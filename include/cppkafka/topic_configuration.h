@@ -16,6 +16,8 @@ public:
     TopicConfiguration& operator=(TopicConfiguration&& rhs) noexcept = default;
 
     void set(const std::string& name, const std::string& value);
+
+    rd_kafka_topic_conf_t* get_handle() const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_topic_conf_t,
                                       decltype(&rd_kafka_topic_conf_destroy)>;

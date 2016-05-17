@@ -16,6 +16,8 @@ public:
     Configuration& operator=(Configuration&& rhs) noexcept = default;
 
     void set(const std::string& name, const std::string& value);
+
+    rd_kafka_conf_t* get_handle() const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_conf_t, decltype(&rd_kafka_conf_destroy)>;
 

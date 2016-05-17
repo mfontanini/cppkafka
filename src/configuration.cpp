@@ -23,6 +23,7 @@ Configuration::Configuration(const Configuration& rhs)
 
 Configuration& Configuration::operator=(const Configuration& rhs) {
     handle_.reset(rd_kafka_conf_dup(rhs.handle_.get()));
+    return *this;
 }
 
 void Configuration::set(const string& name, const string& value) {
@@ -31,8 +32,12 @@ void Configuration::set(const string& name, const string& value) {
     result = rd_kafka_conf_set(handle_.get(), name.data(), value.data(), error_buffer,
                                sizeof(error_buffer));
     if (result != RD_KAFKA_CONF_OK) {
-        throw KafkaConfigException(name, error_buffer);
+        throw ConfigException(name, error_buffer);
     }
+}
+
+rd_kafka_conf_t* Configuration::get_handle() const {
+    return handle_.get();
 }
 
 Configuration::HandlePtr Configuration::make_handle(rd_kafka_conf_t* ptr) {

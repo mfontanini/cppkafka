@@ -23,6 +23,7 @@ TopicConfiguration::TopicConfiguration(const TopicConfiguration& rhs)
 
 TopicConfiguration& TopicConfiguration::operator=(const TopicConfiguration& rhs) {
     handle_.reset(rd_kafka_topic_conf_dup(rhs.handle_.get()));
+    return *this;
 }
 
 void TopicConfiguration::set(const string& name, const string& value) {
@@ -31,8 +32,12 @@ void TopicConfiguration::set(const string& name, const string& value) {
     result = rd_kafka_topic_conf_set(handle_.get(), name.data(), value.data(), error_buffer,
                                      sizeof(error_buffer));
     if (result != RD_KAFKA_CONF_OK) {
-        throw KafkaConfigException(name, error_buffer);
+        throw ConfigException(name, error_buffer);
     }
+}
+
+rd_kafka_topic_conf_t* TopicConfiguration::get_handle() const {
+    return handle_.get();
 }
 
 TopicConfiguration::HandlePtr TopicConfiguration::make_handle(rd_kafka_topic_conf_t* ptr) {

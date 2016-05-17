@@ -4,13 +4,33 @@ using std::string;
 
 namespace cppkafka {
 
-KafkaConfigException::KafkaConfigException(const string& config_name,
-                                           const string& error)
-: message_("Failed to set " + config_name + ": " + error) {
+// Exception
+
+Exception::Exception(string message) 
+: message_(move(message)) {
+
 }
 
-const char* KafkaConfigException::what() const noexcept {
+const char* Exception::what() const noexcept {
     return message_.data();
+}
+
+// ConfigException
+
+ConfigException::ConfigException(const string& config_name, const string& error)
+: Exception("Failed to set " + config_name + ": " + error) {
+
+}
+
+// HandleException
+
+HandleException::HandleException(rd_kafka_resp_err_t error_code) 
+: Exception(rd_kafka_err2str(error_code)), error_code_(error_code) {
+
+}
+
+rd_kafka_resp_err_t HandleException::get_error_code() const {
+    return error_code_;
 }
 
 } // cppkafka
