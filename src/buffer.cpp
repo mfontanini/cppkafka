@@ -1,16 +1,9 @@
 #include "buffer.h"
 
-using std::string;
-
 namespace cppkafka {
 
 Buffer::Buffer() 
 : data_(nullptr), size_(0) {
-
-}
-
-Buffer::Buffer(const string& data)
-: data_(data.data()), size_(data.size()) {
 
 }
 

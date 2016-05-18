@@ -1,6 +1,8 @@
 #ifndef CPPKAFKA_BUFFER_H
 #define CPPKAFKA_BUFFER_H
 
+#include <cstddef>
+
 namespace cppkafka {
 
 class Buffer {
@@ -8,7 +10,6 @@ public:
     using DataType = unsigned char;
 
     Buffer();
-    Buffer(const std::string& data);
     Buffer(const DataType* data, size_t size);
 
     Buffer(const Buffer&) = delete;

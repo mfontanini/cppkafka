@@ -10,10 +10,19 @@ namespace cppkafka {
 class Topic;
 class Buffer;
 class Partition;
+class TopicConfiguration;
 
 class Producer : public KafkaHandleBase {
 public:
+    enum PayloadPolicy {
+        COPY_PAYLOAD = RD_KAFKA_MSG_F_COPY, ///< Means RD_KAFKA_MSG_F_COPY
+        FREE_PAYLOAD = RD_KAFKA_MSG_F_FREE  ///< Means RD_KAFKA_MSG_F_FREE
+    };
+
     Producer(Configuration config);
+
+    void set_payload_policy(PayloadPolicy policy);
+    PayloadPolicy get_payload_policy() const;
 
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload);
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload,
@@ -22,7 +31,7 @@ public:
                  const Buffer& key, void* user_data);
 private:
     Configuration config_;
-    int message_payload_policy_;
+    PayloadPolicy message_payload_policy_;
 };
 
 } // cppkafka

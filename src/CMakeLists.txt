@@ -4,6 +4,7 @@ set(SOURCES
     exceptions.cpp
     topic.cpp
     partition.cpp
+    buffer.cpp
 
     kafka_handle_base.cpp
     producer.cpp
