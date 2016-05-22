@@ -28,6 +28,10 @@ public:
     TopicPartitionList& operator=(TopicPartitionList&&) = default;
 
     void add(const TopicPartition& topic_partition);
+    void update(const TopicPartition& topic_partition);
+    bool remove(const TopicPartition& topic_partition);
+
+    bool contains(const TopicPartition& topic_partition) const;
     size_t size() const;
     bool empty() const;
 
@@ -39,6 +43,8 @@ private:
                                       decltype(&rd_kafka_topic_partition_list_destroy)>;
 
     static HandlePtr make_handle(rd_kafka_topic_partition_list_t* ptr);
+
+    rd_kafka_topic_partition_t* get_topic_partition(const TopicPartition& topic_partition) const;
 
     HandlePtr handle_;
 };
