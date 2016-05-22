@@ -3,8 +3,10 @@
 
 #include <vector>
 #include <string>
+#include <chrono>
 #include "kafka_handle_base.h"
 #include "topic_partition_list.h"
+#include "message.h"
 
 namespace cppkafka {
 
@@ -15,12 +17,20 @@ class Consumer : public KafkaHandleBase {
 public:
     Consumer(const Configuration& config);
 
+    void set_timeout(const std::chrono::milliseconds timeout);
+
     void subscribe(const std::vector<std::string>& topics);
     void unsubscribe();
 
     void assign(const TopicPartitionList& topic_partitions);
+
+    Message poll();
 private:
+    static const std::chrono::milliseconds DEFAULT_TIMEOUT;
+
     void check_error(rd_kafka_resp_err_t error);
+
+    std::chrono::milliseconds timeout_ms_;
 };
 
 } // cppkafka

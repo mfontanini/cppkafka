@@ -6,9 +6,14 @@
 using std::vector;
 using std::string;
 
+using std::chrono::milliseconds;
+
 namespace cppkafka {
 
-Consumer::Consumer(const Configuration& config) {
+const milliseconds Consumer::DEFAULT_TIMEOUT{1000};
+
+Consumer::Consumer(const Configuration& config) 
+: timeout_ms_(DEFAULT_TIMEOUT) {
     char error_buffer[512];
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, config.get_handle(),
                                    error_buffer, sizeof(error_buffer));
@@ -16,6 +21,10 @@ Consumer::Consumer(const Configuration& config) {
         throw Exception("Failed to create consumer handle: " + string(error_buffer));
     }
     set_handle(ptr);
+}
+
+void Consumer::set_timeout(const std::chrono::milliseconds timeout) {
+    timeout_ms_ = timeout;
 }
 
 void Consumer::subscribe(const vector<string>& topics) {
@@ -34,6 +43,11 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
     auto handle = topic_partitions.empty() ? nullptr : topic_partitions.get_handle();
     rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), handle);
     check_error(error);
+}
+
+Message Consumer::poll() {
+    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), timeout_ms_.count());
+    return Message(message);
 }
 
 void Consumer::check_error(rd_kafka_resp_err_t error) {

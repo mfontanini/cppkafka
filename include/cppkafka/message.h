@@ -12,6 +12,10 @@ namespace cppkafka {
 class Message {
 public:
     Message(rd_kafka_message_t* handle);
+    Message(const Message&) = delete;
+    Message(Message&& rhs) = default;
+    Message& operator=(const Message&) = delete;
+    Message& operator=(Message&& rhs) = default;
 
     bool has_error() const;
     rd_kafka_resp_err_t get_error() const;
