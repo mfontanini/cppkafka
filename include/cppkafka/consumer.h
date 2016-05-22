@@ -5,7 +5,6 @@
 #include <string>
 #include <chrono>
 #include "kafka_handle_base.h"
-#include "topic_partition_list.h"
 #include "message.h"
 
 namespace cppkafka {
@@ -35,14 +34,12 @@ public:
     TopicPartitionList get_subscription();
     TopicPartitionList get_assignment();
 
-
     Message poll();
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
     void commit(const Message& msg, bool async);
     void commit(const TopicPartitionList& topic_partitions, bool async);
-    void check_error(rd_kafka_resp_err_t error);
 
     std::chrono::milliseconds timeout_ms_;
 };

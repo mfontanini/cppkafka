@@ -117,10 +117,4 @@ void Consumer::commit(const TopicPartitionList& topic_partitions, bool async) {
     check_error(error);
 }
 
-void Consumer::check_error(rd_kafka_resp_err_t error) {
-    if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
-        throw HandleException(error);
-    }
-}
-
 } // cppkafka

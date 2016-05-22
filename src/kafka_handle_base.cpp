@@ -17,6 +17,18 @@ KafkaHandleBase::KafkaHandleBase(rd_kafka_t* handle)
 
 }
 
+void KafkaHandleBase::pause_partitions(const TopicPartitionList& topic_partitions) {
+    rd_kafka_resp_err_t error = rd_kafka_pause_partitions(get_handle(), 
+                                                          topic_partitions.get_handle());
+    check_error(error);
+}
+
+void KafkaHandleBase::resume_partitions(const TopicPartitionList& topic_partitions) {
+    rd_kafka_resp_err_t error = rd_kafka_resume_partitions(get_handle(), 
+                                                           topic_partitions.get_handle());
+    check_error(error);
+}
+
 rd_kafka_t* KafkaHandleBase::get_handle() {
     return handle_.get();
 }
@@ -39,6 +51,12 @@ Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf
         throw HandleException(rd_kafka_errno2err(errno));
     }
     return Topic(topic);
+}
+
+void KafkaHandleBase::check_error(rd_kafka_resp_err_t error) {
+    if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        throw HandleException(error);
+    }
 }
 
 } // cppkafka
