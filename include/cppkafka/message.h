@@ -21,6 +21,7 @@ public:
     const Buffer& get_key() const;
     int64_t get_offset() const;
     void* private_data();
+    explicit operator bool() const;
 
     rd_kafka_message_t* get_handle() const;
 private:

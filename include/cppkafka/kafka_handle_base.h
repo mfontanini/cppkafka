@@ -13,6 +13,10 @@ class TopicConfiguration;
 class KafkaHandleBase {
 public:
     virtual ~KafkaHandleBase() = default;
+    KafkaHandleBase(const KafkaHandleBase&) = delete;
+    KafkaHandleBase(KafkaHandleBase&&) = delete;
+    KafkaHandleBase& operator=(const KafkaHandleBase&) = delete;
+    KafkaHandleBase& operator=(KafkaHandleBase&&) = delete;
 
     rd_kafka_t* get_handle();
     Topic get_topic(const std::string& name);

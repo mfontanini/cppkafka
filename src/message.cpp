@@ -43,6 +43,10 @@ void* Message::private_data() {
     return handle_->_private;
 }
 
+Message::operator bool() const {
+    return handle_ != nullptr;
+}
+
 rd_kafka_message_t* Message::get_handle() const {
     return handle_.get();
 }
