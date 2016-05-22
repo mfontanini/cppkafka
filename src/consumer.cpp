@@ -12,9 +12,17 @@ namespace cppkafka {
 
 const milliseconds Consumer::DEFAULT_TIMEOUT{1000};
 
-Consumer::Consumer(const Configuration& config) 
+void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
+                               rd_kafka_topic_partition_list_t *partitions, void *opaque) {
+    TopicPartitionList list = TopicPartitionList::make_non_owning(partitions);
+    static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
+}
+
+Consumer::Consumer(Configuration config) 
 : timeout_ms_(DEFAULT_TIMEOUT) {
     char error_buffer[512];
+    // Set ourselves as the opaque pointer
+    rd_kafka_conf_set_opaque(config.get_handle(), this);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, config.get_handle(),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
@@ -25,6 +33,18 @@ Consumer::Consumer(const Configuration& config)
 
 void Consumer::set_timeout(const milliseconds timeout) {
     timeout_ms_ = timeout;
+}
+
+void Consumer::set_assignment_callback(AssignmentCallback callback) {
+    assignment_callback_ = move(callback);
+}
+
+void Consumer::set_revocation_callback(RevocationCallback callback) {
+    revocation_callback_ = move(callback);
+}
+
+void Consumer::set_rebalance_error_callback(RebalanceErrorCallback callback) {
+    rebalance_error_callback_ = move(callback);
 }
 
 void Consumer::subscribe(const vector<string>& topics) {
@@ -42,6 +62,11 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
     // If the list is empty, then we need to use a null pointer
     auto handle = topic_partitions.empty() ? nullptr : topic_partitions.get_handle();
     rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), handle);
+    check_error(error);
+}
+
+void Consumer::unassign() {
+    rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), nullptr);
     check_error(error);
 }
 
@@ -115,6 +140,28 @@ void Consumer::commit(const TopicPartitionList& topic_partitions, bool async) {
     rd_kafka_resp_err_t error;
     error = rd_kafka_commit(get_handle(), topic_partitions.get_handle(), async ? 1 : 0);
     check_error(error);
+}
+
+void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
+                                const TopicPartitionList& topic_partitions) {
+    if (error == RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS) {
+        if (assignment_callback_) {
+            assignment_callback_(topic_partitions);
+        }
+        assign(topic_partitions);
+    }
+    else if (error == RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS) {
+        if (revocation_callback_) {
+            revocation_callback_(topic_partitions);
+        }
+        unassign();
+    }
+    else {
+        if (rebalance_error_callback_) {
+            rebalance_error_callback_(error);
+        }
+        unassign();
+    }
 }
 
 } // cppkafka

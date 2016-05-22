@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <functional>
 #include "kafka_handle_base.h"
 #include "message.h"
 
@@ -14,14 +15,22 @@ class TopicConfiguration;
 
 class Consumer : public KafkaHandleBase {
 public:
-    Consumer(const Configuration& config);
+    using AssignmentCallback = std::function<void(const TopicPartitionList&)>;
+    using RevocationCallback = std::function<void(const TopicPartitionList&)>;
+    using RebalanceErrorCallback = std::function<void(rd_kafka_resp_err_t)>;
+
+    Consumer(Configuration config);
 
     void set_timeout(const std::chrono::milliseconds timeout);
+    void set_assignment_callback(AssignmentCallback callback);
+    void set_revocation_callback(RevocationCallback callback);
+    void set_rebalance_error_callback(RebalanceErrorCallback callback);
 
     void subscribe(const std::vector<std::string>& topics);
     void unsubscribe();
 
     void assign(const TopicPartitionList& topic_partitions);
+    void unassign();
     void close();
 
     void commit(const Message& msg);
@@ -38,10 +47,17 @@ public:
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
+    static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
+                                rd_kafka_topic_partition_list_t *partitions, void *opaque);
+
     void commit(const Message& msg, bool async);
     void commit(const TopicPartitionList& topic_partitions, bool async);
+    void handle_rebalance(rd_kafka_resp_err_t err, const TopicPartitionList& topic_partitions);
 
     std::chrono::milliseconds timeout_ms_;
+    AssignmentCallback assignment_callback_;
+    RevocationCallback revocation_callback_;
+    RebalanceErrorCallback rebalance_error_callback_;
 };
 
 } // cppkafka

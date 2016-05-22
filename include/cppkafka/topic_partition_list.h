@@ -12,6 +12,8 @@ class TopicPartition;
 
 class TopicPartitionList {
 public:
+    static TopicPartitionList make_non_owning(rd_kafka_topic_partition_list_t* handle);
+
     TopicPartitionList();
     TopicPartitionList(rd_kafka_topic_partition_list_t* handle);
     TopicPartitionList(size_t size);
@@ -40,10 +42,14 @@ public:
 private:
     static const size_t DEFAULT_CONTAINER_SIZE;
 
+    struct NonOwningTag { };
+
     using HandlePtr = std::unique_ptr<rd_kafka_topic_partition_list_t, 
                                       decltype(&rd_kafka_topic_partition_list_destroy)>;
 
     static HandlePtr make_handle(rd_kafka_topic_partition_list_t* ptr);
+
+    TopicPartitionList(rd_kafka_topic_partition_list_t* handle, NonOwningTag);
 
     rd_kafka_topic_partition_t* get_topic_partition(const TopicPartition& topic_partition) const;
 

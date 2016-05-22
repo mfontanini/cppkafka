@@ -6,6 +6,15 @@ namespace cppkafka {
 
 const size_t TopicPartitionList::DEFAULT_CONTAINER_SIZE = 5;
 
+void dummy_deleter(rd_kafka_topic_partition_list_t*) {
+
+}
+
+TopicPartitionList
+TopicPartitionList::make_non_owning(rd_kafka_topic_partition_list_t* handle) {
+    return TopicPartitionList(handle, NonOwningTag());
+}
+
 TopicPartitionList::TopicPartitionList() 
 : TopicPartitionList(DEFAULT_CONTAINER_SIZE) {
 
@@ -13,6 +22,12 @@ TopicPartitionList::TopicPartitionList()
 
 TopicPartitionList::TopicPartitionList(rd_kafka_topic_partition_list_t* handle) 
 : handle_(make_handle(handle)) {
+
+}
+
+TopicPartitionList::TopicPartitionList(rd_kafka_topic_partition_list_t* handle,
+                                       NonOwningTag) 
+: handle_(handle, &dummy_deleter) {
 
 }
 
