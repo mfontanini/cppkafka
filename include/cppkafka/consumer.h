@@ -29,6 +29,9 @@ public:
     void commit(const TopicPartitionList& topic_partitions);
     void async_commit(const TopicPartitionList& topic_partitions);
 
+    TopicPartitionList get_committed(const TopicPartitionList& topic_partitions);
+    TopicPartitionList get_position(const TopicPartitionList& topic_partitions);
+
     Message poll();
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
