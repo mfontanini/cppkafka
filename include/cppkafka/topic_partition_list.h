@@ -13,6 +13,7 @@ class TopicPartition;
 class TopicPartitionList {
 public:
     TopicPartitionList();
+    TopicPartitionList(rd_kafka_topic_partition_list_t* handle);
     TopicPartitionList(size_t size);
     template <typename ForwardIterator>
     TopicPartitionList(ForwardIterator start, const ForwardIterator& end) 

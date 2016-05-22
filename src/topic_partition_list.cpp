@@ -11,6 +11,11 @@ TopicPartitionList::TopicPartitionList()
 
 }
 
+TopicPartitionList::TopicPartitionList(rd_kafka_topic_partition_list_t* handle) 
+: handle_(make_handle(handle)) {
+
+}
+
 TopicPartitionList::TopicPartitionList(size_t size) 
 : handle_(make_handle(rd_kafka_topic_partition_list_new(size))) {
 

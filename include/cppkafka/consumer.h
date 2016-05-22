@@ -23,14 +23,18 @@ public:
     void unsubscribe();
 
     void assign(const TopicPartitionList& topic_partitions);
+    void close();
 
     void commit(const Message& msg);
     void async_commit(const Message& msg);
     void commit(const TopicPartitionList& topic_partitions);
     void async_commit(const TopicPartitionList& topic_partitions);
 
-    TopicPartitionList get_committed(const TopicPartitionList& topic_partitions);
-    TopicPartitionList get_position(const TopicPartitionList& topic_partitions);
+    TopicPartitionList get_offsets_committed(const TopicPartitionList& topic_partitions);
+    TopicPartitionList get_offsets_position(const TopicPartitionList& topic_partitions);
+    TopicPartitionList get_subscription();
+    TopicPartitionList get_assignment();
+
 
     Message poll();
 private:

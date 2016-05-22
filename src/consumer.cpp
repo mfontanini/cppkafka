@@ -45,6 +45,11 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
     check_error(error);
 }
 
+void Consumer::close() {
+    rd_kafka_resp_err_t error = rd_kafka_consumer_close(get_handle());
+    check_error(error);
+}
+
 void Consumer::commit(const Message& msg) {
     commit(msg, false);
 }
@@ -61,7 +66,7 @@ void Consumer::async_commit(const TopicPartitionList& topic_partitions) {
     commit(topic_partitions, true);
 }
 
-TopicPartitionList Consumer::get_committed(const TopicPartitionList& topic_partitions) {
+TopicPartitionList Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) {
     // Copy the list, let rd_kafka change it and return it
     TopicPartitionList output = topic_partitions;
     rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), output.get_handle(),
@@ -70,12 +75,28 @@ TopicPartitionList Consumer::get_committed(const TopicPartitionList& topic_parti
     return output;
 }
 
-TopicPartitionList Consumer::get_position(const TopicPartitionList& topic_partitions) {
+TopicPartitionList Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) {
     // Copy the list, let rd_kafka change it and return it
     TopicPartitionList output = topic_partitions;
     rd_kafka_resp_err_t error = rd_kafka_position(get_handle(), output.get_handle());
     check_error(error);
     return output;
+}
+
+TopicPartitionList Consumer::get_subscription() {
+    rd_kafka_resp_err_t error;
+    rd_kafka_topic_partition_list_t* list = nullptr;
+    error = rd_kafka_subscription(get_handle(), &list);
+    check_error(error);
+    return TopicPartitionList(list);
+}
+
+TopicPartitionList Consumer::get_assignment() {
+    rd_kafka_resp_err_t error;
+    rd_kafka_topic_partition_list_t* list = nullptr;
+    error = rd_kafka_assignment(get_handle(), &list);
+    check_error(error);
+    return TopicPartitionList(list);
 }
 
 Message Consumer::poll() {
