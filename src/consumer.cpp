@@ -45,9 +45,24 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
     check_error(error);
 }
 
+void Consumer::commit(const Message& msg) {
+    commit(msg, false);
+}
+
+void Consumer::async_commit(const Message& msg) {
+    commit(msg, true);
+}
+
 Message Consumer::poll() {
     rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), timeout_ms_.count());
     return Message(message);
+}
+
+void Consumer::commit(const Message& msg, bool async) {
+    rd_kafka_resp_err_t error;
+    error = rd_kafka_commit_message(get_handle(), msg.get_handle(),
+                         async ? 1 : 0);
+    check_error(error);
 }
 
 void Consumer::check_error(rd_kafka_resp_err_t error) {

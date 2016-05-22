@@ -24,10 +24,14 @@ public:
 
     void assign(const TopicPartitionList& topic_partitions);
 
+    void commit(const Message& msg);
+    void async_commit(const Message& msg);
+
     Message poll();
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
+    void commit(const Message& msg, bool async);
     void check_error(rd_kafka_resp_err_t error);
 
     std::chrono::milliseconds timeout_ms_;
