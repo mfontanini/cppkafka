@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <algorithm>
+#include <initializer_list>
 #include <librdkafka/rdkafka.h>
 #include "topic_partition.h"
 
@@ -15,6 +16,7 @@ public:
     static TopicPartitionList make_non_owning(rd_kafka_topic_partition_list_t* handle);
 
     TopicPartitionList();
+    TopicPartitionList(const std::initializer_list<TopicPartition>& topic_partitions);
     TopicPartitionList(rd_kafka_topic_partition_list_t* handle);
     TopicPartitionList(size_t size);
     template <typename ForwardIterator>

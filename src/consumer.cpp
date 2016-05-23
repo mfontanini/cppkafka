@@ -23,12 +23,18 @@ Consumer::Consumer(Configuration config)
     char error_buffer[512];
     // Set ourselves as the opaque pointer
     rd_kafka_conf_set_opaque(config.get_handle(), this);
-    rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, config.get_handle(),
+    rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, 
+                                   rd_kafka_conf_dup(config.get_handle()),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
         throw Exception("Failed to create consumer handle: " + string(error_buffer));
     }
+    rd_kafka_poll_set_consumer(ptr);
     set_handle(ptr);
+}
+
+Consumer::~Consumer() {
+    close();
 }
 
 void Consumer::set_timeout(const milliseconds timeout) {
@@ -126,7 +132,7 @@ TopicPartitionList Consumer::get_assignment() {
 
 Message Consumer::poll() {
     rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), timeout_ms_.count());
-    return Message(message);
+    return message ? Message(message) : Message();
 }
 
 void Consumer::commit(const Message& msg, bool async) {

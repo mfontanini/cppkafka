@@ -2,6 +2,8 @@
 #include "topic_partition.h"
 #include "exceptions.h"
 
+using std::initializer_list;
+
 namespace cppkafka {
 
 const size_t TopicPartitionList::DEFAULT_CONTAINER_SIZE = 5;
@@ -18,6 +20,13 @@ TopicPartitionList::make_non_owning(rd_kafka_topic_partition_list_t* handle) {
 TopicPartitionList::TopicPartitionList() 
 : TopicPartitionList(DEFAULT_CONTAINER_SIZE) {
 
+}
+
+TopicPartitionList::TopicPartitionList(const initializer_list<TopicPartition>& topic_partitions)
+: TopicPartitionList(topic_partitions.size()) {
+    for (const auto& value : topic_partitions) {
+        add(value);
+    }
 }
 
 TopicPartitionList::TopicPartitionList(rd_kafka_topic_partition_list_t* handle) 

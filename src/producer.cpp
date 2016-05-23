@@ -1,9 +1,6 @@
 #include <errno.h>
 #include "producer.h"
 #include "exceptions.h"
-#include "buffer.h"
-#include "topic.h"
-#include "partition.h"
 
 using std::move;
 using std::string;
@@ -13,11 +10,13 @@ namespace cppkafka {
 Producer::Producer(Configuration config)
 : config_(move(config)) {
     char error_buffer[512];
-    rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_PRODUCER, config_.get_handle(),
+    rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_PRODUCER,
+                                   rd_kafka_conf_dup(config_.get_handle()),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
         throw Exception("Failed to create producer handle: " + string(error_buffer));
     }
+    rd_kafka_set_log_level(ptr, 7);
     set_handle(ptr);
     set_payload_policy(Producer::COPY_PAYLOAD);
 }

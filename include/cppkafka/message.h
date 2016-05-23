@@ -11,6 +11,7 @@ namespace cppkafka {
 
 class Message {
 public:
+    Message();
     Message(rd_kafka_message_t* handle);
     Message(const Message&) = delete;
     Message(Message&& rhs) = default;

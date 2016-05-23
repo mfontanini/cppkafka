@@ -20,6 +20,11 @@ public:
     using RebalanceErrorCallback = std::function<void(rd_kafka_resp_err_t)>;
 
     Consumer(Configuration config);
+    Consumer(const Consumer&) = delete;
+    Consumer(Consumer&) = delete;
+    Consumer& operator=(const Consumer&) = delete;
+    Consumer& operator=(Consumer&&) = delete;
+    ~Consumer();
 
     void set_timeout(const std::chrono::milliseconds timeout);
     void set_assignment_callback(AssignmentCallback callback);

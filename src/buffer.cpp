@@ -1,5 +1,7 @@
 #include "buffer.h"
 
+using std::string;
+
 namespace cppkafka {
 
 Buffer::Buffer() 
@@ -18,6 +20,10 @@ const Buffer::DataType* Buffer::get_data() const {
 
 size_t Buffer::get_size() const {
     return size_;
+}
+
+string Buffer::as_string() const {
+    return string(data_, data_ + size_);
 }
 
 } // cppkafka

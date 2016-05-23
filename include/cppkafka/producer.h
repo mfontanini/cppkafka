@@ -4,6 +4,9 @@
 #include <memory>
 #include "kafka_handle_base.h"
 #include "configuration.h"
+#include "buffer.h"
+#include "topic.h"
+#include "partition.h"
 
 namespace cppkafka {
 

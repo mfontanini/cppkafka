@@ -4,6 +4,11 @@ using std::string;
 
 namespace cppkafka {
 
+Message::Message() 
+: handle_(nullptr, nullptr) {
+
+}
+
 Message::Message(rd_kafka_message_t* handle) 
 : handle_(handle, &rd_kafka_message_destroy),
 payload_((const Buffer::DataType*)handle_->payload, handle_->len),
