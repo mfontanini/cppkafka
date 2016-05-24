@@ -11,10 +11,10 @@ public:
     using DataType = unsigned char;
 
     Buffer();
-    Buffer(const DataType* data, size_t size);
-    template <typename ForwardIterator>
-    Buffer(const ForwardIterator& start, const ForwardIterator& end) :
-        data_((const DataType*)&*start), size_(std::distance(start, end)) {
+    template <typename T>
+    Buffer(const T* data, size_t size) 
+    : data_(reinterpret_cast<const DataType*>(data)), size_(size) {
+        static_assert(sizeof(T) == 1, "Buffer must point to elements of 1 byte");
 
     }
 

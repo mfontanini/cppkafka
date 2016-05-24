@@ -9,11 +9,6 @@ Buffer::Buffer()
 
 }
 
-Buffer::Buffer(const DataType* data, size_t size) 
-: data_(data), size_(size) {
-
-}
-
 const Buffer::DataType* Buffer::get_data() const {
     return data_;
 }
