@@ -26,7 +26,6 @@ public:
     Consumer& operator=(Consumer&&) = delete;
     ~Consumer();
 
-    void set_timeout(const std::chrono::milliseconds timeout);
     void set_assignment_callback(AssignmentCallback callback);
     void set_revocation_callback(RevocationCallback callback);
     void set_rebalance_error_callback(RebalanceErrorCallback callback);
@@ -50,8 +49,6 @@ public:
 
     Message poll();
 private:
-    static const std::chrono::milliseconds DEFAULT_TIMEOUT;
-
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);
 
@@ -59,7 +56,6 @@ private:
     void commit(const TopicPartitionList& topic_partitions, bool async);
     void handle_rebalance(rd_kafka_resp_err_t err, const TopicPartitionList& topic_partitions);
 
-    std::chrono::milliseconds timeout_ms_;
     AssignmentCallback assignment_callback_;
     RevocationCallback revocation_callback_;
     RebalanceErrorCallback rebalance_error_callback_;

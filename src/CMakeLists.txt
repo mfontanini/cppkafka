@@ -8,6 +8,7 @@ set(SOURCES
     message.cpp
     topic_partition.cpp
     topic_partition_list.cpp
+    metadata.cpp
 
     kafka_handle_base.cpp
     producer.cpp

@@ -15,7 +15,6 @@ public:
     Buffer(const T* data, size_t size) 
     : data_(reinterpret_cast<const DataType*>(data)), size_(size) {
         static_assert(sizeof(T) == 1, "Buffer must point to elements of 1 byte");
-
     }
 
     Buffer(const Buffer&) = delete;

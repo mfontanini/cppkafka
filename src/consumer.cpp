@@ -10,16 +10,13 @@ using std::chrono::milliseconds;
 
 namespace cppkafka {
 
-const milliseconds Consumer::DEFAULT_TIMEOUT{1000};
-
 void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
                                rd_kafka_topic_partition_list_t *partitions, void *opaque) {
     TopicPartitionList list = TopicPartitionList::make_non_owning(partitions);
     static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
 }
 
-Consumer::Consumer(Configuration config) 
-: timeout_ms_(DEFAULT_TIMEOUT) {
+Consumer::Consumer(Configuration config) {
     char error_buffer[512];
     // Set ourselves as the opaque pointer
     rd_kafka_conf_set_opaque(config.get_handle(), this);
@@ -35,10 +32,6 @@ Consumer::Consumer(Configuration config)
 
 Consumer::~Consumer() {
     close();
-}
-
-void Consumer::set_timeout(const milliseconds timeout) {
-    timeout_ms_ = timeout;
 }
 
 void Consumer::set_assignment_callback(AssignmentCallback callback) {
@@ -101,7 +94,7 @@ TopicPartitionList Consumer::get_offsets_committed(const TopicPartitionList& top
     // Copy the list, let rd_kafka change it and return it
     TopicPartitionList output = topic_partitions;
     rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), output.get_handle(),
-                                                   timeout_ms_.count());
+                                                   get_timeout().count());
     check_error(error);
     return output;
 }
@@ -131,7 +124,8 @@ TopicPartitionList Consumer::get_assignment() {
 }
 
 Message Consumer::poll() {
-    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), timeout_ms_.count());
+    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), 
+                                                         get_timeout().count());
     return message ? Message(message) : Message();
 }
 
