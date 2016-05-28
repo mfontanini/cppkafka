@@ -8,9 +8,11 @@ namespace cppkafka {
 
 class TopicPartition {
 public:
-    TopicPartition(const std::string& topic);
-    TopicPartition(const std::string& topic, int partition);
-    TopicPartition(const std::string& topic, int partition, int64_t offset);
+    TopicPartition();
+    TopicPartition(const char* topic);
+    TopicPartition(std::string topic);
+    TopicPartition(std::string topic, int partition);
+    TopicPartition(std::string topic, int partition, int64_t offset);
 
     const std::string& get_topic() const;
     int get_partition() const;

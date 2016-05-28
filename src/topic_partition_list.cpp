@@ -2,110 +2,34 @@
 #include "topic_partition.h"
 #include "exceptions.h"
 
-using std::initializer_list;
+using std::vector;
 
 namespace cppkafka {
 
-const size_t TopicPartitionList::DEFAULT_CONTAINER_SIZE = 5;
-
-void dummy_deleter(rd_kafka_topic_partition_list_t*) {
-
-}
-
-TopicPartitionList
-TopicPartitionList::make_non_owning(rd_kafka_topic_partition_list_t* handle) {
-    return TopicPartitionList(handle, NonOwningTag());
-}
-
-TopicPartitionList::TopicPartitionList() 
-: TopicPartitionList(DEFAULT_CONTAINER_SIZE) {
-
-}
-
-TopicPartitionList::TopicPartitionList(const initializer_list<TopicPartition>& topic_partitions)
-: TopicPartitionList(topic_partitions.size()) {
-    for (const auto& value : topic_partitions) {
-        add(value);
+TopicPartitionsListPtr convert(const vector<TopicPartition>& topic_partitions) {
+    TopicPartitionsListPtr handle(rd_kafka_topic_partition_list_new(topic_partitions.size()),
+                                  &rd_kafka_topic_partition_list_destroy);
+    for (const auto& item : topic_partitions) {
+        rd_kafka_topic_partition_t* new_item = nullptr;
+        new_item = rd_kafka_topic_partition_list_add(handle.get(),
+                                                     item.get_topic().data(),
+                                                     item.get_partition());
+        new_item->offset = item.get_offset();
     }
+    return handle;
 }
 
-TopicPartitionList::TopicPartitionList(rd_kafka_topic_partition_list_t* handle) 
-: handle_(make_handle(handle)) {
-
-}
-
-TopicPartitionList::TopicPartitionList(rd_kafka_topic_partition_list_t* handle,
-                                       NonOwningTag) 
-: handle_(handle, &dummy_deleter) {
-
-}
-
-TopicPartitionList::TopicPartitionList(size_t size) 
-: handle_(make_handle(rd_kafka_topic_partition_list_new(size))) {
-
-}
-
-TopicPartitionList::TopicPartitionList(const TopicPartitionList& rhs) 
-: handle_(make_handle(rd_kafka_topic_partition_list_copy(rhs.get_handle()))) {
-
-}
-
-TopicPartitionList& TopicPartitionList::operator=(const TopicPartitionList& rhs) {
-    handle_.reset(rd_kafka_topic_partition_list_copy(rhs.get_handle()));
-    return *this;
-}
-
-void TopicPartitionList::add(const TopicPartition& topic_partition) {
-    rd_kafka_topic_partition_t* element = nullptr;
-    element = rd_kafka_topic_partition_list_add(handle_.get(),
-                                                topic_partition.get_topic().data(),
-                                                topic_partition.get_partition());
-    element->offset = topic_partition.get_offset();
-}
-
-void TopicPartitionList::update(const TopicPartition& topic_partition) {
-    rd_kafka_resp_err_t error;
-    error = rd_kafka_topic_partition_list_set_offset(get_handle(),
-                                                     topic_partition.get_topic().data(),
-                                                     topic_partition.get_partition(),
-                                                     topic_partition.get_offset());
-    if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
-        throw HandleException(error);
+vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions) {
+    vector<TopicPartition> output;
+    for (int i = 0; i < topic_partitions->cnt; ++i) {
+        const auto& elem = topic_partitions->elems[i];
+        output.emplace_back(elem.topic, elem.partition, elem.offset);
     }
+    return output;
 }
 
-bool TopicPartitionList::remove(const TopicPartition& topic_partition) {
-    return rd_kafka_topic_partition_list_del(get_handle(),
-                                             topic_partition.get_topic().data(),
-                                             topic_partition.get_partition()) == 1;
-}
-
-bool TopicPartitionList::contains(const TopicPartition& topic_partition) const {
-    return get_topic_partition(topic_partition) != nullptr;
-}
-
-size_t TopicPartitionList::size() const {
-    return handle_->cnt;
-}
-
-bool TopicPartitionList::empty() const {
-    return size() == 0;
-}
-
-rd_kafka_topic_partition_list_t* TopicPartitionList::get_handle() const {
-    return handle_.get();
-}
-
-TopicPartitionList::HandlePtr
-TopicPartitionList::make_handle(rd_kafka_topic_partition_list_t* ptr) {
-    return HandlePtr(ptr, &rd_kafka_topic_partition_list_destroy);
-}
-
-rd_kafka_topic_partition_t*
-TopicPartitionList::get_topic_partition(const TopicPartition& topic_partition) const {
-    return rd_kafka_topic_partition_list_find(get_handle(),
-                                              topic_partition.get_topic().data(),
-                                              topic_partition.get_partition());
+TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle) {
+    return TopicPartitionsListPtr(handle, &rd_kafka_topic_partition_list_destroy);
 }
 
 } // cppkafka

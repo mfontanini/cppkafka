@@ -16,3 +16,4 @@ add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 
 create_test(producer)
 create_test(kafka_handle_base)
+create_test(topic_partition_list)

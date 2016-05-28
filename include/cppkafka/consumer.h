@@ -54,7 +54,7 @@ private:
 
     void commit(const Message& msg, bool async);
     void commit(const TopicPartitionList& topic_partitions, bool async);
-    void handle_rebalance(rd_kafka_resp_err_t err, const TopicPartitionList& topic_partitions);
+    void handle_rebalance(rd_kafka_resp_err_t err, TopicPartitionList& topic_partitions);
 
     AssignmentCallback assignment_callback_;
     RevocationCallback revocation_callback_;

@@ -5,18 +5,28 @@ using std::string;
 
 namespace cppkafka {
 
-TopicPartition::TopicPartition(const string& topic) 
-: TopicPartition(topic, RD_KAFKA_PARTITION_UA) {
+TopicPartition::TopicPartition() 
+: TopicPartition("") {
 
 }
 
-TopicPartition::TopicPartition(const string& topic, int partition) 
-: TopicPartition(topic, partition, RD_KAFKA_OFFSET_INVALID) {
+TopicPartition::TopicPartition(const char* topic) 
+: TopicPartition(string(topic)) {
 
 }
 
-TopicPartition::TopicPartition(const string& topic, int partition, int64_t offset) 
-: topic_(topic), partition_(partition), offset_(offset) {
+TopicPartition::TopicPartition(string topic) 
+: TopicPartition(move(topic), RD_KAFKA_PARTITION_UA) {
+
+}
+
+TopicPartition::TopicPartition(string topic, int partition) 
+: TopicPartition(move(topic), partition, RD_KAFKA_OFFSET_INVALID) {
+
+}
+
+TopicPartition::TopicPartition(string topic, int partition, int64_t offset) 
+: topic_(move(topic)), partition_(partition), offset_(offset) {
 
 }
 

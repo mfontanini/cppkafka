@@ -5,8 +5,9 @@
 #include <memory>
 #include <chrono>
 #include <librdkafka/rdkafka.h>
-#include "topic_partition_list.h"
 #include "metadata.h"
+#include "topic_partition.h"
+#include "topic_partition_list.h"
 
 namespace cppkafka {
 
