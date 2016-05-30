@@ -15,7 +15,7 @@ class TopicConfiguration;
 
 class Consumer : public KafkaHandleBase {
 public:
-    using AssignmentCallback = std::function<void(const TopicPartitionList&)>;
+    using AssignmentCallback = std::function<void(TopicPartitionList&)>;
     using RevocationCallback = std::function<void(const TopicPartitionList&)>;
     using RebalanceErrorCallback = std::function<void(rd_kafka_resp_err_t)>;
 

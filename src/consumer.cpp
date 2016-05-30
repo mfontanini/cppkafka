@@ -26,6 +26,7 @@ Consumer::Consumer(Configuration config) {
     char error_buffer[512];
     // Set ourselves as the opaque pointer
     rd_kafka_conf_set_opaque(config.get_handle(), this);
+    rd_kafka_conf_set_rebalance_cb(config.get_handle(), &Consumer::rebalance_proxy);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, 
                                    rd_kafka_conf_dup(config.get_handle()),
                                    error_buffer, sizeof(error_buffer));
