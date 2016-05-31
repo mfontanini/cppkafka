@@ -16,16 +16,6 @@ TopicConfiguration::TopicConfiguration(rd_kafka_topic_conf_t* ptr)
 
 }
 
-TopicConfiguration::TopicConfiguration(const TopicConfiguration& rhs) 
-: handle_(make_handle(rd_kafka_topic_conf_dup(rhs.handle_.get()))) {
-
-}
-
-TopicConfiguration& TopicConfiguration::operator=(const TopicConfiguration& rhs) {
-    handle_.reset(rd_kafka_topic_conf_dup(rhs.handle_.get()));
-    return *this;
-}
-
 void TopicConfiguration::set(const string& name, const string& value) {
     char error_buffer[512];
     rd_kafka_conf_res_t result;
@@ -41,7 +31,7 @@ rd_kafka_topic_conf_t* TopicConfiguration::get_handle() const {
 }
 
 TopicConfiguration::HandlePtr TopicConfiguration::make_handle(rd_kafka_topic_conf_t* ptr) {
-    return HandlePtr(ptr, &rd_kafka_topic_conf_destroy);
+    return HandlePtr(ptr, &rd_kafka_topic_conf_destroy, &rd_kafka_topic_conf_dup);
 }     
 
 } // cppkafka
