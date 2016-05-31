@@ -186,3 +186,36 @@ TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {
         EXPECT_LT(message.get_partition(), 3);
     }
 }
+
+TEST_F(ProducerTest, Callbacks) {
+    int partition = 0;
+
+    // Create a consumer and assign this topic/partition
+    Consumer consumer(make_consumer_config());
+    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    ConsumerRunner runner(consumer, 1, 1);
+
+    // Now create a producer and produce a message
+    string payload = "Hello world!";
+    bool deliver_report_called = false;
+    Configuration config = make_producer_config();
+    config.set_delivery_report_callback([&](const Message& msg) {
+        EXPECT_EQ(payload, msg.get_payload().as_string());
+        deliver_report_called = true;
+    });
+    Producer producer(move(config));
+    Topic topic = producer.get_topic(KAFKA_TOPIC);
+    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    producer.poll();
+    runner.try_join();
+
+    const auto& messages = runner.get_messages();
+    ASSERT_EQ(1, messages.size());
+    const auto& message = messages[0];
+    EXPECT_EQ(payload, message.get_payload().as_string());
+    EXPECT_EQ("", message.get_key().as_string());
+    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
+    EXPECT_EQ(partition, message.get_partition());
+    EXPECT_EQ(0, message.get_error());
+    EXPECT_TRUE(deliver_report_called);
+}

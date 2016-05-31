@@ -10,6 +10,7 @@ namespace cppkafka {
 Producer::Producer(Configuration config)
 : config_(move(config)) {
     char error_buffer[512];
+    rd_kafka_conf_set_opaque(config_.get_handle(), this);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_PRODUCER,
                                    rd_kafka_conf_dup(config_.get_handle()),
                                    error_buffer, sizeof(error_buffer));
@@ -27,6 +28,10 @@ void Producer::set_payload_policy(PayloadPolicy policy) {
 
 Producer::PayloadPolicy Producer::get_payload_policy() const {
     return message_payload_policy_;
+}
+
+const Configuration& Producer::get_configuration() const {
+  return config_;
 }
 
 void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& payload) {
@@ -49,6 +54,10 @@ void Producer::produce(const Topic& topic, const Partition& partition, const Buf
     if (result == -1) {
         throw HandleException(rd_kafka_errno2err(errno));
     }
+}
+
+int Producer::poll() {
+    return rd_kafka_poll(get_handle(), get_timeout().count());
 }
 
 } // cppkafka

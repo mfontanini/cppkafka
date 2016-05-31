@@ -11,6 +11,8 @@ namespace cppkafka {
 
 class Message {
 public:
+    static Message make_non_owning(rd_kafka_message_t* handle);
+
     Message();
     Message(rd_kafka_message_t* handle);
     Message(const Message&) = delete;
@@ -31,6 +33,11 @@ public:
     rd_kafka_message_t* get_handle() const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_message_t, decltype(&rd_kafka_message_destroy)>;
+
+    struct NonOwningTag { };
+
+    Message(rd_kafka_message_t* handle, NonOwningTag);
+    Message(HandlePtr handle);
 
     HandlePtr handle_;
     Buffer payload_;

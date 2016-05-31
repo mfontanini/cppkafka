@@ -15,6 +15,7 @@ using TopicPartitionList = std::vector<TopicPartition>;
 
 TopicPartitionsListPtr convert(const std::vector<TopicPartition>& topic_partitions);
 std::vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions);
+std::vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions);
 TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
 
 } // cppkafka

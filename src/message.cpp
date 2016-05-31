@@ -4,15 +4,33 @@ using std::string;
 
 namespace cppkafka {
 
+void dummy_deleter(rd_kafka_message_t*) {
+
+}
+
+Message Message::make_non_owning(rd_kafka_message_t* handle) {
+    return Message(handle, NonOwningTag());
+}
+
 Message::Message() 
 : handle_(nullptr, nullptr) {
 
 }
 
 Message::Message(rd_kafka_message_t* handle) 
-: handle_(handle, &rd_kafka_message_destroy),
-payload_((const Buffer::DataType*)handle_->payload, handle_->len),
-key_((const Buffer::DataType*)handle_->key, handle_->key_len) {
+: Message(HandlePtr(handle, &rd_kafka_message_destroy)) {
+
+}
+
+Message::Message(rd_kafka_message_t* handle, NonOwningTag) 
+: Message(HandlePtr(handle, &dummy_deleter)) {
+
+}
+
+Message::Message(HandlePtr handle) 
+: handle_(move(handle)), 
+  payload_((const Buffer::DataType*)handle_->payload, handle_->len),
+  key_((const Buffer::DataType*)handle_->key, handle_->key_len) {
 
 }
 

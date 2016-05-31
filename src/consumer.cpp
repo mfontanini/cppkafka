@@ -5,30 +5,26 @@
 
 using std::vector;
 using std::string;
+using std::move;
 
 using std::chrono::milliseconds;
 
 namespace cppkafka {
 
-void dummy_topic_partition_list_deleter(rd_kafka_topic_partition_list_t*) {
-
-}
-
 void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
                                rd_kafka_topic_partition_list_t *partitions, void *opaque) {
-    // Build a dummy unique_ptr which won't actually delete the ptr
-    TopicPartitionsListPtr handle(partitions, &dummy_topic_partition_list_deleter);
-    TopicPartitionList list = convert(handle);
+    TopicPartitionList list = convert(partitions);
     static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
 }
 
-Consumer::Consumer(Configuration config) {
+Consumer::Consumer(Configuration config) 
+: config_(move(config)) {
     char error_buffer[512];
     // Set ourselves as the opaque pointer
-    rd_kafka_conf_set_opaque(config.get_handle(), this);
-    rd_kafka_conf_set_rebalance_cb(config.get_handle(), &Consumer::rebalance_proxy);
+    rd_kafka_conf_set_opaque(config_.get_handle(), this);
+    rd_kafka_conf_set_rebalance_cb(config_.get_handle(), &Consumer::rebalance_proxy);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, 
-                                   rd_kafka_conf_dup(config.get_handle()),
+                                   rd_kafka_conf_dup(config_.get_handle()),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
         throw Exception("Failed to create consumer handle: " + string(error_buffer));
@@ -128,6 +124,10 @@ TopicPartitionList Consumer::get_assignment() {
     error = rd_kafka_assignment(get_handle(), &list);
     check_error(error);
     return convert(make_handle(list));
+}
+
+const Configuration& Consumer::get_configuration() const {
+    return config_;
 }
 
 Message Consumer::poll() {

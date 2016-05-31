@@ -20,6 +20,10 @@ TopicPartitionsListPtr convert(const vector<TopicPartition>& topic_partitions) {
 }
 
 vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions) {
+    return convert(topic_partitions.get());
+}
+
+vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions) {
     vector<TopicPartition> output;
     for (int i = 0; i < topic_partitions->cnt; ++i) {
         const auto& elem = topic_partitions->elems[i];

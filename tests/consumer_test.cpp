@@ -44,7 +44,7 @@ public:
                         cond.notify_one();
                     }
                 }
-                else if (msg && msg.get_error() == 0) {
+                else if (msg && msg.get_error() == 0 && number_eofs == partitions) {
                     messages_.push_back(move(msg));
                 }
             }
@@ -90,11 +90,11 @@ public:
         return config;
     }
 
-    Configuration make_consumer_config() {
+    Configuration make_consumer_config(const string& group_id = "consumer_test") {
         Configuration config;
         config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
         config.set("enable.auto.commit", "false");
-        config.set("group.id", "consumer_test");
+        config.set("group.id", group_id);
         return config;
     }
 };
@@ -180,4 +180,41 @@ TEST_F(ConsumerTest, Rebalance) {
         EXPECT_TRUE(partitions.erase(topic_partition.get_partition()));
     }
     EXPECT_EQ(1, runner1.get_messages().size() + runner2.get_messages().size());
+}
+
+TEST_F(ConsumerTest, OffsetCommit) {
+    int partition = 0;
+    int64_t message_offset = 0;
+    bool offset_commit_called = false;
+
+    // Create a consumer and subscribe to the topic
+    Configuration config = make_consumer_config("offset_commit");
+    config.set_offset_commit_callback([&](rd_kafka_resp_err_t error,
+                                          const TopicPartitionList& topic_partitions) {
+        offset_commit_called = true;
+        EXPECT_EQ(0, error);
+        ASSERT_EQ(1, topic_partitions.size());
+        EXPECT_EQ(KAFKA_TOPIC, topic_partitions[0].get_topic());
+        EXPECT_EQ(0, topic_partitions[0].get_partition());
+        EXPECT_EQ(message_offset + 1, topic_partitions[0].get_offset());
+    });
+    Consumer consumer(config);
+    consumer.assign({ { KAFKA_TOPIC, 0 } });
+    ConsumerRunner runner(consumer, 1, 1);
+
+    // Produce a message just so we stop the consumer
+    Producer producer(make_producer_config());
+    Topic topic = producer.get_topic(KAFKA_TOPIC);
+    string payload = "Hello world!";
+    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    runner.try_join();
+
+    ASSERT_EQ(1, runner.get_messages().size());
+    const Message& msg = runner.get_messages()[0];
+    message_offset = msg.get_offset();
+    consumer.commit(msg);
+    for (size_t i = 0; i < 3 && !offset_commit_called; ++i) {
+        consumer.poll();
+    }
+    EXPECT_TRUE(offset_commit_called);
 }
