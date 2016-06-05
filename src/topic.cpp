@@ -5,8 +5,21 @@ using std::string;
 
 namespace cppkafka {
 
+void dummy_topic_destroyer(rd_kafka_topic_t*) {
+
+}
+
+Topic Topic::make_non_owning(rd_kafka_topic_t* handle) {
+    return Topic(handle, NonOwningTag{});
+}
+
 Topic::Topic(rd_kafka_topic_t* handle) 
 : handle_(handle, &rd_kafka_topic_destroy) {
+
+}
+
+Topic::Topic(rd_kafka_topic_t* handle, NonOwningTag)
+: handle_(handle, &dummy_topic_destroyer) {
 
 }
 

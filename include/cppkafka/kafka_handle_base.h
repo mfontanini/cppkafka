@@ -4,16 +4,18 @@
 #include <string>
 #include <memory>
 #include <chrono>
+#include <unordered_map>
+#include <mutex>
 #include <librdkafka/rdkafka.h>
 #include "metadata.h"
 #include "topic_partition.h"
 #include "topic_partition_list.h"
+#include "topic_configuration.h"
 #include "configuration.h"
 
 namespace cppkafka {
 
 class Topic;
-class TopicConfiguration;
 
 class KafkaHandleBase {
 public:
@@ -46,13 +48,17 @@ private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
     using HandlePtr = std::unique_ptr<rd_kafka_t, decltype(&rd_kafka_destroy)>;
+    using TopicConfigurationMap = std::unordered_map<std::string, TopicConfiguration>;
 
     Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
     Metadata get_metadata(rd_kafka_topic_t* topic_ptr);
+    void save_topic_config(const std::string& topic_name, TopicConfiguration config);
 
     HandlePtr handle_;
     std::chrono::milliseconds timeout_ms_;
     Configuration config_;
+    TopicConfigurationMap topic_configurations_;
+    std::mutex topic_configurations_mutex_;
 };
 
 } // cppkafka

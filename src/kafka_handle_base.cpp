@@ -1,12 +1,13 @@
 #include "kafka_handle_base.h"
 #include "exceptions.h"
-#include "topic_configuration.h"
 #include "topic.h"
 #include "topic_partition_list.h"
 
 using std::string;
 using std::vector;
 using std::move;
+using std::lock_guard;
+using std::mutex;
 using std::chrono::milliseconds;
 
 namespace cppkafka {
@@ -46,11 +47,14 @@ rd_kafka_t* KafkaHandleBase::get_handle() {
 }
 
 Topic KafkaHandleBase::get_topic(const string& name) {
+    save_topic_config(name, TopicConfiguration{});
     return get_topic(name, nullptr);
 }
 
-Topic KafkaHandleBase::get_topic(const string& name, TopicConfiguration topicConfig) {
-    return get_topic(name, topicConfig.get_handle());
+Topic KafkaHandleBase::get_topic(const string& name, TopicConfiguration config) {
+    auto handle = config.get_handle();
+    save_topic_config(name, move(config));
+    return get_topic(name, rd_kafka_topic_conf_dup(handle));
 }
 
 Metadata KafkaHandleBase::get_metadata() {
@@ -87,6 +91,12 @@ Metadata KafkaHandleBase::get_metadata(rd_kafka_topic_t* topic_ptr) {
                                                   topic_ptr, &metadata, timeout_ms_.count());
     check_error(error);
     return Metadata(metadata);
+}
+
+void KafkaHandleBase::save_topic_config(const string& topic_name, TopicConfiguration config) {
+    lock_guard<mutex> _(topic_configurations_mutex_);
+    auto iter = topic_configurations_.emplace(topic_name, move(config)).first;
+    iter->second.set_as_opaque();
 }
 
 void KafkaHandleBase::check_error(rd_kafka_resp_err_t error) {

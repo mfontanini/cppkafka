@@ -197,15 +197,27 @@ TEST_F(ProducerTest, Callbacks) {
 
     // Now create a producer and produce a message
     string payload = "Hello world!";
+    string key = "hehe";
     bool deliver_report_called = false;
     Configuration config = make_producer_config();
     config.set_delivery_report_callback([&](Producer&, const Message& msg) {
         EXPECT_EQ(payload, msg.get_payload().as_string());
         deliver_report_called = true;
     });
+
+    TopicConfiguration topic_config;
+    topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
+                                              int32_t partition_count) {
+        EXPECT_EQ(key, msg_key.as_string());
+        EXPECT_EQ(3, partition_count);
+        EXPECT_EQ(KAFKA_TOPIC, topic.get_name());
+        return 0;
+    });
+
     Producer producer(move(config));
-    Topic topic = producer.get_topic(KAFKA_TOPIC);
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    Topic topic = producer.get_topic(KAFKA_TOPIC, topic_config);
+    producer.produce(topic, {}, Buffer(payload.data(), payload.size()),
+                     Buffer(key.data(), key.size()));
     producer.poll();
     runner.try_join();
 
@@ -213,7 +225,7 @@ TEST_F(ProducerTest, Callbacks) {
     ASSERT_EQ(1, messages.size());
     const auto& message = messages[0];
     EXPECT_EQ(payload, message.get_payload().as_string());
-    EXPECT_EQ("", message.get_key().as_string());
+    EXPECT_EQ(key, message.get_key().as_string());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());
