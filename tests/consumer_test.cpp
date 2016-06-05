@@ -93,7 +93,7 @@ public:
     Configuration make_consumer_config(const string& group_id = "consumer_test") {
         Configuration config;
         config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
-        config.set("enable.auto.commit", "false");
+        config.set("enable.auto.commit", false);
         config.set("group.id", group_id);
         return config;
     }

@@ -5,16 +5,19 @@
 #include <functional>
 #include <librdkafka/rdkafka.h>
 #include "clonable_ptr.h"
+#include "configuration_base.h"
 
 namespace cppkafka {
 
 class Topic;
 class Buffer;
 
-class TopicConfiguration {
+class TopicConfiguration : public ConfigurationBase<TopicConfiguration> {
 public:
     using PartitionerCallback = std::function<int32_t(const Topic&, const Buffer& key,
                                                       int32_t partition_count)>;
+
+    using ConfigurationBase<TopicConfiguration>::set;
 
     TopicConfiguration();
 
@@ -26,6 +29,7 @@ public:
 
     const PartitionerCallback& get_partitioner_callback() const;
     rd_kafka_topic_conf_t* get_handle() const;
+    std::string get(const std::string& name) const;
 private:
     using HandlePtr = ClonablePtr<rd_kafka_topic_conf_t,
                                   decltype(&rd_kafka_topic_conf_destroy),

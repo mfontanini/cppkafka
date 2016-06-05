@@ -1,4 +1,5 @@
 #include "configuration.h"
+#include <vector>
 #include <librdkafka/rdkafka.h>
 #include "exceptions.h"
 #include "message.h"
@@ -7,6 +8,7 @@
 
 using std::string;
 using std::move;
+using std::vector;
 
 using boost::optional;
 
@@ -144,6 +146,17 @@ void Configuration::set_default_topic_configuration(optional<TopicConfiguration>
 
 rd_kafka_conf_t* Configuration::get_handle() const {
     return handle_.get();
+}
+
+string Configuration::get(const string& name) const {
+    size_t size = 0;
+    auto result = rd_kafka_conf_get(handle_.get(), name.data(), nullptr, &size);
+    if (result != RD_KAFKA_CONF_OK) {
+        throw ConfigOptionNotFound(name);
+    }
+    vector<char> buffer(size);
+    rd_kafka_conf_get(handle_.get(), name.data(), buffer.data(), &size);
+    return string(buffer.data());
 }
 
 const Configuration::DeliveryReportCallback& Configuration::get_delivery_report_callback() const {

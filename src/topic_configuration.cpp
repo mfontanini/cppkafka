@@ -1,10 +1,12 @@
 #include "topic_configuration.h"
+#include <vector>
 #include <librdkafka/rdkafka.h>
 #include "exceptions.h"
 #include "topic.h"
 #include "buffer.h"
 
 using std::string;
+using std::vector;
 
 namespace cppkafka {
 
@@ -61,6 +63,17 @@ TopicConfiguration::get_partitioner_callback() const {
 
 rd_kafka_topic_conf_t* TopicConfiguration::get_handle() const {
     return handle_.get();
+}
+
+string TopicConfiguration::get(const string& name) const {
+    size_t size = 0;
+    auto result = rd_kafka_topic_conf_get(handle_.get(), name.data(), nullptr, &size);
+    if (result != RD_KAFKA_CONF_OK) {
+        throw ConfigOptionNotFound(name);
+    }
+    vector<char> buffer(size);
+    rd_kafka_topic_conf_get(handle_.get(), name.data(), buffer.data(), &size);
+    return string(buffer.data());
 }
 
 TopicConfiguration::HandlePtr TopicConfiguration::make_handle(rd_kafka_topic_conf_t* ptr) {

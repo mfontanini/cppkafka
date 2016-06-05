@@ -22,6 +22,13 @@ ConfigException::ConfigException(const string& config_name, const string& error)
 
 }
 
+// ConfigOptionNotFound
+
+ConfigOptionNotFound::ConfigOptionNotFound(const string& config_name) 
+: Exception(config_name + " not found") {
+
+}
+
 // HandleException
 
 HandleException::HandleException(rd_kafka_resp_err_t error_code) 

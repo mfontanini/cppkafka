@@ -93,7 +93,7 @@ public:
     Configuration make_consumer_config() {
         Configuration config;
         config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
-        config.set("enable.auto.commit", "false");
+        config.set("enable.auto.commit", false);
         config.set("group.id", "producer_test");
         return config;
     }
@@ -268,5 +268,5 @@ TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
     ASSERT_EQ(1, messages.size());
     const auto& message = messages[0];
     EXPECT_EQ(partition, message.get_partition());
-    EXPECT_TRUE(callback_called);
+    EXPECT_TRUE(callback_called);   
 }

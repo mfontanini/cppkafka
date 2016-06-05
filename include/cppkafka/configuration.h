@@ -10,6 +10,7 @@
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
 #include "clonable_ptr.h"
+#include "configuration_base.h"
 
 namespace cppkafka {
 
@@ -18,7 +19,7 @@ class Producer;
 class Consumer;
 class KafkaHandleBase;
 
-class Configuration {
+class Configuration : public ConfigurationBase<Configuration> {
 public:
     using DeliveryReportCallback = std::function<void(Producer& producer, const Message&)>;
     using OffsetCommitCallback = std::function<void(Consumer& consumer, rd_kafka_resp_err_t,
@@ -35,6 +36,8 @@ public:
     using StatsCallback = std::function<void(KafkaHandleBase& handle, const std::string& json)>;
     using SocketCallback = std::function<int(int domain, int type, int protoco)>;
 
+    using ConfigurationBase<Configuration>::set;
+
     Configuration();
 
     void set(const std::string& name, const std::string& value);
@@ -48,6 +51,7 @@ public:
     void set_default_topic_configuration(boost::optional<TopicConfiguration> config);
 
     rd_kafka_conf_t* get_handle() const;
+    std::string get(const std::string& name) const;
     const DeliveryReportCallback& get_delivery_report_callback() const;
     const OffsetCommitCallback& get_offset_commit_callback() const;
     const ErrorCallback& get_error_callback() const;

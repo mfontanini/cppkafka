@@ -21,6 +21,11 @@ public:
     ConfigException(const std::string& config_name, const std::string& error);
 };
 
+class ConfigOptionNotFound : public Exception {
+public:
+    ConfigOptionNotFound(const std::string& config_name);
+};
+
 class HandleException : public Exception {
 public:
     HandleException(rd_kafka_resp_err_t error_code);
