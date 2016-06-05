@@ -20,6 +20,7 @@ public:
 
     ClonablePtr& operator=(const ClonablePtr& rhs) {
         handle_.reset(cloner_(rhs.handle_.get()));
+        return *this;
     }
 
     ClonablePtr(ClonablePtr&&) = default;

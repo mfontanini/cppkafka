@@ -6,6 +6,9 @@
 #include "consumer.h"
 
 using std::string;
+using std::move;
+
+using boost::optional;
 
 using std::chrono::milliseconds;
 
@@ -135,6 +138,10 @@ void Configuration::set_socket_callback(SocketCallback callback) {
     rd_kafka_conf_set_socket_cb(handle_.get(), &socket_callback_proxy);
 }
 
+void Configuration::set_default_topic_configuration(optional<TopicConfiguration> config) {
+    default_topic_config_ = move(config);
+}
+
 rd_kafka_conf_t* Configuration::get_handle() const {
     return handle_.get();
 }
@@ -165,6 +172,14 @@ const Configuration::StatsCallback& Configuration::get_stats_callback() const {
 
 const Configuration::SocketCallback& Configuration::get_socket_callback() const {
     return socket_callback_;
+}
+
+const optional<TopicConfiguration>& Configuration::get_default_topic_configuration() const {
+    return default_topic_config_;
+}
+
+optional<TopicConfiguration>& Configuration::get_default_topic_configuration() {
+    return default_topic_config_;
 }
 
 Configuration::HandlePtr Configuration::make_handle(rd_kafka_conf_t* ptr) {

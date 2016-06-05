@@ -5,8 +5,10 @@
 #include <string>
 #include <functional>
 #include <chrono>
+#include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
 #include "topic_partition_list.h"
+#include "topic_configuration.h"
 #include "clonable_ptr.h"
 
 namespace cppkafka {
@@ -43,6 +45,7 @@ public:
     void set_log_callback(LogCallback callback);
     void set_stats_callback(StatsCallback callback);
     void set_socket_callback(SocketCallback callback);
+    void set_default_topic_configuration(boost::optional<TopicConfiguration> config);
 
     rd_kafka_conf_t* get_handle() const;
     const DeliveryReportCallback& get_delivery_report_callback() const;
@@ -52,6 +55,8 @@ public:
     const LogCallback& get_log_callback() const;
     const StatsCallback& get_stats_callback() const;
     const SocketCallback& get_socket_callback() const;
+    const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
+    boost::optional<TopicConfiguration>& get_default_topic_configuration();
 private:
     using HandlePtr = ClonablePtr<rd_kafka_conf_t, decltype(&rd_kafka_conf_destroy),
                                   decltype(&rd_kafka_conf_dup)>;
@@ -60,6 +65,7 @@ private:
     static HandlePtr make_handle(rd_kafka_conf_t* ptr);
 
     HandlePtr handle_;
+    boost::optional<TopicConfiguration> default_topic_config_;
     DeliveryReportCallback delivery_report_callback_;
     OffsetCommitCallback offset_commit_callback_;
     ErrorCallback error_callback_;

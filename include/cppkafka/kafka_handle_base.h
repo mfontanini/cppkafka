@@ -39,7 +39,6 @@ public:
     const Configuration& get_configuration() const;
 protected:
     KafkaHandleBase(Configuration config);
-    KafkaHandleBase(rd_kafka_t* handle);
 
     void set_handle(rd_kafka_t* handle);
     void check_error(rd_kafka_resp_err_t error);

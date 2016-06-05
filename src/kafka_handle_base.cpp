@@ -16,12 +16,12 @@ const milliseconds KafkaHandleBase::DEFAULT_TIMEOUT{1000};
 
 KafkaHandleBase::KafkaHandleBase(Configuration config) 
 : handle_(nullptr, nullptr), timeout_ms_(DEFAULT_TIMEOUT), config_(move(config)) {
-
-}
-
-KafkaHandleBase::KafkaHandleBase(rd_kafka_t* handle) 
-: handle_(handle, &rd_kafka_destroy), timeout_ms_(DEFAULT_TIMEOUT) {
-
+    auto& maybe_config = config_.get_default_topic_configuration();
+    if (maybe_config) {
+        maybe_config->set_as_opaque();
+        auto conf_handle = rd_kafka_topic_conf_dup(maybe_config->get_handle());
+        rd_kafka_conf_set_default_topic_conf(config_.get_handle(), conf_handle);
+    }
 }
 
 void KafkaHandleBase::pause_partitions(const TopicPartitionList& topic_partitions) {
