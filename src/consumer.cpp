@@ -18,13 +18,14 @@ void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
 }
 
 Consumer::Consumer(Configuration config) 
-: config_(move(config)) {
+: KafkaHandleBase(move(config)) {
     char error_buffer[512];
+    rd_kafka_conf_t* config_handle = get_configuration_handle();
     // Set ourselves as the opaque pointer
-    rd_kafka_conf_set_opaque(config_.get_handle(), this);
-    rd_kafka_conf_set_rebalance_cb(config_.get_handle(), &Consumer::rebalance_proxy);
+    rd_kafka_conf_set_opaque(config_handle, this);
+    rd_kafka_conf_set_rebalance_cb(config_handle, &Consumer::rebalance_proxy);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, 
-                                   rd_kafka_conf_dup(config_.get_handle()),
+                                   rd_kafka_conf_dup(config_handle),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
         throw Exception("Failed to create consumer handle: " + string(error_buffer));
@@ -124,10 +125,6 @@ TopicPartitionList Consumer::get_assignment() {
     error = rd_kafka_assignment(get_handle(), &list);
     check_error(error);
     return convert(make_handle(list));
-}
-
-const Configuration& Consumer::get_configuration() const {
-    return config_;
 }
 
 Message Consumer::poll() {

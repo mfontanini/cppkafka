@@ -27,8 +27,6 @@ public:
     void set_payload_policy(PayloadPolicy policy);
     PayloadPolicy get_payload_policy() const;
 
-    const Configuration& get_configuration() const;
-
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload);
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload,
                  const Buffer& key);
@@ -37,7 +35,6 @@ public:
 
     int poll();
 private:
-    Configuration config_;
     PayloadPolicy message_payload_policy_;
 };
 

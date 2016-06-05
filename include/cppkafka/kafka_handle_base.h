@@ -8,6 +8,7 @@
 #include "metadata.h"
 #include "topic_partition.h"
 #include "topic_partition_list.h"
+#include "configuration.h"
 
 namespace cppkafka {
 
@@ -33,12 +34,14 @@ public:
     Metadata get_metadata();
     Metadata get_metadata(const Topic& topic);
     std::chrono::milliseconds get_timeout() const;
+    const Configuration& get_configuration() const;
 protected:
-    KafkaHandleBase();
+    KafkaHandleBase(Configuration config);
     KafkaHandleBase(rd_kafka_t* handle);
 
     void set_handle(rd_kafka_t* handle);
     void check_error(rd_kafka_resp_err_t error);
+    rd_kafka_conf_t* get_configuration_handle();
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
@@ -49,6 +52,7 @@ private:
 
     HandlePtr handle_;
     std::chrono::milliseconds timeout_ms_;
+    Configuration config_;
 };
 
 } // cppkafka

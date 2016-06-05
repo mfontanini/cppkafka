@@ -6,14 +6,15 @@
 
 using std::string;
 using std::vector;
+using std::move;
 using std::chrono::milliseconds;
 
 namespace cppkafka {
 
 const milliseconds KafkaHandleBase::DEFAULT_TIMEOUT{1000};
 
-KafkaHandleBase::KafkaHandleBase() 
-: handle_(nullptr, nullptr), timeout_ms_(DEFAULT_TIMEOUT) {
+KafkaHandleBase::KafkaHandleBase(Configuration config) 
+: handle_(nullptr, nullptr), timeout_ms_(DEFAULT_TIMEOUT), config_(move(config)) {
 
 }
 
@@ -64,6 +65,10 @@ milliseconds KafkaHandleBase::get_timeout() const {
     return timeout_ms_;
 }
 
+const Configuration& KafkaHandleBase::get_configuration() const {
+    return config_;
+}
+
 void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
     handle_ = HandlePtr(handle, &rd_kafka_destroy);
 }
@@ -88,6 +93,10 @@ void KafkaHandleBase::check_error(rd_kafka_resp_err_t error) {
     if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
         throw HandleException(error);
     }
+}
+
+rd_kafka_conf_t* KafkaHandleBase::get_configuration_handle() {
+    return config_.get_handle();
 }
 
 } // cppkafka

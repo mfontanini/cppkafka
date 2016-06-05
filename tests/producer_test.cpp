@@ -199,7 +199,7 @@ TEST_F(ProducerTest, Callbacks) {
     string payload = "Hello world!";
     bool deliver_report_called = false;
     Configuration config = make_producer_config();
-    config.set_delivery_report_callback([&](const Message& msg) {
+    config.set_delivery_report_callback([&](Producer&, const Message& msg) {
         EXPECT_EQ(payload, msg.get_payload().as_string());
         deliver_report_called = true;
     });

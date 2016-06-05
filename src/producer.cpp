@@ -8,11 +8,12 @@ using std::string;
 namespace cppkafka {
 
 Producer::Producer(Configuration config)
-: config_(move(config)) {
+: KafkaHandleBase(move(config)) {
     char error_buffer[512];
-    rd_kafka_conf_set_opaque(config_.get_handle(), this);
+    auto config_handle = get_configuration().get_handle();
+    rd_kafka_conf_set_opaque(config_handle, this);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_PRODUCER,
-                                   rd_kafka_conf_dup(config_.get_handle()),
+                                   rd_kafka_conf_dup(config_handle),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
         throw Exception("Failed to create producer handle: " + string(error_buffer));
@@ -28,10 +29,6 @@ void Producer::set_payload_policy(PayloadPolicy policy) {
 
 Producer::PayloadPolicy Producer::get_payload_policy() const {
     return message_payload_policy_;
-}
-
-const Configuration& Producer::get_configuration() const {
-  return config_;
 }
 
 void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& payload) {

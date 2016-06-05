@@ -189,7 +189,7 @@ TEST_F(ConsumerTest, OffsetCommit) {
 
     // Create a consumer and subscribe to the topic
     Configuration config = make_consumer_config("offset_commit");
-    config.set_offset_commit_callback([&](rd_kafka_resp_err_t error,
+    config.set_offset_commit_callback([&](Consumer&, rd_kafka_resp_err_t error,
                                           const TopicPartitionList& topic_partitions) {
         offset_commit_called = true;
         EXPECT_EQ(0, error);

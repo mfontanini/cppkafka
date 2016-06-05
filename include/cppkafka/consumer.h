@@ -7,7 +7,6 @@
 #include <functional>
 #include "kafka_handle_base.h"
 #include "message.h"
-#include "configuration.h"
 
 namespace cppkafka {
 
@@ -46,7 +45,6 @@ public:
     TopicPartitionList get_offsets_position(const TopicPartitionList& topic_partitions);
     TopicPartitionList get_subscription();
     TopicPartitionList get_assignment();
-    const Configuration& get_configuration() const;
 
     Message poll();
 private:
@@ -60,7 +58,6 @@ private:
     AssignmentCallback assignment_callback_;
     RevocationCallback revocation_callback_;
     RebalanceErrorCallback rebalance_error_callback_;
-    Configuration config_;
 };
 
 } // cppkafka
