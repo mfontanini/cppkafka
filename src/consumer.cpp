@@ -6,6 +6,7 @@
 using std::vector;
 using std::string;
 using std::move;
+using std::make_tuple;
 
 using std::chrono::milliseconds;
 
@@ -96,7 +97,17 @@ void Consumer::async_commit(const TopicPartitionList& topic_partitions) {
     commit(topic_partitions, true);
 }
 
-TopicPartitionList Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) {
+KafkaHandleBase::OffsetTuple Consumer::get_offsets(const string& topic, int partition) const {
+    int64_t low;
+    int64_t high;
+    rd_kafka_resp_err_t result = rd_kafka_get_watermark_offsets(get_handle(), topic.data(),
+                                                                partition, &low, &high);
+    check_error(result);
+    return make_tuple(low, high);
+}
+
+TopicPartitionList
+Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), topic_list_handle.get(),
                                                    get_timeout().count());
@@ -104,14 +115,15 @@ TopicPartitionList Consumer::get_offsets_committed(const TopicPartitionList& top
     return convert(topic_list_handle);
 }
 
-TopicPartitionList Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) {
+TopicPartitionList
+Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_position(get_handle(), topic_list_handle.get());
     check_error(error);
     return convert(topic_list_handle);
 }
 
-TopicPartitionList Consumer::get_subscription() {
+TopicPartitionList Consumer::get_subscription() const {
     rd_kafka_resp_err_t error;
     rd_kafka_topic_partition_list_t* list = nullptr;
     error = rd_kafka_subscription(get_handle(), &list);
@@ -119,12 +131,16 @@ TopicPartitionList Consumer::get_subscription() {
     return convert(make_handle(list));
 }
 
-TopicPartitionList Consumer::get_assignment() {
+TopicPartitionList Consumer::get_assignment() const {
     rd_kafka_resp_err_t error;
     rd_kafka_topic_partition_list_t* list = nullptr;
     error = rd_kafka_assignment(get_handle(), &list);
     check_error(error);
     return convert(make_handle(list));
+}
+
+string Consumer::get_member_id() const {
+    return rd_kafka_memberid(get_handle());
 }
 
 Message Consumer::poll() {

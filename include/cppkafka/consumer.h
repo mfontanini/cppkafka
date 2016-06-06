@@ -41,10 +41,13 @@ public:
     void commit(const TopicPartitionList& topic_partitions);
     void async_commit(const TopicPartitionList& topic_partitions);
 
-    TopicPartitionList get_offsets_committed(const TopicPartitionList& topic_partitions);
-    TopicPartitionList get_offsets_position(const TopicPartitionList& topic_partitions);
-    TopicPartitionList get_subscription();
-    TopicPartitionList get_assignment();
+    OffsetTuple get_offsets(const std::string& topic, int partition) const;
+
+    TopicPartitionList get_offsets_committed(const TopicPartitionList& topic_partitions) const;
+    TopicPartitionList get_offsets_position(const TopicPartitionList& topic_partitions) const;
+    TopicPartitionList get_subscription() const;
+    TopicPartitionList get_assignment() const;
+    std::string get_member_id() const;
 
     Message poll();
 private:

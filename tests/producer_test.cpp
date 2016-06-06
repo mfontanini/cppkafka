@@ -10,6 +10,7 @@
 using std::string;
 using std::to_string;
 using std::set;
+using std::tie;
 using std::move;
 using std::thread;
 using std::mutex;
@@ -124,6 +125,11 @@ TEST_F(ProducerTest, OneMessageOnFixedPartition) {
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());
+
+    int64_t low;
+    int64_t high;
+    tie(low, high) = producer.query_offsets(KAFKA_TOPIC, partition);
+    EXPECT_GT(high, low);
 }
 
 TEST_F(ProducerTest, OneMessageUsingKey) {

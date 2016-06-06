@@ -6,6 +6,7 @@
 using std::string;
 using std::vector;
 using std::move;
+using std::make_tuple;
 using std::lock_guard;
 using std::mutex;
 using std::chrono::milliseconds;
@@ -42,7 +43,7 @@ void KafkaHandleBase::set_timeout(const milliseconds& timeout) {
     timeout_ms_ = timeout;
 }
 
-rd_kafka_t* KafkaHandleBase::get_handle() {
+rd_kafka_t* KafkaHandleBase::get_handle() const {
     return handle_.get();
 }
 
@@ -57,12 +58,27 @@ Topic KafkaHandleBase::get_topic(const string& name, TopicConfiguration config) 
     return get_topic(name, rd_kafka_topic_conf_dup(handle));
 }
 
-Metadata KafkaHandleBase::get_metadata() {
+KafkaHandleBase::OffsetTuple KafkaHandleBase::query_offsets(const string& topic,
+                                                            int partition) const {
+    int64_t low;
+    int64_t high;
+    rd_kafka_resp_err_t result = rd_kafka_query_watermark_offsets(handle_.get(), topic.data(),
+                                                                  partition, &low, &high,
+                                                                  timeout_ms_.count());
+    check_error(result);
+    return make_tuple(low, high);
+}
+
+Metadata KafkaHandleBase::get_metadata() const {
     return get_metadata(nullptr);
 }
 
-Metadata KafkaHandleBase::get_metadata(const Topic& topic) {
+Metadata KafkaHandleBase::get_metadata(const Topic& topic) const {
     return get_metadata(topic.get_handle());
+}
+
+string KafkaHandleBase::get_name() const {
+    return rd_kafka_name(handle_.get());
 }
 
 milliseconds KafkaHandleBase::get_timeout() const {
@@ -85,7 +101,7 @@ Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf
     return Topic(topic);
 }
 
-Metadata KafkaHandleBase::get_metadata(rd_kafka_topic_t* topic_ptr) {
+Metadata KafkaHandleBase::get_metadata(rd_kafka_topic_t* topic_ptr) const {
     const rd_kafka_metadata_t* metadata;
     rd_kafka_resp_err_t error = rd_kafka_metadata(get_handle(), topic_ptr != nullptr, 
                                                   topic_ptr, &metadata, timeout_ms_.count());
@@ -99,7 +115,7 @@ void KafkaHandleBase::save_topic_config(const string& topic_name, TopicConfigura
     iter->second.set_as_opaque();
 }
 
-void KafkaHandleBase::check_error(rd_kafka_resp_err_t error) {
+void KafkaHandleBase::check_error(rd_kafka_resp_err_t error) const {
     if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
         throw HandleException(error);
     }

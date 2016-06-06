@@ -14,6 +14,7 @@ using std::string;
 using std::thread;
 using std::set;
 using std::mutex;
+using std::tie;
 using std::condition_variable;
 using std::lock_guard;
 using std::unique_lock;
@@ -131,6 +132,12 @@ TEST_F(ConsumerTest, AssignmentCallback) {
 
     assignment = consumer.get_assignment();
     EXPECT_EQ(3, assignment.size());
+
+    int64_t low;
+    int64_t high;
+    tie(low, high) = consumer.get_offsets(KAFKA_TOPIC, partition);
+    EXPECT_GT(high, low);
+    EXPECT_EQ(high, runner.get_messages().back().get_offset() + 1);
 }
 
 TEST_F(ConsumerTest, Rebalance) {
