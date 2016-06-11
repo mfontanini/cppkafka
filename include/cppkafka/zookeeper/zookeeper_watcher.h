@@ -27,48 +27,37 @@
  *
  */
 
-#ifndef CPPKAFKA_EXCEPTIONS_H
-#define CPPKAFKA_EXCEPTIONS_H
+#ifndef CPPKAFKA_ZOOKEEPER_WATCHER_H
+#define CPPKAFKA_ZOOKEEPER_WATCHER_H
 
-#include <stdexcept>
+#include <memory>
 #include <string>
-#include <librdkafka/rdkafka.h>
+#include <chrono>
+#include <zookeeper/zookeeper.h>
 
 namespace cppkafka {
 
-class Exception : public std::exception {
+class ZookeeperWatcher {
 public:
-    Exception(std::string message);
+    static const std::chrono::milliseconds DEFAULT_RECEIVE_TIMEOUT;
 
-    const char* what() const noexcept;
+    ZookeeperWatcher(const std::string& endpoint);
+    ZookeeperWatcher(const std::string& endpoint, std::chrono::milliseconds receive_timeout);
+
+
+    std::string get_brokers();
 private:
-    std::string message_;
-};
+    using HandlePtr = std::unique_ptr<zhandle_t, decltype(&zookeeper_close)>;
 
-class ConfigException : public Exception {
-public:
-    ConfigException(const std::string& config_name, const std::string& error);
-};
+    static const std::string BROKERS_PATH;
 
-class ConfigOptionNotFound : public Exception {
-public:
-    ConfigOptionNotFound(const std::string& config_name);
-};
+    static void handle_event_proxy(zhandle_t* zh, int type, int state, const char* path,
+                                   void* ctx);
+    void handle_event(int type, int state, const char* path);
 
-class HandleException : public Exception {
-public:
-    HandleException(rd_kafka_resp_err_t error_code);
-
-    rd_kafka_resp_err_t get_error_code() const;
-private:
-    rd_kafka_resp_err_t error_code_;
-};
-
-class ZookeeperException : public Exception {
-public:
-    using Exception::Exception;
+    HandlePtr handle_;
 };
 
 } // cppkafka
 
-#endif // CPPKAFKA_EXCEPTIONS_H
+#endif // CPPKAFKA_ZOOKEEPER_WATCHER_H

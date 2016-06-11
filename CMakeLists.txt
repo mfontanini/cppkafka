@@ -25,5 +25,7 @@ ExternalProject_Add(
 # Make sure we build googletest before anything else
 add_dependencies(cppkafka googletest)
 
+option(ENABLE_ZOOKEEPER "Whether to enable zookeeper support" ON)
+
 enable_testing()
 add_subdirectory(tests)

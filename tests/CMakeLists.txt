@@ -4,8 +4,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
 link_directories(${GOOGLETEST_LIBRARY})
 link_libraries(cppkafka rdkafka gtest gtest_main pthread)
 
-set(KAFKA_TEST_INSTANCE "127.0.0.1:9092" 
-    CACHE STRING "The kafka instance to which connect to run tests")
+set(KAFKA_TEST_INSTANCE "kafka-vm:9092" 
+    CACHE STRING "The kafka instance to which to connect to run tests")
+
+set(ZOOKEEPER_TEST_INSTANCE "kafka-vm:2181" 
+    CACHE STRING "The zookeeper instance to which to connect to run tests")
 
 macro(create_test test_name)
     add_executable(${test_name}_test "${test_name}_test.cpp")
@@ -13,9 +16,14 @@ macro(create_test test_name)
 endmacro()
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
+add_definitions("-DZOOKEEPER_TEST_INSTANCE=\"${ZOOKEEPER_TEST_INSTANCE}\"")
 
 create_test(consumer)
 create_test(producer)
 create_test(kafka_handle_base)
 create_test(topic_partition_list)
 create_test(configuration)
+if (ENABLE_ZOOKEEPER)
+    create_test(zookeeper_watcher)
+    target_link_libraries(zookeeper_watcher_test zookeeper_mt)
+endif()
