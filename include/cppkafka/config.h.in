@@ -1,0 +1,7 @@
+#ifndef CPPKAFKA_CONFIG_H
+#define CPPKAFKA_CONFIG_H
+
+/* Define if the zookeeper extensions are enabled */
+#cmakedefine CPPKAFKA_HAVE_ZOOKEEPER
+
+#endif // CPPKAFKA_CONFIG_H

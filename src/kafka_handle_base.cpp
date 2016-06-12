@@ -31,6 +31,9 @@
 #include "exceptions.h"
 #include "topic.h"
 #include "topic_partition_list.h"
+#ifdef CPPKAFKA_HAVE_ZOOKEEPER
+    #include "zookeeper/zookeeper_pool.h"
+#endif // CPPKAFKA_HAVE_ZOOKEEPER
 
 using std::string;
 using std::vector;
@@ -38,6 +41,7 @@ using std::move;
 using std::make_tuple;
 using std::lock_guard;
 using std::mutex;
+using std::exception;
 using std::chrono::milliseconds;
 
 namespace cppkafka {
@@ -120,6 +124,32 @@ const Configuration& KafkaHandleBase::get_configuration() const {
 
 void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
     handle_ = HandlePtr(handle, &rd_kafka_destroy);
+
+    #ifdef CPPKAFKA_HAVE_ZOOKEEPER
+    
+    if (config_.has_property("zookeeper")) {
+        string endpoint = config_.get("zookeeper");
+        milliseconds timeout = ZookeeperWatcher::DEFAULT_RECEIVE_TIMEOUT;
+        if (config_.has_property("zookeeper.receive.timeout.ms")) {
+            try {
+                timeout = milliseconds(stoi(config_.get("zookeeper.receive.timeout.ms")));
+            }
+            catch (exception&) {
+                throw ZookeeperException("Invalid zookeeper receive timeout");
+            }
+        }
+        auto& pool = ZookeeperPool::instance();
+        auto callback = [&](const string& brokers) {
+            // Add the brokers and poll
+            rd_kafka_brokers_add(handle_.get(), brokers.data());
+            rd_kafka_poll(handle_.get(), 10);
+        };
+        ZookeeperSubscriber subscriber = pool.subscribe(endpoint, timeout, callback);
+        zookeeper_subscriber_.reset(new ZookeeperSubscriber(move(subscriber)));
+        callback(pool.get_brokers(endpoint));
+    }
+    
+    #endif // CPPKAFKA_HAVE_ZOOKEEPER
 }
 
 Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf) {

@@ -42,6 +42,10 @@
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
 #include "configuration.h"
+#include "config.h"
+#ifdef CPPKAFKA_HAVE_ZOOKEEPER
+    #include "zookeeper/zookeeper_subscriber.h"
+#endif // CPPKAFKA_HAVE_ZOOKEEPER
 
 namespace cppkafka {
 
@@ -93,6 +97,10 @@ private:
     Configuration config_;
     TopicConfigurationMap topic_configurations_;
     std::mutex topic_configurations_mutex_;
+    #ifdef CPPKAFKA_HAVE_ZOOKEEPER
+        // This could be an optional but apparently move construction is only supported as of 1.56
+        std::unique_ptr<ZookeeperSubscriber> zookeeper_subscriber_;
+    #endif // CPPKAFKA_HAVE_ZOOKEEPER
 };
 
 } // cppkafka

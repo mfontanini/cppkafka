@@ -29,15 +29,20 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <chrono>
 #include <picojson.h>
 #include "zookeeper/zookeeper_watcher.h"
 #include "exceptions.h"
 
 using std::string;
+using std::lock_guard;
+using std::mutex;
 using std::unique_ptr;
 using std::ostringstream;
 using std::runtime_error;
+using std::make_shared;
 using std::chrono::milliseconds;
+using std::chrono::system_clock;
 
 using picojson::value;
 using picojson::object;
@@ -52,7 +57,7 @@ ZookeeperWatcher::ZookeeperWatcher(const string& endpoint)
 
 }
 
-ZookeeperWatcher::ZookeeperWatcher(const string& endpoint, milliseconds receive_timeout)
+ZookeeperWatcher::ZookeeperWatcher(const string& endpoint, milliseconds receive_timeout) 
 : handle_(nullptr, nullptr) {
     auto raw_handle = zookeeper_init(endpoint.data(), &ZookeeperWatcher::handle_event_proxy,
                                      receive_timeout.count(), nullptr, this, 0);
@@ -63,10 +68,23 @@ ZookeeperWatcher::ZookeeperWatcher(const string& endpoint, milliseconds receive_
     handle_ = HandlePtr(raw_handle, &zookeeper_close);
 }
 
+string ZookeeperWatcher::subscribe(WatcherCallback callback) {
+    lock_guard<mutex> _(callbacks_mutex_);
+    string id = generate_id();
+    callbacks_.emplace(id, move(callback));
+    return id;
+}
+
+void ZookeeperWatcher::unsubscribe(const string& id) {
+    lock_guard<mutex> _(callbacks_mutex_);
+    callbacks_.erase(id);
+}
+
 string ZookeeperWatcher::get_brokers() {
+    auto handle = handle_.get();
     using VectorPtr = unique_ptr<String_vector, decltype(&deallocate_String_vector)>;
     String_vector brokers;
-    if (zoo_get_children(handle_.get(), BROKERS_PATH.data(), 1, &brokers) != ZOK) {
+    if (zoo_get_children(handle, BROKERS_PATH.data(), 1, &brokers) != ZOK) {
         throw ZookeeperException("Failed to get broker list from zookeeper");
     }
     // RAII up this pointer
@@ -76,7 +94,7 @@ string ZookeeperWatcher::get_brokers() {
         char config_line[1024];
         string path = "/brokers/ids/" + string(brokers.data[i]);
         int config_len = sizeof(config_line);
-        zoo_get(handle_.get(), path.data(), 0, config_line, &config_len, NULL);
+        zoo_get(handle, path.data(), 0, config_line, &config_len, NULL);
         if (config_len > 0) {
             config_line[config_len] = 0;
 
@@ -102,6 +120,11 @@ string ZookeeperWatcher::get_brokers() {
     return oss.str();
 }
 
+size_t ZookeeperWatcher::get_subscriber_count() const {
+    lock_guard<mutex> _(callbacks_mutex_);
+    return callbacks_.size();
+}
+
 void ZookeeperWatcher::handle_event_proxy(zhandle_t*, int type, int state, const char* path,
                                           void* ctx) {
     auto self = static_cast<ZookeeperWatcher*>(ctx);
@@ -111,8 +134,17 @@ void ZookeeperWatcher::handle_event_proxy(zhandle_t*, int type, int state, const
 void ZookeeperWatcher::handle_event(int type, int state, const char* path) {
     if (type == ZOO_CHILD_EVENT && path == BROKERS_PATH) {
         string brokers = get_brokers();
-        // TODO: Callback!
+        lock_guard<mutex> _(callbacks_mutex_);
+        for (const auto& callbackPair : callbacks_) {
+            callbackPair.second(brokers);
+        }        
     }   
+}
+
+string ZookeeperWatcher::generate_id() {
+    ostringstream oss;
+    oss << id_counter_++ << "-" << system_clock::now().time_since_epoch().count();
+    return oss.str();
 }
 
 } // cppkafka

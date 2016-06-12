@@ -27,5 +27,15 @@ add_dependencies(cppkafka googletest)
 
 option(ENABLE_ZOOKEEPER "Whether to enable zookeeper support" ON)
 
+if (ENABLE_ZOOKEEPER)
+    set(CPPKAFKA_HAVE_ZOOKEEPER ON)
+endif()
+
+# Configuration file
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/cppkafka/config.h.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/cppkafka/config.h"
+)
+
 enable_testing()
 add_subdirectory(tests)

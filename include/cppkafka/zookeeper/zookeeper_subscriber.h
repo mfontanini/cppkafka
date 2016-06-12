@@ -27,52 +27,29 @@
  *
  */
 
-#ifndef CPPKAFKA_ZOOKEEPER_WATCHER_H
-#define CPPKAFKA_ZOOKEEPER_WATCHER_H
+#ifndef CPPKAFKA_ZOOKEEPER_SUBSCRIBER_H
+#define CPPKAFKA_ZOOKEEPER_SUBSCRIBER_H
 
-#include <memory>
 #include <string>
-#include <chrono>
-#include <map>
-#include <functional>
-#include <mutex>
-#include <zookeeper/zookeeper.h>
 
 namespace cppkafka {
 
-class ZookeeperWatcher {
+class ZookeeperSubscriber {
 public:
-    static const std::chrono::milliseconds DEFAULT_RECEIVE_TIMEOUT;
+    ZookeeperSubscriber(std::string endpoint, std::string subscription_id);
+    ZookeeperSubscriber(ZookeeperSubscriber&&) = default;
+    ZookeeperSubscriber(const ZookeeperSubscriber&) = delete;
+    ZookeeperSubscriber& operator=(ZookeeperSubscriber&&);
+    ZookeeperSubscriber& operator=(const ZookeeperSubscriber&) = delete;
+    ~ZookeeperSubscriber();
 
-    using WatcherCallback = std::function<void(const std::string& brokers)>;
-
-    ZookeeperWatcher(const std::string& endpoint);
-    ZookeeperWatcher(const std::string& endpoint, std::chrono::milliseconds receive_timeout);
-
-    void setup_watcher();
-
-    std::string subscribe(WatcherCallback callback); 
-    void unsubscribe(const std::string& id);
-
-    std::string get_brokers();
-    size_t get_subscriber_count() const;
+    const std::string& get_endpoint() const;
+    const std::string& get_subscription_id() const;
 private:
-    static const std::string BROKERS_PATH;
-
-    using HandlePtr = std::unique_ptr<zhandle_t, decltype(&zookeeper_close)>;
-    using CallbackMap = std::map<std::string, WatcherCallback>;
-
-    static void handle_event_proxy(zhandle_t* zh, int type, int state, const char* path,
-                                   void* ctx);
-    void handle_event(int type, int state, const char* path);
-    std::string generate_id();
-
-    HandlePtr handle_;
-    CallbackMap callbacks_;
-    mutable std::mutex callbacks_mutex_;
-    size_t id_counter_{0};
+    std::string endpoint_;
+    std::string subscription_id_;
 };
 
 } // cppkafka
 
-#endif // CPPKAFKA_ZOOKEEPER_WATCHER_H
+#endif // CPPKAFKA_ZOOKEEPER_SUBSCRIBER_H

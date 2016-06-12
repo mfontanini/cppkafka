@@ -34,16 +34,24 @@
 #include "message.h"
 #include "producer.h"
 #include "consumer.h"
+#include "config.h"
 
 using std::string;
 using std::move;
 using std::vector;
+using std::unordered_set;
 
 using boost::optional;
 
 using std::chrono::milliseconds;
 
 namespace cppkafka {
+
+const unordered_set<string> Configuration::VALID_EXTENSIONS = {
+    #ifdef CPPKAFKA_HAVE_ZOOKEEPER
+    "zookeeper", "zookeeper.receive.timeout.ms"
+    #endif // CPPKAFKA_HAVE_ZOOKEEPER
+};
 
 // Callback proxies
 
@@ -125,12 +133,18 @@ Configuration::Configuration(rd_kafka_conf_t* ptr)
 }
 
 void Configuration::set(const string& name, const string& value) {
-    char error_buffer[512];
-    rd_kafka_conf_res_t result;
-    result = rd_kafka_conf_set(handle_.get(), name.data(), value.data(), error_buffer,
-                               sizeof(error_buffer));
-    if (result != RD_KAFKA_CONF_OK) {
-        throw ConfigException(name, error_buffer);
+    if (VALID_EXTENSIONS.count(name)) {
+        // This is one of cppkafka's extensions
+        extension_properties_.emplace(name, value);
+    }
+    else {
+        char error_buffer[512];
+        rd_kafka_conf_res_t result;
+        result = rd_kafka_conf_set(handle_.get(), name.data(), value.data(), error_buffer,
+                                   sizeof(error_buffer));
+        if (result != RD_KAFKA_CONF_OK) {
+            throw ConfigException(name, error_buffer);
+        }
     }
 }
 
@@ -173,19 +187,38 @@ void Configuration::set_default_topic_configuration(optional<TopicConfiguration>
     default_topic_config_ = move(config);
 }
 
+bool Configuration::has_property(const string& name) const {
+    if (VALID_EXTENSIONS.count(name)) {
+        return extension_properties_.count(name) == 1;
+    }
+    else {
+        size_t size = 0;
+        return rd_kafka_conf_get(handle_.get(), name.data(), nullptr, &size) == RD_KAFKA_CONF_OK;
+    }
+}
+
 rd_kafka_conf_t* Configuration::get_handle() const {
     return handle_.get();
 }
 
 string Configuration::get(const string& name) const {
-    size_t size = 0;
-    auto result = rd_kafka_conf_get(handle_.get(), name.data(), nullptr, &size);
-    if (result != RD_KAFKA_CONF_OK) {
-        throw ConfigOptionNotFound(name);
+    if (VALID_EXTENSIONS.count(name)) {
+        auto iter = extension_properties_.find(name);
+        if (iter == extension_properties_.end()) {
+            throw ConfigOptionNotFound(name);
+        }
+        return iter->second;
     }
-    vector<char> buffer(size);
-    rd_kafka_conf_get(handle_.get(), name.data(), buffer.data(), &size);
-    return string(buffer.data());
+    else {
+        size_t size = 0;
+        auto result = rd_kafka_conf_get(handle_.get(), name.data(), nullptr, &size);
+        if (result != RD_KAFKA_CONF_OK) {
+            throw ConfigOptionNotFound(name);
+        }
+        vector<char> buffer(size);
+        rd_kafka_conf_get(handle_.get(), name.data(), buffer.data(), &size);
+        return string(buffer.data());
+    }
 }
 
 const Configuration::DeliveryReportCallback& Configuration::get_delivery_report_callback() const {

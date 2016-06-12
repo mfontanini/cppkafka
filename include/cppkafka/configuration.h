@@ -33,6 +33,8 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <unordered_map>
+#include <unordered_set>
 #include <chrono>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
@@ -79,6 +81,7 @@ public:
     void set_socket_callback(SocketCallback callback);
     void set_default_topic_configuration(boost::optional<TopicConfiguration> config);
 
+    bool has_property(const std::string& name) const;
     rd_kafka_conf_t* get_handle() const;
     std::string get(const std::string& name) const;
     const DeliveryReportCallback& get_delivery_report_callback() const;
@@ -91,8 +94,10 @@ public:
     const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
     boost::optional<TopicConfiguration>& get_default_topic_configuration();
 private:
+    static const std::unordered_set<std::string> VALID_EXTENSIONS;
     using HandlePtr = ClonablePtr<rd_kafka_conf_t, decltype(&rd_kafka_conf_destroy),
                                   decltype(&rd_kafka_conf_dup)>;
+    using PropertiesMap = std::unordered_map<std::string, std::string>;
 
     Configuration(rd_kafka_conf_t* ptr);
     static HandlePtr make_handle(rd_kafka_conf_t* ptr);
@@ -106,6 +111,7 @@ private:
     LogCallback log_callback_;
     StatsCallback stats_callback_;
     SocketCallback socket_callback_;
+    PropertiesMap extension_properties_;
 };
 
 } // cppkafka

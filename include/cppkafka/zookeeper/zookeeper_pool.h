@@ -27,52 +27,37 @@
  *
  */
 
-#ifndef CPPKAFKA_ZOOKEEPER_WATCHER_H
-#define CPPKAFKA_ZOOKEEPER_WATCHER_H
+#ifndef CPPKAFKA_ZOOKEEPER_POOL_H
+#define CPPKAFKA_ZOOKEEPER_POOL_H
 
-#include <memory>
+#include <map>
 #include <string>
 #include <chrono>
-#include <map>
-#include <functional>
 #include <mutex>
-#include <zookeeper/zookeeper.h>
+#include "zookeeper/zookeeper_watcher.h"
 
 namespace cppkafka {
 
-class ZookeeperWatcher {
+class ZookeeperSubscriber;
+
+class ZookeeperPool {
 public:
-    static const std::chrono::milliseconds DEFAULT_RECEIVE_TIMEOUT;
+    static ZookeeperPool& instance();
 
-    using WatcherCallback = std::function<void(const std::string& brokers)>;
+    ZookeeperSubscriber subscribe(const std::string& endpoint,
+                                  std::chrono::milliseconds receive_timeout,
+                                  ZookeeperWatcher::WatcherCallback callback);
+    void unsubscribe(const ZookeeperSubscriber& subscriber);
+    std::string get_brokers(const std::string& endpoint);
 
-    ZookeeperWatcher(const std::string& endpoint);
-    ZookeeperWatcher(const std::string& endpoint, std::chrono::milliseconds receive_timeout);
-
-    void setup_watcher();
-
-    std::string subscribe(WatcherCallback callback); 
-    void unsubscribe(const std::string& id);
-
-    std::string get_brokers();
-    size_t get_subscriber_count() const;
+    size_t get_subscriber_count(const std::string& endpoint) const;
 private:
-    static const std::string BROKERS_PATH;
+    using WatchersMap = std::map<std::string, ZookeeperWatcher>;
 
-    using HandlePtr = std::unique_ptr<zhandle_t, decltype(&zookeeper_close)>;
-    using CallbackMap = std::map<std::string, WatcherCallback>;
-
-    static void handle_event_proxy(zhandle_t* zh, int type, int state, const char* path,
-                                   void* ctx);
-    void handle_event(int type, int state, const char* path);
-    std::string generate_id();
-
-    HandlePtr handle_;
-    CallbackMap callbacks_;
-    mutable std::mutex callbacks_mutex_;
-    size_t id_counter_{0};
+    WatchersMap watchers_;
+    mutable std::mutex watchers_mutex_;
 };
 
 } // cppkafka
 
-#endif // CPPKAFKA_ZOOKEEPER_WATCHER_H
+#endif // CPPKAFKA_ZOOKEEPER_POOL_H

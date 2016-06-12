@@ -276,3 +276,46 @@ TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_TRUE(callback_called);   
 }
+
+#ifdef CPPKAFKA_HAVE_ZOOKEEPER
+
+#include "zookeeper/zookeeper_pool.h"
+
+TEST_F(ProducerTest, ConnectUsingZookeeper) {
+    int partition = 0;
+
+    Configuration producer_config;
+    producer_config.set("zookeeper", ZOOKEEPER_TEST_INSTANCE);
+
+    Configuration consumer_config = producer_config;
+    consumer_config.set("enable.auto.commit", false);
+    consumer_config.set("group.id", "producer_test");
+
+    // Create a consumer and assign this topic/partition
+    Consumer consumer(consumer_config);
+    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    ConsumerRunner runner(consumer, 1, 1);
+
+    // Now create a producer and produce a message
+    Producer producer(producer_config);
+    Topic topic = producer.get_topic(KAFKA_TOPIC);
+    string payload = "Hello world! 2";
+    string key = "such key";
+    producer.produce(topic, partition, Buffer(payload.data(), payload.size()),
+                     Buffer(key.data(), key.size()));
+    runner.try_join();
+
+    const auto& messages = runner.get_messages();
+    ASSERT_EQ(1, messages.size());
+    const auto& message = messages[0];
+    EXPECT_EQ(payload, message.get_payload().as_string());
+    EXPECT_EQ(key, message.get_key().as_string());
+    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
+    EXPECT_EQ(partition, message.get_partition());
+    EXPECT_EQ(0, message.get_error());
+
+    // We should have 2 watchers
+    EXPECT_EQ(2, ZookeeperPool::instance().get_subscriber_count(ZOOKEEPER_TEST_INSTANCE));
+}
+
+#endif // CPPKAFKA_HAVE_ZOOKEEPER
