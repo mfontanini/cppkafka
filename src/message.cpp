@@ -91,7 +91,7 @@ int64_t Message::get_offset() const {
     return handle_->offset;
 }
 
-void* Message::private_data() {
+void* Message::private_data() const {
     return handle_->_private;
 }
 

@@ -37,13 +37,46 @@
 
 namespace cppkafka {
 
+/**
+ * \brief Represents a rdkafka topic
+ *
+ * This is a simple wrapper over a rd_kafka_topic_t*
+ */
 class Topic {
 public:
+    /**
+     * \brief Creates a Topic object that doesn't take ownership of the handle
+     *
+     * \param handle The handle to be used
+     */
     static Topic make_non_owning(rd_kafka_topic_t* handle);
 
+    /**
+     * \brief Constructs a topic using a handle
+     *
+     * This will take ownership of the handle
+     *
+     * \param handle The handle to be used
+     */
     Topic(rd_kafka_topic_t* handle);
 
+    /**
+     * Returns the topic name
+     */
     std::string get_name() const;
+
+    /** 
+     * \brief Check if the partition is available
+     *
+     * This translates into a call to rd_kafka_topic_partition_available
+     *
+     * \param partition The partition to check
+     */
+    bool is_partition_available(int partition) const;
+
+    /**
+     * Returns the rdkakfa handle
+     */
     rd_kafka_topic_t* get_handle() const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_topic_t, decltype(&rd_kafka_topic_destroy)>;

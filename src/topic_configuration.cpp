@@ -90,8 +90,9 @@ TopicConfiguration::get_partitioner_callback() const {
     return partitioner_callback_;
 }
 
-rd_kafka_topic_conf_t* TopicConfiguration::get_handle() const {
-    return handle_.get();
+bool TopicConfiguration::has_property(const string& name) const {
+    size_t size = 0;
+    return rd_kafka_topic_conf_get(handle_.get(), name.data(), nullptr, &size) == RD_KAFKA_CONF_OK;
 }
 
 string TopicConfiguration::get(const string& name) const {
@@ -103,6 +104,10 @@ string TopicConfiguration::get(const string& name) const {
     vector<char> buffer(size);
     rd_kafka_topic_conf_get(handle_.get(), name.data(), buffer.data(), &size);
     return string(buffer.data());
+}
+
+rd_kafka_topic_conf_t* TopicConfiguration::get_handle() const {
+    return handle_.get();
 }
 
 TopicConfiguration::HandlePtr TopicConfiguration::make_handle(rd_kafka_topic_conf_t* ptr) {

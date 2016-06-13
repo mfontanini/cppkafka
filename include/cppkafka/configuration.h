@@ -85,7 +85,17 @@ public:
     /**
      * \brief Sets an attribute.
      *
-     * This will call rd_kafka_conf_set under the hood
+     * This will call rd_kafka_conf_set under the hood.
+     *
+     * If the zookeeper extension is enabled (cppkafka is build with -DENABLE_ZOOKEEPER=1), then
+     * this accepts 2 extra attribute names:
+     *
+     * - "zookeeper" which indicates the zookeeper endpoint to connect to
+     * - "zookeeper.receive.timeout.ms" which indicates the zookeeper receive timeout
+     *
+     * When the "zookeeper" attribute is used, a Consumer or Producer constructed using this
+     * configuration will use zookeeper under the hood to get the broker list and watch for
+     * broker updates.
      *
      * \param name The name of the attribute
      * \param value The value of the attribute

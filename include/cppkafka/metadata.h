@@ -39,14 +39,36 @@
 
 namespace cppkafka {
 
+/**
+ * Represents the metadata for a partition
+ */
 class PartitionMetadata {
 public:
     PartitionMetadata(const rd_kafka_metadata_partition& partition);
 
+    /**
+     * Gets the partition id
+     */
     uint32_t get_id() const;
+
+    /**
+     * Gets the partition error as reported by the broker
+     */
     rd_kafka_resp_err_t get_error() const;
+
+    /**
+     * Gets the leader broker id
+     */
     int32_t get_leader() const;
+
+    /**
+     * Gets the replica brokers
+     */
     const std::vector<int32_t>& get_replicas() const;
+
+    /**
+     * Gets the In Sync Replica Brokers
+     */
     const std::vector<int32_t>& get_in_sync_replica_brokers() const;
 private:
     int32_t id_;
@@ -56,12 +78,26 @@ private:
     std::vector<int32_t> isrs_;
 };
 
+/**
+ * Represents the metadata for a topic
+ */
 class TopicMetadata {
 public:
     TopicMetadata(const rd_kafka_metadata_topic& topic);
 
+    /**
+     * Gets the topic name
+     */
     const std::string& get_topic() const;
+
+    /**
+     * Gets the topic error
+     */
     rd_kafka_resp_err_t get_error() const;
+
+    /**
+     * Gets the partitions' metadata
+     */
     const std::vector<PartitionMetadata>& get_partitions() const;
 private:
     std::string topic_;
@@ -69,12 +105,26 @@ private:
     std::vector<PartitionMetadata> partitions_;
 };
 
+/**
+ * Represents a broker's metadata
+ */
 class BrokerMetadata {
 public:
     BrokerMetadata(const rd_kafka_metadata_broker_t& broker);
 
+    /**
+     * Gets the host this broker can be found at
+     */
     const std::string& get_host() const;
+
+    /**
+     * Gets the broker's id
+     */
     int32_t get_id() const;
+
+    /**
+     * Gets the broker's port
+     */
     uint16_t get_port() const;
 private:
     const std::string host_;
@@ -82,13 +132,35 @@ private:
     uint16_t port_;
 };
 
+/**
+ * Represents metadata for brokers, topics and partitions
+ */
 class Metadata {
 public:
     Metadata(const rd_kafka_metadata_t* ptr);
 
+    /**
+     * Gets the brokers' metadata
+     */
     std::vector<BrokerMetadata> get_brokers() const;
+    
+    /**
+     * Gets the topics' metadata
+     */
     std::vector<TopicMetadata> get_topics() const;
+
+    /**
+     * Gets metadata for the topics that can be found on the given set
+     *
+     * \param topics The topic names to be looked up
+     */
     std::vector<TopicMetadata> get_topics(const std::unordered_set<std::string>& topics) const;
+
+    /**
+     * Gets metadata for topics that start with the given prefix
+     *
+     * \param prefix The prefix to be looked up
+     */
     std::vector<TopicMetadata> get_topics(const std::string& prefix) const;
 private:
     using HandlePtr = std::unique_ptr<const rd_kafka_metadata_t, decltype(&rd_kafka_metadata_destroy)>;

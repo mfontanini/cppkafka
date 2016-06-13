@@ -38,27 +38,93 @@
 
 namespace cppkafka {
 
+/**
+ * \brief Thin wrapper over a rdkafka message handle
+ *
+ * This is a non copyable, movable class that wraps a rd_kafka_message_t*.
+ *
+ * Messages can be empty (contain a null rd_kafka_message_t*). Therefore, users should check
+ * that the message isn't empty by using the operator bool() before using them. This is especially
+ * necessary when calling Consumer::poll() as any poll operation that returns a null pointer will
+ * return an empty message.
+ */
 class Message {
 public:
+    /**
+     * Constructs a message that won't take ownership of the given pointer
+     */
     static Message make_non_owning(rd_kafka_message_t* handle);
 
+    /**
+     * Constructs an empty message
+     */
     Message();
+
+    /**
+     * \brief Constructs a message from a handle
+     *
+     * The constructed message instance *will own* the given pointer, calling 
+     * rd_kafka_message_destroy upon destruction.
+     *
+     * \param handle The message handle to be wrapped
+     */
     Message(rd_kafka_message_t* handle);
     Message(const Message&) = delete;
     Message(Message&& rhs) = default;
     Message& operator=(const Message&) = delete;
     Message& operator=(Message&& rhs) = default;
 
+    /**
+     * Indicates whether this is a message carrying an error notification
+     */
     bool has_error() const;
+
+    /**
+     * Gets the error attribute
+     */
     rd_kafka_resp_err_t get_error() const;
+
+    /**
+     * Gets the topic that this message belongs to
+     */
     std::string get_topic() const;
+
+    /**
+     * Gets the partition that this message belongs to
+     */
     int get_partition() const;
+
+    /**
+     * Gets the message's payload
+     */
     const Buffer& get_payload() const;
+
+    /**
+     * Gets the message's key
+     */
     const Buffer& get_key() const;
+
+    /**
+     * Gets the message offset
+     */
     int64_t get_offset() const;
-    void* private_data();
+
+    /**
+     * \brief Gets the private data.
+     *
+     * This should only be used on messages produced by a Producer that were set a private data
+     * attribute 
+     */
+    void* private_data() const;
+
+    /**
+     * Indicates whether this message is valid (not null)
+     */
     explicit operator bool() const;
 
+    /**
+     * Gets the rdkafka message handle
+     */
     rd_kafka_message_t* get_handle() const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_message_t, decltype(&rd_kafka_message_destroy)>;

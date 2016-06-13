@@ -35,16 +35,64 @@
 
 namespace cppkafka {
 
+/**
+ * Represents a topic/partition
+ */
 class TopicPartition {
 public:
+    /**
+     * Default constructs a topic/partition
+     */
     TopicPartition();
+
+    /**
+     * \brief Constructs a topic/partition
+     * 
+     * The partition value will be RD_KAFKA_OFFSET_INVALID
+     *
+     * \param topic The topic name
+     */
     TopicPartition(const char* topic);
+    
+    /**
+     * \brief Constructs a topic/partition
+     * 
+     * The partition value will be RD_KAFKA_OFFSET_INVALID
+     *
+     * \param topic The topic name
+     */
     TopicPartition(std::string topic);
+    
+    /**
+     * Constructs a topic/partition
+     *
+     * \param topic The topic name
+     * \param partition The partition to be used
+     */
     TopicPartition(std::string topic, int partition);
+    
+    /**
+     * Constructs a topic/partition
+     *
+     * \param topic The topic name
+     * \param partition The partition to be used
+     * \param offset The offset to be used
+     */
     TopicPartition(std::string topic, int partition, int64_t offset);
 
+    /**
+     * Gets the topic name
+     */
     const std::string& get_topic() const;
+
+    /**
+     * Gets the partition
+     */
     int get_partition() const;
+
+    /**
+     * Gets the offset
+     */
     int64_t get_offset() const;
 private:
     std::string topic_;

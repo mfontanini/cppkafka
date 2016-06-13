@@ -41,24 +41,78 @@ namespace cppkafka {
 class Topic;
 class Buffer;
 
+/**
+ * \brief Represents the topic configuration
+ *
+ * ConfigurationBase provides some extra overloads for set
+ */
 class TopicConfiguration : public ConfigurationBase<TopicConfiguration> {
 public:
+    /**
+     * \brief Partitioner callback
+     *
+     * This has the same requirements as rdkafka's partitioner calback:
+     *   - *Must not* call any rd_kafka_*() functions except:
+     *       rd_kafka_topic_partition_available(). This is done via Topic::is_partition_available
+     *   - *Must not* block or execute for prolonged periods of time.
+     *   - *Must* return a value between 0 and partition_count-1, or the
+     *     special RD_KAFKA_PARTITION_UA value if partitioning
+     *     could not be performed.
+     */
     using PartitionerCallback = std::function<int32_t(const Topic&, const Buffer& key,
                                                       int32_t partition_count)>;
 
     using ConfigurationBase<TopicConfiguration>::set;
 
+    /**
+     * Default constructs a topic configuration object
+     */
     TopicConfiguration();
 
+    /**
+     * Sets an option
+     *
+     * \param name The name of the option
+     * \param value The value of the option
+     */
     void set(const std::string& name, const std::string& value);
 
+    /**
+     * \brief Sets the partitioner callback
+     *
+     * This translates into a call to rd_kafka_topic_conf_set_partitioner_cb
+     */
     void set_partitioner_callback(PartitionerCallback callback);
 
+    /**
+     * \brief Sets the "this" pointer as the opaque pointer for this handle
+     *
+     * This method will be called by consumers/producers when the topic configuration object
+     * has been put in a persistent memory location. Users of cppkafka do not need to use this.
+     */
     void set_as_opaque();
 
+    /** 
+     * Gets the partitioner callback
+     */
     const PartitionerCallback& get_partitioner_callback() const;
-    rd_kafka_topic_conf_t* get_handle() const;
+
+    /**
+     * Returns true iff the given property name has been set
+     */
+    bool has_property(const std::string& name) const;
+
+    /**
+     * Gets an option's value
+     *
+     * \param name The option's name
+     */
     std::string get(const std::string& name) const;
+
+    /**
+     * Gets the rdkafka handle
+     */
+    rd_kafka_topic_conf_t* get_handle() const;
 private:
     using HandlePtr = ClonablePtr<rd_kafka_topic_conf_t,
                                   decltype(&rd_kafka_topic_conf_destroy),

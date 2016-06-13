@@ -32,11 +32,29 @@
 
 namespace cppkafka {
 
+/**
+ * \brief Dumb wrapper over a partition
+ *
+ * This class is basically a wrapper over an int that when default constructed will default
+ * to using RD_KAFKA_PARTITION_UA so you don't need to use the macro name.
+ */
 class Partition {
 public:
+    /**
+     * \brief Constructs an unassigned partition
+     *
+     * The partition's value will be RD_KAFKA_PARTITION_UA
+     */
     Partition();
+
+    /**
+     * Construct a partition using the given partition value
+     */
     Partition(int partition);
 
+    /**
+     * Gets the partition value
+     */
     int get_partition() const; 
 private:
     int partition_;

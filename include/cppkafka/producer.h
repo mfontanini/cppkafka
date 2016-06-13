@@ -44,6 +44,40 @@ class Buffer;
 class Partition;
 class TopicConfiguration;
 
+/**
+ * \brief Producer class
+ *
+ * This class allows producing messages on kafka.
+ *
+ * By default the payloads will be copied (using the RD_KAFKA_MSG_F_COPY flag) but the 
+ * behavior can be changed, in which case rdkafka will be reponsible for freeing it.
+ *
+ * In order to produce messages you could do something like:
+ *
+ * \code
+ * // Use the zookeeper extension
+ * Configuration config;
+ * config.set("zookeeper", "127.0.0.1:2181");
+ *
+ * // Create a producer 
+ * Producer producer(config);
+ *
+ * // Get the topic we'll write into
+ * Topic topic = producer.get_topic("foo");
+ * 
+ * // Create some key and payload
+ * string key = "creative_key_name";
+ * string payload = "some payload";
+ *
+ * // Write a message into an unassigned partition
+ * producer.produce(topic, Partition(), Buffer(payload.data(), payload.size()));
+ *
+ * // Write using a key
+ * producer.produce(topic, Partition(), Buffer(payload.data(), payload.size()),
+ *                  Buffer(key.data(), key.size()));
+ * 
+ * \endcode
+ */
 class Producer : public KafkaHandleBase {
 public:
     enum PayloadPolicy {
@@ -51,17 +85,62 @@ public:
         FREE_PAYLOAD = RD_KAFKA_MSG_F_FREE  ///< Means RD_KAFKA_MSG_F_FREE
     };
 
+    /**
+     * Constructs a producer using the given configuration
+     *
+     * \param config The configuration to use
+     */
     Producer(Configuration config);
 
+    /**
+     * Sets the payload policy
+     *
+     * \param policy The payload policy to be used
+     */
     void set_payload_policy(PayloadPolicy policy);
+
+    /**
+     * Returns the current payload policy
+     */
     PayloadPolicy get_payload_policy() const;
 
+    /**
+     * Produces a message
+     *
+     * \param topic The topic to write the message to
+     * \param partition The partition to write the message to
+     * \param payload The message payload
+     */
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload);
+    
+    /**
+     * Produces a message
+     *
+     * \param topic The topic to write the message to
+     * \param partition The partition to write the message to
+     * \param payload The message payload
+     * \param key The message key
+     */
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload,
                  const Buffer& key);
+    
+    /**
+     * Produces a message
+     *
+     * \param topic The topic to write the message to
+     * \param partition The partition to write the message to
+     * \param payload The message payload
+     * \param key The message key
+     * \param user_data The opaque data pointer to be used (accesible via Message::private_data)
+     */
     void produce(const Topic& topic, const Partition& partition, const Buffer& payload,
                  const Buffer& key, void* user_data);
 
+    /**
+     * \brief Polls on this handle
+     *
+     * This translates into a call to rd_kafka_poll
+     */
     int poll();
 private:
     PayloadPolicy message_payload_policy_;

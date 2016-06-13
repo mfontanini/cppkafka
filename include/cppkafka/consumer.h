@@ -81,7 +81,7 @@ class TopicConfiguration;
  *     Message msg = consumer.poll(); 
  *     if (msg) {
  *         // It's a valid message!
- *         if (msg.get_error() == 0) {
+ *         if (!msg.has_error()) {
  *             // It's an actual message. Get the payload and print it to stdout
  *             cout << msg.get_payload().as_string() << endl;
  *         }

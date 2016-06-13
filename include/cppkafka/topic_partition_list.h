@@ -40,8 +40,12 @@ class TopicPartition;
 
 using TopicPartitionsListPtr = std::unique_ptr<rd_kafka_topic_partition_list_t, 
                                                decltype(&rd_kafka_topic_partition_list_destroy)>;
+/**
+ * A topic partition list
+ */
 using TopicPartitionList = std::vector<TopicPartition>;
 
+// Conversions between rdkafka handles and TopicPartitionList
 TopicPartitionsListPtr convert(const std::vector<TopicPartition>& topic_partitions);
 std::vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions);
 std::vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions);
