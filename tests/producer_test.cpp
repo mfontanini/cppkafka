@@ -128,7 +128,7 @@ TEST_F(ProducerTest, OneMessageOnFixedPartition) {
 
     int64_t low;
     int64_t high;
-    tie(low, high) = producer.query_offsets(KAFKA_TOPIC, partition);
+    tie(low, high) = producer.query_offsets({ KAFKA_TOPIC, partition });
     EXPECT_GT(high, low);
 }
 

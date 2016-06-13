@@ -91,10 +91,12 @@ Topic KafkaHandleBase::get_topic(const string& name, TopicConfiguration config) 
     return get_topic(name, rd_kafka_topic_conf_dup(handle));
 }
 
-KafkaHandleBase::OffsetTuple KafkaHandleBase::query_offsets(const string& topic,
-                                                            int partition) const {
+KafkaHandleBase::OffsetTuple
+KafkaHandleBase::query_offsets(const TopicPartition& topic_partition) const {
     int64_t low;
     int64_t high;
+    const string& topic = topic_partition.get_topic();
+    const int partition = topic_partition.get_partition();
     rd_kafka_resp_err_t result = rd_kafka_query_watermark_offsets(handle_.get(), topic.data(),
                                                                   partition, &low, &high,
                                                                   timeout_ms_.count());
@@ -144,8 +146,8 @@ void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
             rd_kafka_brokers_add(handle_.get(), brokers.data());
             rd_kafka_poll(handle_.get(), 10);
         };
-        ZookeeperSubscriber subscriber = pool.subscribe(endpoint, timeout, callback);
-        zookeeper_subscriber_.reset(new ZookeeperSubscriber(move(subscriber)));
+        ZookeeperSubscription subscriber = pool.subscribe(endpoint, timeout, callback);
+        zookeeper_subscription_.reset(new ZookeeperSubscription(move(subscriber)));
         callback(pool.get_brokers(endpoint));
     }
     

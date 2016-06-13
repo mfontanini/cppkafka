@@ -44,13 +44,16 @@
 #include "configuration.h"
 #include "config.h"
 #ifdef CPPKAFKA_HAVE_ZOOKEEPER
-    #include "zookeeper/zookeeper_subscriber.h"
+    #include "zookeeper/zookeeper_subscription.h"
 #endif // CPPKAFKA_HAVE_ZOOKEEPER
 
 namespace cppkafka {
 
 class Topic;
 
+/**
+ * Base class for kafka consumer/producer
+ */
 class KafkaHandleBase {
 public:
     using OffsetTuple = std::tuple<int64_t, int64_t>;
@@ -61,20 +64,100 @@ public:
     KafkaHandleBase& operator=(const KafkaHandleBase&) = delete;
     KafkaHandleBase& operator=(KafkaHandleBase&&) = delete;
 
+    /**
+     * \brief Pauses consumption/production from the given topic/partition list
+     *
+     * This translates into a call to  rd_kafka_pause_partitions
+     *
+     * \param topic_partitions The topic/partition list to pause consuming/producing from/to
+     */
     void pause_partitions(const TopicPartitionList& topic_partitions);
+    
+    /**
+     * \brief Resumes consumption/production from the given topic/partition list
+     *
+     * This translates into a call to  rd_kafka_resume_partitions
+     *
+     * \param topic_partitions The topic/partition list to resume consuming/producing from/to
+     */
     void resume_partitions(const TopicPartitionList& topic_partitions);
 
+    /**
+     * \brief Sets the timeout for operations that require a timeout
+     *
+     * This timeout is applied to operations like polling, querying for offsets, etc
+     *
+     * \param timeout The timeout to be set
+     */
     void set_timeout(const std::chrono::milliseconds& timeout);
 
-    OffsetTuple query_offsets(const std::string& topic, int partition) const;
+    /**
+     * \brief Queries the offset for the given topic/partition
+     *
+     * This translates into a call to rd_kafka_query_watermark_offsets
+     * 
+     * \param topic_partition The topic/partition to be queried
+     */ 
+    OffsetTuple query_offsets(const TopicPartition& topic_partition) const;
 
+    /**
+     * Gets the rdkafka handle
+     */
     rd_kafka_t* get_handle() const;
+
+    /**
+     * \brief Creates a topic handle
+     *
+     * This translates into a call to rd_kafka_topic_new. This will use the default topic 
+     * configuration provided in the Configuration object for this consumer/producer handle, 
+     * if any.
+     *
+     * \param name The name of the topic to be created 
+     */
     Topic get_topic(const std::string& name);
+
+    /**
+     * \brief Creates a topic handle
+     *
+     * This translates into a call to rd_kafka_topic_new.
+     *
+     * \param name The name of the topic to be created 
+     * \param config The configuration to be used for the new topic
+     */
     Topic get_topic(const std::string& name, TopicConfiguration config);
+
+    /**
+     * \brief Gets metadata for brokers, topics, partitions, etc
+     *
+     * This translates into a call to rd_kafka_metadata
+     */
     Metadata get_metadata() const;
+
+    /**
+     * \brief Gets general metadata but only fetches metadata for the given topic rather than 
+     * all of them 
+     *
+     * This translates into a call to rd_kafka_metadata
+     *
+     * \param topic The topic to fetch information for
+     */
     Metadata get_metadata(const Topic& topic) const;
+
+    /**
+     * Returns the kafka handle name
+     */
     std::string get_name() const;
+
+    /**
+     * Gets the configured timeout.
+     *
+     * \sa KafkaHandleBase::set_timeout
+     */
     std::chrono::milliseconds get_timeout() const;
+
+    /**
+     * Gets the handle's configuration
+     */ 
     const Configuration& get_configuration() const;
 protected:
     KafkaHandleBase(Configuration config);
@@ -99,7 +182,7 @@ private:
     std::mutex topic_configurations_mutex_;
     #ifdef CPPKAFKA_HAVE_ZOOKEEPER
         // This could be an optional but apparently move construction is only supported as of 1.56
-        std::unique_ptr<ZookeeperSubscriber> zookeeper_subscriber_;
+        std::unique_ptr<ZookeeperSubscription> zookeeper_subscription_;
     #endif // CPPKAFKA_HAVE_ZOOKEEPER
 };
 

@@ -36,6 +36,9 @@
 
 namespace cppkafka {
 
+/**
+ * Base class for all cppkafka exceptions
+ */
 class Exception : public std::exception {
 public:
     Exception(std::string message);
@@ -45,16 +48,25 @@ private:
     std::string message_;
 };
 
+/**
+ * A configuration related error
+ */
 class ConfigException : public Exception {
 public:
     ConfigException(const std::string& config_name, const std::string& error);
 };
 
+/** 
+ * Indicates a configuration option was not set
+ */
 class ConfigOptionNotFound : public Exception {
 public:
     ConfigOptionNotFound(const std::string& config_name);
 };
 
+/**
+ * A generic rdkafka handle error
+ */
 class HandleException : public Exception {
 public:
     HandleException(rd_kafka_resp_err_t error_code);
@@ -64,6 +76,9 @@ private:
     rd_kafka_resp_err_t error_code_;
 };
 
+/** 
+ * An exception when using zookeeper
+ */
 class ZookeeperException : public Exception {
 public:
     using Exception::Exception;

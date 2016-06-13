@@ -130,12 +130,14 @@ TEST_F(ConsumerTest, AssignmentCallback) {
     }
     EXPECT_EQ(1, runner.get_messages().size());
 
+    EXPECT_EQ(vector<string>{ KAFKA_TOPIC }, consumer.get_subscription());
+
     assignment = consumer.get_assignment();
     EXPECT_EQ(3, assignment.size());
 
     int64_t low;
     int64_t high;
-    tie(low, high) = consumer.get_offsets(KAFKA_TOPIC, partition);
+    tie(low, high) = consumer.get_offsets({ KAFKA_TOPIC, partition });
     EXPECT_GT(high, low);
     EXPECT_EQ(high, runner.get_messages().back().get_offset() + 1);
 }

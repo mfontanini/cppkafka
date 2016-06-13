@@ -50,6 +50,14 @@ class Producer;
 class Consumer;
 class KafkaHandleBase;
 
+/**
+ * \brief Represents a global configuration (rd_kafka_conf_t).
+ *
+ * This wraps an rdkafka configuration handle. It can safely be copied (will use 
+ * rd_kafka_conf_dup under the hood) and moved.
+ *
+ * Some other overloads for Configuration::set are given via ConfigurationBase.
+ */
 class Configuration : public ConfigurationBase<Configuration> {
 public:
     using DeliveryReportCallback = std::function<void(Producer& producer, const Message&)>;
@@ -69,29 +77,121 @@ public:
 
     using ConfigurationBase<Configuration>::set;
 
+    /**
+     * Default constructs a Configuration object
+     */
     Configuration();
 
+    /**
+     * \brief Sets an attribute.
+     *
+     * This will call rd_kafka_conf_set under the hood
+     *
+     * \param name The name of the attribute
+     * \param value The value of the attribute
+     */
     void set(const std::string& name, const std::string& value);
+
+    /**
+     * Sets the delivery report callback (invokes rd_kafka_conf_set_dr_msg_cb)
+     */
     void set_delivery_report_callback(DeliveryReportCallback callback);
+
+    /**
+     * Sets the offset commit callback (invokes rd_kafka_conf_set_offset_commit_cb)
+     */
     void set_offset_commit_callback(OffsetCommitCallback callback);
+
+    /** 
+     * Sets the error callback (invokes rd_kafka_conf_set_error_cb)
+     */
     void set_error_callback(ErrorCallback callback);
+
+    /** 
+     * Sets the throttle callback (invokes rd_kafka_conf_set_throttle_cb)
+     */
     void set_throttle_callback(ThrottleCallback callback);
+
+    /** 
+     * Sets the log callback (invokes rd_kafka_conf_set_log_cb)
+     */
     void set_log_callback(LogCallback callback);
+
+    /** 
+     * Sets the stats callback (invokes rd_kafka_conf_set_stats_cb)
+     */
     void set_stats_callback(StatsCallback callback);
+
+    /** 
+     * Sets the socket callback (invokes rd_kafka_conf_set_socket_cb)
+     */
     void set_socket_callback(SocketCallback callback);
+
+    /** 
+     * Sets the default topic configuration
+     */
     void set_default_topic_configuration(boost::optional<TopicConfiguration> config);
 
+    /**
+     * Returns true iff the given property name has been set
+     */
     bool has_property(const std::string& name) const;
+
+    /** 
+     * Gets the rdkafka configuration handle
+     */
     rd_kafka_conf_t* get_handle() const;
+
+    /**
+     * Gets an option value
+     *
+     * \throws ConfigOptionNotFound if the option is not present
+     */
     std::string get(const std::string& name) const;
+
+    /**
+     * Gets the delivery report callback
+     */
     const DeliveryReportCallback& get_delivery_report_callback() const;
+
+    /**
+     * Gets the offset commit callback
+     */
     const OffsetCommitCallback& get_offset_commit_callback() const;
+
+    /**
+     * Gets the error callback
+     */
     const ErrorCallback& get_error_callback() const;
+
+    /**
+     * Gets the throttle callback
+     */
     const ThrottleCallback& get_throttle_callback() const;
+
+    /**
+     * Gets the log callback
+     */
     const LogCallback& get_log_callback() const;
+
+    /**
+     * Gets the stats callback
+     */
     const StatsCallback& get_stats_callback() const;
+
+    /**
+     * Gets the socket callback
+     */
     const SocketCallback& get_socket_callback() const;
+
+    /**
+     * Gets the default topic configuration
+     */
     const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
+
+    /**
+     * Gets the default topic configuration
+     */
     boost::optional<TopicConfiguration>& get_default_topic_configuration();
 private:
     static const std::unordered_set<std::string> VALID_EXTENSIONS;

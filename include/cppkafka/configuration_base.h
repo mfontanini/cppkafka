@@ -37,17 +37,25 @@ namespace cppkafka {
 template <typename Concrete>
 class ConfigurationBase {
 public:
+    /**
+     * Sets a bool value
+     */
     void set(const std::string& name, bool value) {
         proxy_set(name, value ? "true" : "false");
     }
 
-    // Overload for any integral value
+    /**
+     * Sets a value of any integral value
+     */
     template <typename T,
               typename = typename std::enable_if<std::is_integral<T>::value>::type>
     void set(const std::string& name, T value) {
         proxy_set(name, std::to_string(value));
     }
 
+    /**
+     * Sets a cstring value
+     */
     void set(const std::string& name, const char* value) {
         proxy_set(name, value);
     }

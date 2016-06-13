@@ -126,9 +126,11 @@ void Consumer::async_commit(const TopicPartitionList& topic_partitions) {
     commit(topic_partitions, true);
 }
 
-KafkaHandleBase::OffsetTuple Consumer::get_offsets(const string& topic, int partition) const {
+KafkaHandleBase::OffsetTuple Consumer::get_offsets(const TopicPartition& topic_partition) const {
     int64_t low;
     int64_t high;
+    const string& topic = topic_partition.get_topic();
+    const int partition = topic_partition.get_partition(); 
     rd_kafka_resp_err_t result = rd_kafka_get_watermark_offsets(get_handle(), topic.data(),
                                                                 partition, &low, &high);
     check_error(result);
@@ -152,12 +154,18 @@ Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) const
     return convert(topic_list_handle);
 }
 
-TopicPartitionList Consumer::get_subscription() const {
+vector<string> Consumer::get_subscription() const {
     rd_kafka_resp_err_t error;
     rd_kafka_topic_partition_list_t* list = nullptr;
     error = rd_kafka_subscription(get_handle(), &list);
     check_error(error);
-    return convert(make_handle(list));
+
+    auto handle = make_handle(list);
+    vector<string> output;
+    for (const auto& topic_partition : convert(handle)) {
+        output.push_back(topic_partition.get_topic());
+    }
+    return output;
 }
 
 TopicPartitionList Consumer::get_assignment() const {

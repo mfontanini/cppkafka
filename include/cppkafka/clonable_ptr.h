@@ -34,19 +34,41 @@
 
 namespace cppkafka {
 
+/**
+ * Smart pointer which allows copying via a clone functor
+ */
 template <typename T, typename Deleter, typename Cloner>
 class ClonablePtr {
 public:
+    /**
+     * Creates an instance
+     *
+     * \param ptr The pointer to be wrapped
+     * \param deleter The deleter functor
+     * \param cloner The clone functor
+     */
     ClonablePtr(T* ptr, const Deleter& deleter, const Cloner& cloner)
     : handle_(ptr, deleter), cloner_(cloner) {
 
     }
 
+    /**
+     * \brief Copies the given ClonablePtr
+     *
+     * Cloning will be done by invoking the Cloner type
+     *
+     * \param rhs The pointer to be copied
+     */
     ClonablePtr(const ClonablePtr& rhs)
     : handle_(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()), cloner_(rhs.cloner_) {
 
     }
 
+    /** 
+     * Copies and assigns the given pointer
+     *
+     * \param rhs The pointer to be copied
+     */
     ClonablePtr& operator=(const ClonablePtr& rhs) {
         handle_.reset(cloner_(rhs.handle_.get()));
         return *this;
@@ -56,6 +78,9 @@ public:
     ClonablePtr& operator=(ClonablePtr&&) = default;
     ~ClonablePtr() = default;
 
+    /**
+     * Getter for the internal pointer
+     */
     T* get() const {
         return handle_.get();
     }

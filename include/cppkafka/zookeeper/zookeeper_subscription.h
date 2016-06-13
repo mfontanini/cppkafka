@@ -27,29 +27,37 @@
  *
  */
 
-#ifndef CPPKAFKA_ZOOKEEPER_SUBSCRIBER_H
-#define CPPKAFKA_ZOOKEEPER_SUBSCRIBER_H
+#ifndef CPPKAFKA_ZOOKEEPER_SUBSCRIPTION_H
+#define CPPKAFKA_ZOOKEEPER_SUBSCRIPTION_H
 
 #include <string>
 
 namespace cppkafka {
 
-class ZookeeperSubscriber {
+/**
+ * \cond
+ */
+class ZookeeperSubscription {
 public:
-    ZookeeperSubscriber(std::string endpoint, std::string subscription_id);
-    ZookeeperSubscriber(ZookeeperSubscriber&&) = default;
-    ZookeeperSubscriber(const ZookeeperSubscriber&) = delete;
-    ZookeeperSubscriber& operator=(ZookeeperSubscriber&&);
-    ZookeeperSubscriber& operator=(const ZookeeperSubscriber&) = delete;
-    ~ZookeeperSubscriber();
+    ZookeeperSubscription(std::string endpoint, std::string subscription_id);
+    ZookeeperSubscription(ZookeeperSubscription&&) = default;
+    ZookeeperSubscription(const ZookeeperSubscription&) = delete;
+    ZookeeperSubscription& operator=(ZookeeperSubscription&&);
+    ZookeeperSubscription& operator=(const ZookeeperSubscription&) = delete;
+    ~ZookeeperSubscription();
 
     const std::string& get_endpoint() const;
+
     const std::string& get_subscription_id() const;
 private:
     std::string endpoint_;
     std::string subscription_id_;
 };
 
+/**
+ * \endcond
+ */
+
 } // cppkafka
 
-#endif // CPPKAFKA_ZOOKEEPER_SUBSCRIBER_H
+#endif // CPPKAFKA_ZOOKEEPER_SUBSCRIPTION_H

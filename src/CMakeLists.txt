@@ -20,7 +20,7 @@ if (ENABLE_ZOOKEEPER)
     set(ZOOKEEPER_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/zookeeper/zookeeper_watcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/zookeeper/zookeeper_pool.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/zookeeper/zookeeper_subscriber.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/zookeeper/zookeeper_subscription.cpp)
     # Add json library as include dir (header only)
     include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json)
     set(SOURCES ${SOURCES} ${ZOOKEEPER_SOURCES})

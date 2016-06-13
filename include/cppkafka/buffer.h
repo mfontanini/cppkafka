@@ -35,11 +35,27 @@
 
 namespace cppkafka {
 
+/**
+ * \brief Represents a view of a buffer.
+ * 
+ * This is only a view, hence you should convert the contents of a buffer into
+ * some other container if you want to store it somewhere. 
+ */
 class Buffer {
 public:
     using DataType = unsigned char;
 
+    /**
+     * Constructs an empty buffer
+     */
     Buffer();
+
+    /**
+     * Constructs a buffer from a pointer and a size
+     *
+     * \param data A pointer to some type of size 1
+     * \param size The size of the buffer
+     */
     template <typename T>
     Buffer(const T* data, size_t size) 
     : data_(reinterpret_cast<const DataType*>(data)), size_(size) {
@@ -51,9 +67,19 @@ public:
     Buffer& operator=(const Buffer&) = delete;
     Buffer& operator=(Buffer&&) = default;
 
+    /**
+     * Getter for the data pointer
+     */
     const DataType* get_data() const;
+
+    /**
+     * Getter for the size of the buffer
+     */
     size_t get_size() const;
 
+    /**
+     * Converts the contents of the buffer into a string
+     */
     std::string as_string() const;
 private:
     const DataType* data_;

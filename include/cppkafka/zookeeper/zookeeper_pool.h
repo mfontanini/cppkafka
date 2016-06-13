@@ -38,18 +38,52 @@
 
 namespace cppkafka {
 
-class ZookeeperSubscriber;
+class ZookeeperSubscription;
 
+/**
+ * \brief Pool of zookeeper handles
+ *
+ * This class is used internally by cppkafka.
+ */
 class ZookeeperPool {
 public:
+    /**
+     * Get singleton instance
+     */
     static ZookeeperPool& instance();
 
-    ZookeeperSubscriber subscribe(const std::string& endpoint,
-                                  std::chrono::milliseconds receive_timeout,
-                                  ZookeeperWatcher::WatcherCallback callback);
-    void unsubscribe(const ZookeeperSubscriber& subscriber);
+    /**
+     * Subscribe to the given endpoint
+     *
+     * \param endpoint The zookeeper endpoint to subscribe to
+     * \param receive_timeout The zookeeper receive timeout
+     * \param callback The callback to be executed on updates
+     *
+     * \return A ZookeeperSubscription that will auto-unsubscribe upon destruction
+     */
+    ZookeeperSubscription subscribe(const std::string& endpoint,
+                                    std::chrono::milliseconds receive_timeout,
+                                    ZookeeperWatcher::WatcherCallback callback);
+
+    /**
+     * Unsubscribes from a previous subscription
+     *
+     * \param subscriber The subscriber return by a previous call to ZookeeperPool::subscribe
+     */
+    void unsubscribe(const ZookeeperSubscription& subscriber);
+
+    /**
+     * \brief Gets the broker list for the given zookeeper endpoint
+     *
+     * Requires having previously called subscribe for this endpoint at least once.
+     *
+     * \param endpoint The endpoint for which to get the broker list
+     */
     std::string get_brokers(const std::string& endpoint);
 
+    /** 
+     * Gets the amount of subscribers for the given zookeeper endpoint
+     */ 
     size_t get_subscriber_count(const std::string& endpoint) const;
 private:
     using WatchersMap = std::map<std::string, ZookeeperWatcher>;

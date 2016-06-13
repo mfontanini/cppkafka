@@ -40,6 +40,9 @@
 
 namespace cppkafka {
 
+/**
+ * \cond
+ */
 class ZookeeperWatcher {
 public:
     static const std::chrono::milliseconds DEFAULT_RECEIVE_TIMEOUT;
@@ -72,6 +75,10 @@ private:
     mutable std::mutex callbacks_mutex_;
     size_t id_counter_{0};
 };
+
+/**
+ * \endcond
+ */
 
 } // cppkafka
 

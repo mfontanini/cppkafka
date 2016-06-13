@@ -28,7 +28,7 @@
  */
 
 #include "zookeeper/zookeeper_pool.h"
-#include "zookeeper/zookeeper_subscriber.h"
+#include "zookeeper/zookeeper_subscription.h"
 #include "exceptions.h"
 
 using std::string;
@@ -45,7 +45,7 @@ ZookeeperPool& ZookeeperPool::instance() {
     return the_instance;
 }
 
-ZookeeperSubscriber ZookeeperPool::subscribe(const string& endpoint,
+ZookeeperSubscription ZookeeperPool::subscribe(const string& endpoint,
                                              milliseconds receive_timeout,
                                              ZookeeperWatcher::WatcherCallback callback) {
     lock_guard<mutex> _(watchers_mutex_);
@@ -55,10 +55,10 @@ ZookeeperSubscriber ZookeeperPool::subscribe(const string& endpoint,
                                  forward_as_tuple(endpoint, receive_timeout)).first;
     }
     string id = iter->second.subscribe(move(callback));
-    return ZookeeperSubscriber(endpoint, id);
+    return ZookeeperSubscription(endpoint, id);
 }
 
-void ZookeeperPool::unsubscribe(const ZookeeperSubscriber& subscriber) {
+void ZookeeperPool::unsubscribe(const ZookeeperSubscription& subscriber) {
     lock_guard<mutex> _(watchers_mutex_);
     auto iter = watchers_.find(subscriber.get_endpoint());
     if (iter != watchers_.end()) {
