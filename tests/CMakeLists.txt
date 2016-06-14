@@ -19,7 +19,7 @@ add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 add_definitions("-DZOOKEEPER_TEST_INSTANCE=\"${ZOOKEEPER_TEST_INSTANCE}\"")
 
 if (ENABLE_ZOOKEEPER)
-    link_libraries(zookeeper_mt)
+    link_libraries(${ZOOKEEPER_LIBRARY})
 endif()
 
 create_test(consumer)
