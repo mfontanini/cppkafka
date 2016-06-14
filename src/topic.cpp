@@ -42,6 +42,11 @@ Topic Topic::make_non_owning(rd_kafka_topic_t* handle) {
     return Topic(handle, NonOwningTag{});
 }
 
+Topic::Topic() 
+: handle_(nullptr, nullptr) {
+
+}
+
 Topic::Topic(rd_kafka_topic_t* handle) 
 : handle_(handle, &rd_kafka_topic_destroy) {
 

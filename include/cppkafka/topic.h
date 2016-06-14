@@ -52,6 +52,14 @@ public:
     static Topic make_non_owning(rd_kafka_topic_t* handle);
 
     /**
+     * \brief Constructs an empty topic
+     *
+     * Note that using any methods except Topic::get_handle on an empty topic is undefined 
+     * behavior
+     */
+    Topic();
+
+    /**
      * \brief Constructs a topic using a handle
      *
      * This will take ownership of the handle
