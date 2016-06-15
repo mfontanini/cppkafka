@@ -13,6 +13,7 @@ TEST_F(TopicPartitionListTest, Conversion) {
     TopicPartitionList list1;
     list1.push_back("foo");
     list1.push_back({ "bar", 2 });
+    list1.push_back({ "asd", 2, TopicPartition::OFFSET_BEGINNING });
 
     TopicPartitionList list2 = convert(convert(list1));
 

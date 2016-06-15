@@ -41,6 +41,16 @@ namespace cppkafka {
 class TopicPartition {
 public:
     /**
+     * Special offsets enum
+     */
+    enum Offset {
+        OFFSET_BEGINNING = -2,
+        OFFSET_END = -1,
+        OFFSET_STORED = -1000,
+        OFFSET_INVALID = -1001
+    };
+
+    /**
      * Default constructs a topic/partition
      */
     TopicPartition();
