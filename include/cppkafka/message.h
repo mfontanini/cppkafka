@@ -85,6 +85,11 @@ public:
     rd_kafka_resp_err_t get_error() const;
 
     /**
+     * Gets the error as a string
+     */
+    std::string get_error_string() const;    
+
+    /**
      * Gets the topic that this message belongs to
      */
     std::string get_topic() const;

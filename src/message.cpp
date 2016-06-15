@@ -71,6 +71,10 @@ rd_kafka_resp_err_t Message::get_error() const {
     return handle_->err;
 }
 
+string Message::get_error_string() const {
+    return rd_kafka_err2str(handle_->err);
+}
+
 int Message::get_partition() const {
     return handle_->partition;
 }

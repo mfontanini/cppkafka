@@ -51,6 +51,10 @@ size_t Buffer::get_size() const {
     return size_;
 }
 
+Buffer::operator bool() const {
+    return data_ != nullptr;
+}
+
 string Buffer::as_string() const {
     return string(data_, data_ + size_);
 }

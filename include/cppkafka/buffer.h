@@ -93,6 +93,11 @@ public:
     size_t get_size() const;
 
     /**
+     * Checks whether this is a non empty buffer
+     */
+    explicit operator bool() const;
+
+    /**
      * Converts the contents of the buffer into a string
      */
     std::string as_string() const;
