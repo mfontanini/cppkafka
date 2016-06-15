@@ -27,11 +27,13 @@
  *
  */
 
+#include <iostream>
 #include "topic_partition_list.h"
 #include "topic_partition.h"
 #include "exceptions.h"
 
 using std::vector;
+using std::ostream;
 
 namespace cppkafka {
 
@@ -63,6 +65,18 @@ vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions
 
 TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle) {
     return TopicPartitionsListPtr(handle, &rd_kafka_topic_partition_list_destroy);
+}
+
+ostream& operator<<(ostream& output, const TopicPartitionList& rhs) {
+    output << "[ ";
+    for (auto iter = rhs.begin(); iter != rhs.end(); ++iter) {
+        if (iter != rhs.begin()) {
+            output << ", ";
+        }
+        output << *iter;
+    }
+    output << " ]";
+    return output;
 }
 
 } // cppkafka

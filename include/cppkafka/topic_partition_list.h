@@ -31,6 +31,7 @@
 #define CPPKAFKA_TOPIC_PARTITION_LIST_H
 
 #include <memory>
+#include <iosfwd>
 #include <algorithm>
 #include <librdkafka/rdkafka.h>
 
@@ -50,6 +51,8 @@ TopicPartitionsListPtr convert(const std::vector<TopicPartition>& topic_partitio
 std::vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions);
 std::vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions);
 TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
+
+std::ostream& operator<<(std::ostream& output, const TopicPartitionList& rhs);
 
 } // cppkafka
 

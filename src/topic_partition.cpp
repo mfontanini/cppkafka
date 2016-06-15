@@ -27,10 +27,12 @@
  *
  */
 
+#include <iostream>
 #include <librdkafka/rdkafka.h>
 #include "topic_partition.h"
 
 using std::string;
+using std::ostream;
 
 namespace cppkafka {
 
@@ -69,6 +71,10 @@ int TopicPartition::get_partition() const {
 
 int64_t TopicPartition::get_offset() const {
     return offset_;
+}
+
+ostream& operator<<(ostream& output, const TopicPartition& rhs) {
+    return output << rhs.get_topic() << "[" << rhs.get_partition() << "]";
 }
 
 } // cppkafka

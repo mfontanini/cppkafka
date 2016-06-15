@@ -31,6 +31,7 @@
 #define CPPKAFKA_TOPIC_PARTITION_H
 
 #include <string>
+#include <iosfwd>
 #include <cstdint>
 
 namespace cppkafka {
@@ -104,6 +105,11 @@ public:
      * Gets the offset
      */
     int64_t get_offset() const;
+
+    /**
+     * Print to a stream
+     */
+    friend std::ostream& operator<<(std::ostream& output, const TopicPartition& rhs);
 private:
     std::string topic_;
     int partition_;
