@@ -40,6 +40,10 @@ namespace cppkafka {
  * 
  * This is only a view, hence you should convert the contents of a buffer into
  * some other container if you want to store it somewhere. 
+ *
+ * If you're using this to produce a message, you *need* to guarantee that the
+ * pointer that this buffer points to will still until the call to Producer::produce
+ * returns.
  */
 class Buffer {
 public:
@@ -61,6 +65,17 @@ public:
     : data_(reinterpret_cast<const DataType*>(data)), size_(size) {
         static_assert(sizeof(T) == 1, "Buffer must point to elements of 1 byte");
     }
+
+    /**
+     * \brief Construct a buffer from a const string ref
+     *
+     * Note that you *can't use temporaries* here as they would be destructed after
+     * the constructor finishes.
+     */
+    Buffer(const std::string& data); 
+
+    // Don't allow construction from temporaries
+    Buffer(std::string&&) = delete;
 
     Buffer(const Buffer&) = delete;
     Buffer(Buffer&&) = default;

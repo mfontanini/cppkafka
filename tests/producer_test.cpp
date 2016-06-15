@@ -114,7 +114,7 @@ TEST_F(ProducerTest, OneMessageOnFixedPartition) {
     Producer producer(make_producer_config());
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world! 1";
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    producer.produce(topic, partition, payload);
     runner.try_join();
 
     const auto& messages = runner.get_messages();
@@ -145,8 +145,7 @@ TEST_F(ProducerTest, OneMessageUsingKey) {
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world! 2";
     string key = "such key";
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()),
-                     Buffer(key.data(), key.size()));
+    producer.produce(topic, partition, payload, key);
     runner.try_join();
 
     const auto& messages = runner.get_messages();
@@ -176,8 +175,7 @@ TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {
     for (size_t i = 0; i < message_count; ++i) {
         string payload = payload_base + to_string(i);
         payloads.insert(payload);
-        producer.produce(topic, {} /*unassigned partition*/, 
-                         Buffer(payload.data(), payload.size()));
+        producer.produce(topic, {} /*unassigned partition*/, payload);
     }
     runner.try_join();
 
@@ -222,8 +220,7 @@ TEST_F(ProducerTest, Callbacks) {
 
     Producer producer(move(config));
     Topic topic = producer.get_topic(KAFKA_TOPIC, topic_config);
-    producer.produce(topic, {}, Buffer(payload.data(), payload.size()),
-                     Buffer(key.data(), key.size()));
+    producer.produce(topic, {}, payload, key);
     producer.poll();
     runner.try_join();
 
@@ -265,8 +262,7 @@ TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
 
     Producer producer(move(config));
     Topic topic = producer.get_topic(KAFKA_TOPIC);
-    producer.produce(topic, {}, Buffer(payload.data(), payload.size()),
-                     Buffer(key.data(), key.size()));
+    producer.produce(topic, {}, payload, key);
     producer.poll();
     runner.try_join();
 
@@ -301,8 +297,7 @@ TEST_F(ProducerTest, ConnectUsingZookeeper) {
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world! 2";
     string key = "such key";
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()),
-                     Buffer(key.data(), key.size()));
+    producer.produce(topic, partition, payload, key);
     runner.try_join();
 
     const auto& messages = runner.get_messages();

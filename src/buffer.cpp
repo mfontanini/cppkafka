@@ -38,6 +38,11 @@ Buffer::Buffer()
 
 }
 
+Buffer::Buffer(const string& data) 
+: Buffer(data.data(), data.size()) {
+
+}
+
 const Buffer::DataType* Buffer::get_data() const {
     return data_;
 }

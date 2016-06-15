@@ -70,11 +70,10 @@ class TopicConfiguration;
  * string payload = "some payload";
  *
  * // Write a message into an unassigned partition
- * producer.produce(topic, Partition(), Buffer(payload.data(), payload.size()));
+ * producer.produce(topic, Partition(), payload);
  *
- * // Write using a key
- * producer.produce(topic, Partition(), Buffer(payload.data(), payload.size()),
- *                  Buffer(key.data(), key.size()));
+ * // Write using a key on a fixed partition (42)
+ * producer.produce(topic, 42, payload, key);
  * 
  * \endcode
  */

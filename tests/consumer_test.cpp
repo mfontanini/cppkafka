@@ -118,7 +118,7 @@ TEST_F(ConsumerTest, AssignmentCallback) {
     Producer producer(make_producer_config());
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world!";
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    producer.produce(topic, partition, payload);
     runner.try_join();
 
     // All 3 partitions should be ours
@@ -173,7 +173,7 @@ TEST_F(ConsumerTest, Rebalance) {
     Producer producer(make_producer_config());
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world!";
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    producer.produce(topic, partition, payload);
     runner1.try_join();
     runner2.try_join();
 
@@ -215,7 +215,7 @@ TEST_F(ConsumerTest, OffsetCommit) {
     Producer producer(make_producer_config());
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world!";
-    producer.produce(topic, partition, Buffer(payload.data(), payload.size()));
+    producer.produce(topic, partition, payload);
     runner.try_join();
 
     ASSERT_EQ(1, runner.get_messages().size());
