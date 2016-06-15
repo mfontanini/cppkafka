@@ -27,6 +27,8 @@ ExternalProject_Add(
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+find_package(RdKafka REQUIRED)
+
 option(ENABLE_ZOOKEEPER "Whether to enable zookeeper support" ON)
 if (ENABLE_ZOOKEEPER)
     find_package(Zookeeper REQUIRED)

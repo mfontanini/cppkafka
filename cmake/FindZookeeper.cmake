@@ -4,7 +4,7 @@ find_path(ZOOKEEPER_ROOT_DIR
 
 find_path(ZOOKEEPER_INCLUDE_DIR
     NAMES zookeeper/zookeeper.h
-    HINTS ${ZOOOKEEPER_ROOT_DIR}/include
+    HINTS ${ZOOKEEPER_ROOT_DIR}/include
 )
 
 set (HINT_DIR ${ZOOKEEPER_ROOT_DIR}/lib)
@@ -19,12 +19,6 @@ find_package_handle_standard_args(ZOOKEEPER DEFAULT_MSG
     ZOOKEEPER_LIBRARY
     ZOOKEEPER_INCLUDE_DIR
 )
-
-include(CheckCXXSourceCompiles)
-
-set(CMAKE_REQUIRED_LIBRARIES ${ZOOKEEPER_LIBRARY})
-check_cxx_source_compiles("int main() { return 0; }" ZOOKEEPER_LINKS)
-set(CMAKE_REQUIRED_LIBRARIES)
 
 mark_as_advanced(
     ZOOKEEPER_ROOT_DIR
