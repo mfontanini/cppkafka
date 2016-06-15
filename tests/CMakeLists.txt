@@ -10,9 +10,12 @@ set(KAFKA_TEST_INSTANCE "kafka-vm:9092"
 set(ZOOKEEPER_TEST_INSTANCE "kafka-vm:2181" 
     CACHE STRING "The zookeeper instance to which to connect to run tests")
 
+add_custom_target(tests)
+
 macro(create_test test_name)
-    add_executable(${test_name}_test "${test_name}_test.cpp")
+    add_executable(${test_name}_test EXCLUDE_FROM_ALL "${test_name}_test.cpp")
     add_test(${test_name} ${test_name}_test)
+    add_dependencies(tests ${test_name}_test)
 endmacro()
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
