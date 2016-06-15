@@ -27,3 +27,10 @@ if (ENABLE_ZOOKEEPER)
 endif()
 
 add_library(cppkafka ${SOURCES})
+
+install( 
+    TARGETS cppkafka
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    COMPONENT dev
+)

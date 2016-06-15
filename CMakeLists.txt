@@ -46,6 +46,7 @@ configure_file(
 )
 
 add_subdirectory(src)
+add_subdirectory(include)
 # Make sure we build googletest before anything else
 add_dependencies(cppkafka googletest)
 enable_testing()
