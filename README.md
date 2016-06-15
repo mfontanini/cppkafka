@@ -36,3 +36,31 @@ int main() {
     producer.produce(topic, 0 /*partition*/, message);
 }
 ```
+
+# Compiling
+
+In order to compile _cppkafka_ you need:
+
+* _rdkafka >= 0.9_
+* Optionally _libzookeeper_. This is used by default, but you can disable it invoking cmake
+using the `-DENABLE_ZOOKEEPER=0` argument.
+* A compiler with good C++11 support. This was tested successfully on _g++ 4.8.3_. 
+* The boost library. _cppkafka_ only requires boost.optional, which is a header only library,
+so this doesn't add any additional runtime dependencies.
+
+Now, in order to build, just run:
+
+```Shell
+mkdir build
+cd build
+cmake ..
+make
+```
+
+# Using
+
+If you want to use _cppkafka_, you'll need to link your application with:
+
+* _cppkafka_
+* _rdkafka_
+* _zookeeper_ if you enabled it during build time (it's on by default).
