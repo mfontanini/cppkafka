@@ -120,8 +120,8 @@ TEST_F(ProducerTest, OneMessageOnFixedPartition) {
     const auto& messages = runner.get_messages();
     ASSERT_EQ(1, messages.size());
     const auto& message = messages[0];
-    EXPECT_EQ(payload, message.get_payload().as_string());
-    EXPECT_EQ("", message.get_key().as_string());
+    EXPECT_EQ(Buffer(payload), message.get_payload());
+    EXPECT_FALSE(message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());
@@ -151,8 +151,8 @@ TEST_F(ProducerTest, OneMessageUsingKey) {
     const auto& messages = runner.get_messages();
     ASSERT_EQ(1, messages.size());
     const auto& message = messages[0];
-    EXPECT_EQ(payload, message.get_payload().as_string());
-    EXPECT_EQ(key, message.get_key().as_string());
+    EXPECT_EQ(Buffer(payload), message.get_payload());
+    EXPECT_EQ(Buffer(key), message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());
@@ -183,9 +183,9 @@ TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {
     ASSERT_EQ(message_count, messages.size());
     for (const auto& message : messages) {
         EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
-        EXPECT_EQ(1, payloads.erase(message.get_payload().as_string()));
+        EXPECT_EQ(1, payloads.erase(message.get_payload()));
         EXPECT_EQ(0, message.get_error());
-        EXPECT_EQ("", message.get_key().as_string());
+        EXPECT_FALSE(message.get_key());
         EXPECT_GE(message.get_partition(), 0);
         EXPECT_LT(message.get_partition(), 3);
     }
@@ -205,14 +205,14 @@ TEST_F(ProducerTest, Callbacks) {
     bool deliver_report_called = false;
     Configuration config = make_producer_config();
     config.set_delivery_report_callback([&](Producer&, const Message& msg) {
-        EXPECT_EQ(payload, msg.get_payload().as_string());
+        EXPECT_EQ(Buffer(payload), msg.get_payload());
         deliver_report_called = true;
     });
 
     TopicConfiguration topic_config;
     topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
                                               int32_t partition_count) {
-        EXPECT_EQ(key, msg_key.as_string());
+        EXPECT_EQ(Buffer(key), msg_key);
         EXPECT_EQ(3, partition_count);
         EXPECT_EQ(KAFKA_TOPIC, topic.get_name());
         return 0;
@@ -227,8 +227,8 @@ TEST_F(ProducerTest, Callbacks) {
     const auto& messages = runner.get_messages();
     ASSERT_EQ(1, messages.size());
     const auto& message = messages[0];
-    EXPECT_EQ(payload, message.get_payload().as_string());
-    EXPECT_EQ(key, message.get_key().as_string());
+    EXPECT_EQ(Buffer(payload), message.get_payload());
+    EXPECT_EQ(Buffer(key), message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());
@@ -252,7 +252,7 @@ TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
     TopicConfiguration topic_config;
     topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
                                               int32_t partition_count) {
-        EXPECT_EQ(key, msg_key.as_string());
+        EXPECT_EQ(Buffer(key), msg_key);
         EXPECT_EQ(3, partition_count);
         EXPECT_EQ(KAFKA_TOPIC, topic.get_name());
         callback_called = true;
@@ -303,8 +303,8 @@ TEST_F(ProducerTest, ConnectUsingZookeeper) {
     const auto& messages = runner.get_messages();
     ASSERT_EQ(1, messages.size());
     const auto& message = messages[0];
-    EXPECT_EQ(payload, message.get_payload().as_string());
-    EXPECT_EQ(key, message.get_key().as_string());
+    EXPECT_EQ(Buffer(payload), message.get_payload());
+    EXPECT_EQ(Buffer(key), message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());

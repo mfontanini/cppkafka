@@ -27,9 +27,16 @@
  *
  */
 
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
 #include "buffer.h"
 
 using std::string;
+using std::equal;
+using std::ostream;
+using std::hex;
+using std::dec;
 
 namespace cppkafka {
 
@@ -55,8 +62,36 @@ Buffer::operator bool() const {
     return data_ != nullptr;
 }
 
-string Buffer::as_string() const {
+Buffer::operator string() const {
     return string(data_, data_ + size_);
+}
+
+bool Buffer::operator==(const Buffer& rhs) const {
+    if (get_size() != rhs.get_size()) {
+        return false;
+    }
+    return equal(get_data(), get_data() + get_size(), rhs.get_data());
+}
+
+bool Buffer::operator!=(const Buffer& rhs) const { 
+    return !(*this == rhs);
+}
+
+ostream& operator<<(ostream& output, const Buffer& rhs) {
+    for (size_t i = 0; i < rhs.get_size(); ++i) {
+        char c = static_cast<char>(rhs.get_data()[i]);
+        if (c >= ' ' && c < 127) {
+            output << c;
+        }
+        else {
+            output << "\\x";
+            if (c < 16) {
+                output << '0';
+            }
+            output << hex << (int)c << dec;
+        }
+    }
+    return output;
 }
 
 } // cppkafka

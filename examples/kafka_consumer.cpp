@@ -81,10 +81,10 @@ int main(int argc, char* argv[]) {
             else {
                 // Print the key (if any)
                 if (msg.get_key()) {
-                    cout << msg.get_key().as_string() << " -> ";
+                    cout << msg.get_key() << " -> ";
                 }
                 // Print the payload
-                cout << msg.get_payload().as_string() << endl;
+                cout << msg.get_payload() << endl;
                 // Now commit the message
                 consumer.commit(msg);
             }

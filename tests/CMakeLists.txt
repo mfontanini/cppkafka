@@ -30,6 +30,8 @@ create_test(producer)
 create_test(kafka_handle_base)
 create_test(topic_partition_list)
 create_test(configuration)
+create_test(buffer)
+
 if (ENABLE_ZOOKEEPER)
     create_test(zookeeper_watcher)
 endif()

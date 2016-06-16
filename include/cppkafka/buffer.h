@@ -31,6 +31,8 @@
 #define CPPKAFKA_BUFFER_H
 
 #include <cstddef>
+#include <vector>
+#include <iosfwd>
 #include <algorithm>
 
 namespace cppkafka {
@@ -63,7 +65,7 @@ public:
     template <typename T>
     Buffer(const T* data, size_t size) 
     : data_(reinterpret_cast<const DataType*>(data)), size_(size) {
-        static_assert(sizeof(T) == 1, "Buffer must point to elements of 1 byte");
+        static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
     /**
@@ -100,7 +102,33 @@ public:
     /**
      * Converts the contents of the buffer into a string
      */
-    std::string as_string() const;
+    operator std::string() const;
+
+    /**
+     * \brief Converts the contents of the buffer into a vector.
+     *
+     * The vector must contain some type of size 1 (e.g. uint8_t, char, etc).
+     */
+    template <typename T>
+    operator std::vector<T>() const {
+        static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
+        return std::vector<T>(data_, data_ + size_);
+    }
+
+    /**
+     * Compares this Buffer for equality 
+     */
+    bool operator==(const Buffer& rhs) const;
+
+    /**
+     * Compares this Buffer for inequality 
+     */
+    bool operator!=(const Buffer& rhs) const;
+
+    /**
+     * Output operator
+     */
+    friend std::ostream& operator<<(std::ostream& output, const Buffer& rhs);
 private:
     const DataType* data_;
     size_t size_;
