@@ -58,8 +58,16 @@ size_t Buffer::get_size() const {
     return size_;
 }
 
+Buffer::const_iterator Buffer::begin() const {
+    return data_;
+}
+
+Buffer::const_iterator Buffer::end() const {
+    return data_ + size_;
+}
+
 Buffer::operator bool() const {
-    return data_ != nullptr;
+    return size_ != 0;
 }
 
 Buffer::operator string() const {
@@ -78,17 +86,16 @@ bool Buffer::operator!=(const Buffer& rhs) const {
 }
 
 ostream& operator<<(ostream& output, const Buffer& rhs) {
-    for (size_t i = 0; i < rhs.get_size(); ++i) {
-        char c = static_cast<char>(rhs.get_data()[i]);
-        if (c >= ' ' && c < 127) {
-            output << c;
+    for (const uint8_t value : rhs) {
+        if (value >= 0x20 && value < 0x7f) {
+            output << value;
         }
         else {
             output << "\\x";
-            if (c < 16) {
+            if (value < 16) {
                 output << '0';
             }
-            output << hex << (int)c << dec;
+            output << hex << static_cast<int>(value) << dec;
         }
     }
     return output;

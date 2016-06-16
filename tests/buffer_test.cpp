@@ -15,6 +15,15 @@ public:
     
 };
 
+TEST_F(BufferTest, OperatorBool) {
+    string data = "Hello world!";
+    Buffer buffer1(data);
+    Buffer buffer2;
+
+    EXPECT_TRUE(buffer1);
+    EXPECT_FALSE(buffer2);
+}
+
 TEST_F(BufferTest, StringConversion) {
     string data = "Hello world!";
     Buffer buffer(data);

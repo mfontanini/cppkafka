@@ -49,7 +49,15 @@ namespace cppkafka {
  */
 class Buffer {
 public:
+    /**
+     * The type of data this buffer points to
+     */
     using DataType = unsigned char;
+
+    /**
+     * The const iterator type
+     */
+    using const_iterator = const DataType*;
 
     /**
      * Constructs an empty buffer
@@ -93,6 +101,16 @@ public:
      * Getter for the size of the buffer
      */
     size_t get_size() const;
+
+    /**
+     * Gets an iterator to the beginning of this buffer
+     */
+    const_iterator begin() const;
+
+    /**
+     * Gets an iterator to the end of this buffer
+     */
+    const_iterator end() const;
 
     /**
      * Checks whether this is a non empty buffer
