@@ -13,6 +13,7 @@ using std::endl;
 using cppkafka::Consumer;
 using cppkafka::Configuration;
 using cppkafka::Message;
+using cppkafka::TopicPartitionList;
 
 namespace po = boost::program_options;
 
@@ -59,6 +60,16 @@ int main(int argc, char* argv[]) {
 
     // Create the consumer
     Consumer consumer(config);
+
+    // Print the assigned partitions on assignment
+    consumer.set_assignment_callback([](const TopicPartitionList& partitions) {
+        cout << "Got assigned: " << partitions << endl;
+    });
+
+    // Print the revoked partitions on revocation
+    consumer.set_revocation_callback([](const TopicPartitionList& partitions) {
+        cout << "Got revoked: " << partitions << endl;
+    });
 
     // Subscribe to the topic
     consumer.subscribe({ topic_name });
