@@ -55,9 +55,9 @@ class TopicConfiguration;
  * In order to produce messages you could do something like:
  *
  * \code
- * // Use the zookeeper extension
+ * // Set the broker list
  * Configuration config;
- * config.set("zookeeper", "127.0.0.1:2181");
+ * config.set("metadata.broker.list", "127.0.0.1:9092");
  *
  * // Create a producer 
  * Producer producer(config);

@@ -4,4 +4,3 @@ install(
     DESTINATION include/cppkafka
     COMPONENT Headers
 )
-add_subdirectory(zookeeper)

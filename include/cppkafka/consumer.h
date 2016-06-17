@@ -52,10 +52,9 @@ class TopicConfiguration;
  * Semi-simple code showing how to use this class
  *
  * \code
- * // Create a configuration and set the group.id and zookeeper fields 
+ * // Create a configuration and set the group.id and broker list fields 
  * Configuration config;
- * // This is only valid when using the zookeeper extension
- * config.set("zookeeper", "127.0.0.1:2181");
+ * config.set("metadata.broker.list", "127.0.0.1:9092");
  * config.set("group.id", "foo");
  *
  * // Create a consumer

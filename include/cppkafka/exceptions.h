@@ -76,14 +76,6 @@ private:
     rd_kafka_resp_err_t error_code_;
 };
 
-/** 
- * An exception when using zookeeper
- */
-class ZookeeperException : public Exception {
-public:
-    using Exception::Exception;
-};
-
 } // cppkafka
 
 #endif // CPPKAFKA_EXCEPTIONS_H

@@ -12,22 +12,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(RdKafka REQUIRED)
 
-option(ENABLE_ZOOKEEPER "Whether to enable zookeeper support" ON)
-if (ENABLE_ZOOKEEPER)
-    find_package(Zookeeper REQUIRED)
-
-    message(STATUS "Found zookeeper library")
-    include_directories(${ZOOKEEPER_INCLUDE_DIR})
-
-    set(CPPKAFKA_HAVE_ZOOKEEPER ON)
-endif()
-
-# Configuration file
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/cppkafka/config.h.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/cppkafka/config.h"
-)
-
 add_subdirectory(src)
 add_subdirectory(include)
 

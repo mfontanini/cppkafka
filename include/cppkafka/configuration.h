@@ -87,16 +87,6 @@ public:
      *
      * This will call rd_kafka_conf_set under the hood.
      *
-     * If the zookeeper extension is enabled (cppkafka is build with -DENABLE_ZOOKEEPER=1), then
-     * this accepts 2 extra attribute names:
-     *
-     * - "zookeeper" which indicates the zookeeper endpoint to connect to
-     * - "zookeeper.receive.timeout.ms" which indicates the zookeeper receive timeout
-     *
-     * When the "zookeeper" attribute is used, a Consumer or Producer constructed using this
-     * configuration will use zookeeper under the hood to get the broker list and watch for
-     * broker updates.
-     *
      * \param name The name of the attribute
      * \param value The value of the attribute
      */
@@ -204,10 +194,8 @@ public:
      */
     boost::optional<TopicConfiguration>& get_default_topic_configuration();
 private:
-    static const std::unordered_set<std::string> VALID_EXTENSIONS;
     using HandlePtr = ClonablePtr<rd_kafka_conf_t, decltype(&rd_kafka_conf_destroy),
                                   decltype(&rd_kafka_conf_dup)>;
-    using PropertiesMap = std::unordered_map<std::string, std::string>;
 
     Configuration(rd_kafka_conf_t* ptr);
     static HandlePtr make_handle(rd_kafka_conf_t* ptr);
@@ -221,7 +209,6 @@ private:
     LogCallback log_callback_;
     StatsCallback stats_callback_;
     SocketCallback socket_callback_;
-    PropertiesMap extension_properties_;
 };
 
 } // cppkafka

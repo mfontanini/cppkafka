@@ -16,26 +16,22 @@ using cppkafka::Message;
 
 namespace po = boost::program_options;
 
-#ifndef CPPKAFKA_HAVE_ZOOKEEPER
-    static_assert(false, "Examples require the zookeeper extension");
-#endif
-
 bool running = true;
 
 int main(int argc, char* argv[]) {
-    string zookeeper_endpoint;
+    string brokers;
     string topic_name;
     string group_id;
 
     po::options_description options("Options");
     options.add_options()
-        ("help,h",    "produce this help message")
-        ("zookeeper", po::value<string>(&zookeeper_endpoint)->required(), 
-                      "the zookeeper endpoint")
-        ("topic",     po::value<string>(&topic_name)->required(),
-                      "the topic in which to write to")
-        ("group-id",  po::value<string>(&group_id)->required(),
-                      "the consumer group id")
+        ("help,h",   "produce this help message")
+        ("brokers",  po::value<string>(&brokers)->required(), 
+                     "the kafka broker list")
+        ("topic",    po::value<string>(&topic_name)->required(),
+                     "the topic in which to write to")
+        ("group-id", po::value<string>(&group_id)->required(),
+                     "the consumer group id")
         ;
 
     po::variables_map vm;
@@ -56,7 +52,7 @@ int main(int argc, char* argv[]) {
 
     // Construct the configuration
     Configuration config;
-    config.set("zookeeper", zookeeper_endpoint);
+    config.set("metadata.broker.list", brokers);
     config.set("group.id", group_id);
     // Disable auto commit
     config.set("enable.auto.commit", false);
@@ -66,6 +62,8 @@ int main(int argc, char* argv[]) {
 
     // Subscribe to the topic
     consumer.subscribe({ topic_name });
+
+    cout << "Consuming messages from topic " << topic_name << endl;
 
     // Now read lines and write them into kafka
     while (running) {

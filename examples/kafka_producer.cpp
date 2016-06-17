@@ -18,20 +18,16 @@ using cppkafka::Partition;
 
 namespace po = boost::program_options;
 
-#ifndef CPPKAFKA_HAVE_ZOOKEEPER
-    static_assert(false, "Examples require the zookeeper extension");
-#endif
-
 int main(int argc, char* argv[]) {
-    string zookeeper_endpoint;
+    string brokers;
     string topic_name;
     int partition_value = -1;
 
     po::options_description options("Options");
     options.add_options()
         ("help,h",    "produce this help message")
-        ("zookeeper", po::value<string>(&zookeeper_endpoint)->required(), 
-                      "the zookeeper endpoint")
+        ("brokers",   po::value<string>(&brokers)->required(), 
+                      "the kafka broker list")
         ("topic",     po::value<string>(&topic_name)->required(),
                       "the topic in which to write to")
         ("partition", po::value<int>(&partition_value),
@@ -60,12 +56,14 @@ int main(int argc, char* argv[]) {
 
     // Construct the configuration
     Configuration config;
-    config.set("zookeeper", zookeeper_endpoint);
+    config.set("metadata.broker.list", brokers);
 
     // Create the producer
     Producer producer(config);
     // Get the topic we want
     Topic topic = producer.get_topic(topic_name);
+
+    cout << "Producing messages into topic " << topic_name << endl;
 
     // Now read lines and write them into kafka
     string line;
