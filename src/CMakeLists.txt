@@ -15,7 +15,7 @@ set(SOURCES
     consumer.cpp
 )
 
-add_library(cppkafka ${SOURCES})
+add_library(cppkafka ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 
 install( 
     TARGETS cppkafka

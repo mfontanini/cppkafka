@@ -8,6 +8,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
+# Build output checks
+option(CPPKAFKA_BUILD_SHARED "Build cppkafka as a shared library." ON)
+if(CPPKAFKA_BUILD_SHARED)
+    message(STATUS "Build will generate a shared library. "
+            "Use CPPKAFKA_BUILD_SHARED=0 to perform a static build")
+    set(CPPKAFKA_LIBRARY_TYPE SHARED)
+else()
+    message(STATUS "Build will generate a static library.")
+    set(CPPKAFKA_LIBRARY_TYPE STATIC)
+    add_definitions("-DCPPKAFKA_STATIC=1")
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/include/cppkafka)
 
 # Look for Boost (just need boost.optional headers here)
