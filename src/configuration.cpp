@@ -39,7 +39,6 @@ using std::string;
 using std::map;
 using std::move;
 using std::vector;
-using std::unordered_set;
 
 using boost::optional;
 

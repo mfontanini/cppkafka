@@ -37,7 +37,6 @@
 #include <mutex>
 #include <tuple>
 #include <librdkafka/rdkafka.h>
-#include "metadata.h"
 #include "topic_partition.h"
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
@@ -46,6 +45,8 @@
 namespace cppkafka {
 
 class Topic;
+class Metadata;
+class TopicMetadata;
 
 /**
  * Base class for kafka consumer/producer
@@ -137,7 +138,7 @@ public:
      *
      * \param topic The topic to fetch information for
      */
-    Metadata get_metadata(const Topic& topic) const;
+    TopicMetadata get_metadata(const Topic& topic) const;
 
     /**
      * Returns the kafka handle name

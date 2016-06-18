@@ -75,6 +75,10 @@ string Message::get_error_string() const {
     return rd_kafka_err2str(handle_->err);
 }
 
+bool Message::is_eof() const {
+    return get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF;
+}
+
 int Message::get_partition() const {
     return handle_->partition;
 }

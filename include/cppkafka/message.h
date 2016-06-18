@@ -90,6 +90,11 @@ public:
     std::string get_error_string() const;    
 
     /**
+     * Utility function to check for get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF
+     */
+    bool is_eof() const;
+
+    /**
      * Gets the topic that this message belongs to
      */
     std::string get_topic() const;

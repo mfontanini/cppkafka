@@ -28,6 +28,7 @@
  */
 
 #include "kafka_handle_base.h"
+#include "metadata.h"
 #include "exceptions.h"
 #include "topic.h"
 #include "topic_partition_list.h"
@@ -105,8 +106,13 @@ Metadata KafkaHandleBase::get_metadata() const {
     return get_metadata(nullptr);
 }
 
-Metadata KafkaHandleBase::get_metadata(const Topic& topic) const {
-    return get_metadata(topic.get_handle());
+TopicMetadata KafkaHandleBase::get_metadata(const Topic& topic) const {
+    Metadata md = get_metadata(topic.get_handle());
+    auto topics = md.get_topics();
+    if (topics.empty()) {
+        throw Exception("Failed to find metadata for topic");
+    }
+    return topics.front();
 }
 
 string KafkaHandleBase::get_name() const {

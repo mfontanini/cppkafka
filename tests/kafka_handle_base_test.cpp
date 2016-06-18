@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <gtest/gtest.h>
 #include "cppkafka/producer.h"
+#include "cppkafka/metadata.h"
 
 using std::vector;
 using std::set;
@@ -93,5 +94,5 @@ TEST_F(KafkaHandleBaseTest, TopicsMetadata) {
 
     // Now get the whole metadata only for this topic
     Topic topic = producer.get_topic(KAFKA_TOPIC);
-    EXPECT_EQ(1, producer.get_metadata(topic).get_topics().size());
+    EXPECT_EQ(KAFKA_TOPIC, producer.get_metadata(topic).get_topic());
 }
