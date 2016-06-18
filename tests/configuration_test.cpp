@@ -19,7 +19,7 @@ TEST_F(ConfigurationTest, GetSetConfig) {
 
 TEST_F(ConfigurationTest, GetSetTopicConfig) {
     TopicConfiguration config;
-    config.set("auto.commit.enable", "true");
+    config.set("auto.commit.enable", true);
     EXPECT_EQ("true", config.get("auto.commit.enable"));
 
     EXPECT_THROW(config.get("asd"), ConfigOptionNotFound);
@@ -32,4 +32,18 @@ TEST_F(ConfigurationTest, SetOverloads) {
 
     EXPECT_EQ("true", config.get("enable.auto.commit"));
     EXPECT_EQ("100", config.get("auto.commit.interval.ms"));
+}
+
+TEST_F(ConfigurationTest, GetAll) {
+    Configuration config;
+    config.set("enable.auto.commit", false);
+    auto option_map = config.get_all();
+    EXPECT_EQ("false", option_map.at("enable.auto.commit"));
+}
+
+TEST_F(ConfigurationTest, TopicGetAll) {
+    TopicConfiguration config;
+    config.set("auto.commit.enable", false);
+    auto option_map = config.get_all();
+    EXPECT_EQ("false", option_map.at("auto.commit.enable"));
 }

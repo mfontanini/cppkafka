@@ -36,6 +36,7 @@
 #include "consumer.h"
 
 using std::string;
+using std::map;
 using std::move;
 using std::vector;
 using std::unordered_set;
@@ -192,6 +193,14 @@ string Configuration::get(const string& name) const {
     vector<char> buffer(size);
     rd_kafka_conf_get(handle_.get(), name.data(), buffer.data(), &size);
     return string(buffer.data());
+}
+
+map<string, string> Configuration::get_all() const {
+    size_t count = 0;
+    const char** all = rd_kafka_conf_dump(handle_.get(), &count);
+    map<string, string> output = parse_dump(all, count);
+    rd_kafka_conf_dump_free(all, count);
+    return output;
 }
 
 const Configuration::DeliveryReportCallback& Configuration::get_delivery_report_callback() const {

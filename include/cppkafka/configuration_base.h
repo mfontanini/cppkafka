@@ -31,6 +31,7 @@
 #define CPPKAFKA_CONFIGURATION_BASE_H
 
 #include <string>
+#include <map>
 
 namespace cppkafka {
 
@@ -58,6 +59,14 @@ public:
      */
     void set(const std::string& name, const char* value) {
         proxy_set(name, value);
+    }
+protected:
+    static std::map<std::string, std::string> parse_dump(const char** values, size_t count) {
+        std::map<std::string, std::string> output;
+        for (size_t i = 0; i < count; i += 2) {
+            output[values[i]] = values[i + 1];
+        }
+        return output;
     }
 private:
     void proxy_set(const std::string& name, const std::string& value) {

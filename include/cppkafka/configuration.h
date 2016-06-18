@@ -33,8 +33,6 @@
 #include <memory>
 #include <string>
 #include <functional>
-#include <unordered_map>
-#include <unordered_set>
 #include <chrono>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
@@ -148,6 +146,11 @@ public:
      * \throws ConfigOptionNotFound if the option is not present
      */
     std::string get(const std::string& name) const;
+
+    /**
+     * Gets all options, including default values which are set by rdkafka
+     */
+    std::map<std::string, std::string> get_all() const;
 
     /**
      * Gets the delivery report callback
