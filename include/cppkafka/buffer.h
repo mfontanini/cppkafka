@@ -34,6 +34,7 @@
 #include <vector>
 #include <iosfwd>
 #include <algorithm>
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -47,7 +48,7 @@ namespace cppkafka {
  * pointer that this buffer points to will still until the call to Producer::produce
  * returns.
  */
-class Buffer {
+class CPPKAFKA_API Buffer {
 public:
     /**
      * The type of data this buffer points to

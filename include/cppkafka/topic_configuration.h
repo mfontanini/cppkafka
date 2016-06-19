@@ -35,6 +35,7 @@
 #include <librdkafka/rdkafka.h>
 #include "clonable_ptr.h"
 #include "configuration_base.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -46,7 +47,7 @@ class Buffer;
  *
  * ConfigurationBase provides some extra overloads for set
  */
-class TopicConfiguration : public ConfigurationBase<TopicConfiguration> {
+class CPPKAFKA_API TopicConfiguration : public ConfigurationBase<TopicConfiguration> {
 public:
     /**
      * \brief Partitioner callback

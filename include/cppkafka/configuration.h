@@ -40,6 +40,7 @@
 #include "topic_configuration.h"
 #include "clonable_ptr.h"
 #include "configuration_base.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -56,7 +57,7 @@ class KafkaHandleBase;
  *
  * Some other overloads for Configuration::set are given via ConfigurationBase.
  */
-class Configuration : public ConfigurationBase<Configuration> {
+class CPPKAFKA_API Configuration : public ConfigurationBase<Configuration> {
 public:
     using DeliveryReportCallback = std::function<void(Producer& producer, const Message&)>;
     using OffsetCommitCallback = std::function<void(Consumer& consumer, rd_kafka_resp_err_t,

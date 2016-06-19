@@ -34,6 +34,7 @@
 #include <iosfwd>
 #include <algorithm>
 #include <librdkafka/rdkafka.h>
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -47,12 +48,12 @@ using TopicPartitionsListPtr = std::unique_ptr<rd_kafka_topic_partition_list_t,
 using TopicPartitionList = std::vector<TopicPartition>;
 
 // Conversions between rdkafka handles and TopicPartitionList
-TopicPartitionsListPtr convert(const std::vector<TopicPartition>& topic_partitions);
-std::vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions);
-std::vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions);
-TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
+CPPKAFKA_API TopicPartitionsListPtr convert(const std::vector<TopicPartition>& topic_partitions);
+CPPKAFKA_API std::vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions);
+CPPKAFKA_API std::vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions);
+CPPKAFKA_API TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
 
-std::ostream& operator<<(std::ostream& output, const TopicPartitionList& rhs);
+CPPKAFKA_API std::ostream& operator<<(std::ostream& output, const TopicPartitionList& rhs);
 
 } // cppkafka
 

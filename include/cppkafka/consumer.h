@@ -36,6 +36,7 @@
 #include <functional>
 #include "kafka_handle_base.h"
 #include "message.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -92,7 +93,7 @@ class TopicConfiguration;
  * }
  * \endcode
  */
-class Consumer : public KafkaHandleBase {
+class CPPKAFKA_API Consumer : public KafkaHandleBase {
 public:
     using AssignmentCallback = std::function<void(TopicPartitionList&)>;
     using RevocationCallback = std::function<void(const TopicPartitionList&)>;

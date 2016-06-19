@@ -36,13 +36,14 @@
 #include <cstdint>
 #include <unordered_set>
 #include <librdkafka/rdkafka.h>
+#include "macros.h"
 
 namespace cppkafka {
 
 /**
  * Represents the metadata for a partition
  */
-class PartitionMetadata {
+class CPPKAFKA_API PartitionMetadata {
 public:
     PartitionMetadata(const rd_kafka_metadata_partition& partition);
 
@@ -81,7 +82,7 @@ private:
 /**
  * Represents the metadata for a topic
  */
-class TopicMetadata {
+class CPPKAFKA_API TopicMetadata {
 public:
     TopicMetadata(const rd_kafka_metadata_topic& topic);
 
@@ -108,7 +109,7 @@ private:
 /**
  * Represents a broker's metadata
  */
-class BrokerMetadata {
+class CPPKAFKA_API BrokerMetadata {
 public:
     BrokerMetadata(const rd_kafka_metadata_broker_t& broker);
 
@@ -135,7 +136,7 @@ private:
 /**
  * Represents metadata for brokers, topics and partitions
  */
-class Metadata {
+class CPPKAFKA_API Metadata {
 public:
     Metadata(const rd_kafka_metadata_t* ptr);
 

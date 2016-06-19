@@ -35,6 +35,7 @@
 #include <librdkafka/rdkafka.h>
 #include "buffer.h"
 #include "topic.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -48,7 +49,7 @@ namespace cppkafka {
  * necessary when calling Consumer::poll() as any poll operation that returns a null pointer will
  * return an empty message.
  */
-class Message {
+class CPPKAFKA_API Message {
 public:
     /**
      * Constructs a message that won't take ownership of the given pointer

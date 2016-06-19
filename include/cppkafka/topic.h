@@ -34,6 +34,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -42,7 +43,7 @@ namespace cppkafka {
  *
  * This is a simple wrapper over a rd_kafka_topic_t*
  */
-class Topic {
+class CPPKAFKA_API Topic {
 public:
     /**
      * \brief Creates a Topic object that doesn't take ownership of the handle

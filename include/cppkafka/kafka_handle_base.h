@@ -41,6 +41,7 @@
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
 #include "configuration.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -51,7 +52,7 @@ class TopicMetadata;
 /**
  * Base class for kafka consumer/producer
  */
-class KafkaHandleBase {
+class CPPKAFKA_API KafkaHandleBase {
 public:
     using OffsetTuple = std::tuple<int64_t, int64_t>;
 

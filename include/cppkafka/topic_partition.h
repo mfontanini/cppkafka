@@ -33,13 +33,14 @@
 #include <string>
 #include <iosfwd>
 #include <cstdint>
+#include "macros.h"
 
 namespace cppkafka {
 
 /**
  * Represents a topic/partition
  */
-class TopicPartition {
+class CPPKAFKA_API TopicPartition {
 public:
     /**
      * Special offsets enum

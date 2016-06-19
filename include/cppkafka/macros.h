@@ -27,56 +27,20 @@
  *
  */
 
-#ifndef CPPKAFKA_EXCEPTIONS_H
-#define CPPKAFKA_EXCEPTIONS_H
+#ifndef CPPKAFKA_MACROS_H
+#define CPPKAFKA_MACROS_H
 
-#include <stdexcept>
-#include <string>
-#include <librdkafka/rdkafka.h>
-#include "macros.h"
+// If cppkafka was built into a shared library
+#if defined(_WIN32) && !defined(CPPKAFKA_STATIC)
+    // Export/import symbols, depending on whether we're compiling or consuming the lib
+    #ifdef cppkafka_EXPORTS
+        #define CPPKAFKA_API __declspec(dllexport)
+    #else
+        #define CPPKAFKA_API __declspec(dllimport)
+    #endif // cppkafka_EXPORTS
+#else 
+    // Otherwise, default this to an empty macro
+    #define CPPKAFKA_API
+#endif // _WIN32 && !CPPKAFKA_STATIC
 
-namespace cppkafka {
-
-/**
- * Base class for all cppkafka exceptions
- */
-class CPPKAFKA_API Exception : public std::exception {
-public:
-    Exception(std::string message);
-
-    const char* what() const noexcept;
-private:
-    std::string message_;
-};
-
-/**
- * A configuration related error
- */
-class CPPKAFKA_API ConfigException : public Exception {
-public:
-    ConfigException(const std::string& config_name, const std::string& error);
-};
-
-/** 
- * Indicates a configuration option was not set
- */
-class CPPKAFKA_API ConfigOptionNotFound : public Exception {
-public:
-    ConfigOptionNotFound(const std::string& config_name);
-};
-
-/**
- * A generic rdkafka handle error
- */
-class CPPKAFKA_API HandleException : public Exception {
-public:
-    HandleException(rd_kafka_resp_err_t error_code);
-
-    rd_kafka_resp_err_t get_error_code() const;
-private:
-    rd_kafka_resp_err_t error_code_;
-};
-
-} // cppkafka
-
-#endif // CPPKAFKA_EXCEPTIONS_H
+#endif // CPPKAFKA_MACROS_H

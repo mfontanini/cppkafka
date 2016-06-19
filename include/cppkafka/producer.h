@@ -36,6 +36,7 @@
 #include "buffer.h"
 #include "topic.h"
 #include "partition.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -77,7 +78,7 @@ class TopicConfiguration;
  * 
  * \endcode
  */
-class Producer : public KafkaHandleBase {
+class CPPKAFKA_API Producer : public KafkaHandleBase {
 public:
     enum PayloadPolicy {
         COPY_PAYLOAD = RD_KAFKA_MSG_F_COPY, ///< Means RD_KAFKA_MSG_F_COPY

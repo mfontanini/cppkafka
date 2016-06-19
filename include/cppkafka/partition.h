@@ -30,6 +30,8 @@
 #ifndef CPPKAFKA_PARTITION_H
 #define CPPKAFKA_PARTITION_H
 
+#include "macros.h"
+
 namespace cppkafka {
 
 /**
@@ -38,7 +40,7 @@ namespace cppkafka {
  * This class is basically a wrapper over an int that when default constructed will default
  * to using RD_KAFKA_PARTITION_UA so you don't need to use the macro name.
  */
-class Partition {
+class CPPKAFKA_API Partition {
 public:
     /**
      * \brief Constructs an unassigned partition
