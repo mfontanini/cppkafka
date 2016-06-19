@@ -64,7 +64,7 @@ public:
     /**
      * \brief Pauses consumption/production from the given topic/partition list
      *
-     * This translates into a call to  rd_kafka_pause_partitions
+     * This translates into a call to rd_kafka_pause_partitions
      *
      * \param topic_partitions The topic/partition list to pause consuming/producing from/to
      */
@@ -87,6 +87,15 @@ public:
      * \param timeout The timeout to be set
      */
     void set_timeout(const std::chrono::milliseconds& timeout);
+
+    /**
+     * \brief Adds one or more brokers to this handle's broker list
+     *
+     * This calls rd_kafka_brokers_add using the provided broker list.
+     *
+     * \param brokers The broker list endpoint string
+     */
+    void add_brokers(const std::string& brokers);
 
     /**
      * \brief Queries the offset for the given topic/partition

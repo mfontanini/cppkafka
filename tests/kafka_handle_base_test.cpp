@@ -47,7 +47,8 @@ public:
 const string KafkaHandleBaseTest::KAFKA_TOPIC = "cppkafka_test1";
 
 TEST_F(KafkaHandleBaseTest, BrokersMetadata) {
-    Producer producer(make_config());
+    Producer producer({});
+    producer.add_brokers(KAFKA_TEST_INSTANCE);
     Metadata metadata = producer.get_metadata();
 
     vector<BrokerMetadata> brokers = metadata.get_brokers();

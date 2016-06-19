@@ -74,6 +74,10 @@ void KafkaHandleBase::set_timeout(const milliseconds& timeout) {
     timeout_ms_ = timeout;
 }
 
+void KafkaHandleBase::add_brokers(const string& brokers) {
+    rd_kafka_brokers_add(handle_.get(), brokers.data());
+}
+
 rd_kafka_t* KafkaHandleBase::get_handle() const {
     return handle_.get();
 }
