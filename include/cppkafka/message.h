@@ -32,12 +32,15 @@
 
 #include <memory>
 #include <cstdint>
+#include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
 #include "buffer.h"
 #include "topic.h"
 #include "macros.h"
 
 namespace cppkafka {
+
+class MessageTimestamp;
 
 /**
  * \brief Thin wrapper over a rdkafka message handle
@@ -126,7 +129,14 @@ public:
      * This should only be used on messages produced by a Producer that were set a private data
      * attribute 
      */
-    void* private_data() const;
+    void* get_private_data() const;
+
+    /**
+     * \brief Gets this Message's timestamp
+     *
+     * If calling rd_kafka_message_timestamp returns -1, then boost::none_t will be returned.
+     */
+    boost::optional<MessageTimestamp> get_timestamp() const;
 
     /**
      * Indicates whether this message is valid (not null)
@@ -148,6 +158,35 @@ private:
     HandlePtr handle_;
     Buffer payload_;
     Buffer key_;
+};
+
+class CPPKAFKA_API MessageTimestamp {
+public:
+    /**
+     * The timestamp type
+     */
+    enum TimestampType {
+        CREATE_TIME = RD_KAFKA_TIMESTAMP_CREATE_TIME,
+        LOG_APPEND_TIME = RD_KAFKA_TIMESTAMP_LOG_APPEND_TIME
+    };
+
+    /**
+     * Constructs a timestamp object
+     */
+    MessageTimestamp(int64_t timestamp, TimestampType type);
+
+    /**
+     * Gets the timestamp value
+     */
+    int64_t get_timestamp() const;
+
+    /**
+     * Gets the timestamp type
+     */
+    TimestampType get_type() const;
+private:
+    int64_t timestamp_;
+    TimestampType type_;
 };
 
 } // cppkafka

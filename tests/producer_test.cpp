@@ -156,6 +156,8 @@ TEST_F(ProducerTest, OneMessageUsingKey) {
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_EQ(0, message.get_error());
+    // NOTE: if this line fails, then you're using kafka 0.10+ and that's okay
+    EXPECT_FALSE(message.get_timestamp());
 }
 
 TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {

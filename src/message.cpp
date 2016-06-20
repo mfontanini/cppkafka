@@ -31,6 +31,9 @@
 
 using std::string;
 
+using boost::optional;
+using boost::none_t;
+
 namespace cppkafka {
 
 void dummy_deleter(rd_kafka_message_t*) {
@@ -99,8 +102,17 @@ int64_t Message::get_offset() const {
     return handle_->offset;
 }
 
-void* Message::private_data() const {
+void* Message::get_private_data() const {
     return handle_->_private;
+}
+
+optional<MessageTimestamp> Message::get_timestamp() const {
+    rd_kafka_timestamp_type_t type = RD_KAFKA_TIMESTAMP_NOT_AVAILABLE;
+    int64_t timestamp = rd_kafka_message_timestamp(handle_.get(), &type);
+    if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
+        return none_t();
+    }
+    return MessageTimestamp(timestamp, static_cast<MessageTimestamp::TimestampType>(type));
 }
 
 Message::operator bool() const {
@@ -109,6 +121,21 @@ Message::operator bool() const {
 
 rd_kafka_message_t* Message::get_handle() const {
     return handle_.get();
+}
+
+// MessageTimestamp
+
+MessageTimestamp::MessageTimestamp(int64_t timestamp, TimestampType type)
+: timestamp_(timestamp), type_(type) {
+
+}
+
+int64_t MessageTimestamp::get_timestamp() const {
+    return timestamp_;
+}
+
+MessageTimestamp::TimestampType MessageTimestamp::get_type() const {
+    return type_;
 }
 
 } // cppkafka
