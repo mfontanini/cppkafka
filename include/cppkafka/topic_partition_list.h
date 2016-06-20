@@ -33,6 +33,7 @@
 #include <memory>
 #include <iosfwd>
 #include <algorithm>
+#include <vector>
 #include <librdkafka/rdkafka.h>
 #include "macros.h"
 

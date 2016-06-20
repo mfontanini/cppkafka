@@ -171,7 +171,7 @@ void Configuration::set_socket_callback(SocketCallback callback) {
 }
 
 void Configuration::set_default_topic_configuration(optional<TopicConfiguration> config) {
-    default_topic_config_ = move(config);
+    default_topic_config_ = std::move(config);
 }
 
 bool Configuration::has_property(const string& name) const {

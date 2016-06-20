@@ -16,6 +16,7 @@ set(SOURCES
 )
 
 add_library(cppkafka ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
+target_link_libraries(cppkafka ${RDKAFKA_LIBRARY})
 
 install( 
     TARGETS cppkafka
