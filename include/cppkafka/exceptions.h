@@ -65,6 +65,14 @@ public:
     ConfigOptionNotFound(const std::string& config_name);
 };
 
+/** 
+ * Indicates a configuration option value could not be converted to a specified type
+ */
+class CPPKAFKA_API InvalidConfigOptionType : public Exception {
+public:
+    InvalidConfigOptionType(const std::string& config_name, const std::string& type);
+};
+
 /**
  * A generic rdkafka handle error
  */

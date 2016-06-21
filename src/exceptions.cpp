@@ -58,6 +58,13 @@ ConfigOptionNotFound::ConfigOptionNotFound(const string& config_name)
 
 }
 
+// InvalidConfigOptionType
+
+InvalidConfigOptionType::InvalidConfigOptionType(const string& config_name, const string& type) 
+: Exception(config_name + " could not be converted to " + type) {
+
+}
+
 // HandleException
 
 HandleException::HandleException(rd_kafka_resp_err_t error_code) 

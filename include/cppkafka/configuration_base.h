@@ -32,11 +32,15 @@
 
 #include <string>
 #include <map>
+#include "exceptions.h"
 
 namespace cppkafka {
 
 template <typename Concrete>
 class ConfigurationBase {
+private:
+    template <typename T>
+    struct Type2Type { };
 public:
     /**
      * Sets a bool value
@@ -60,6 +64,25 @@ public:
     void set(const std::string& name, const char* value) {
         proxy_set(name, value);
     }
+
+    /**
+     * \brief Gets a value, converting it to the given type.
+     *
+     * If the configuration option is not found, then ConfigOptionNotFound is thrown.
+     *
+     * If the configuration value can't be converted to the given type, then 
+     * InvalidConfigOptionType is thrown.
+     *
+     * Valid conversion types:
+     * * std::string
+     * * bool
+     * * int
+     */
+    template <typename T>
+    T get(const std::string& name) const {
+        std::string value = static_cast<const Concrete&>(*this).get(name);
+        return convert(value, Type2Type<T>());
+    }
 protected:
     static std::map<std::string, std::string> parse_dump(const char** values, size_t count) {
         std::map<std::string, std::string> output;
@@ -71,6 +94,31 @@ protected:
 private:
     void proxy_set(const std::string& name, const std::string& value) {
         static_cast<Concrete&>(*this).set(name, value);
+    }
+
+    static std::string convert(const std::string& value, Type2Type<std::string>) {
+        return value;
+    }
+
+    static bool convert(const std::string& value, Type2Type<bool>) {
+        if (value == "true") {
+            return true;
+        }
+        else if (value == "false") {
+            return false;
+        }
+        else {
+            throw InvalidConfigOptionType(value, "bool");
+        }
+    }
+
+    static int convert(const std::string& value, Type2Type<int>) {
+        try {
+            return std::stoi(value);
+        }
+        catch (std::exception&) {
+            throw InvalidConfigOptionType(value, "int");
+        }
     }
 };
 

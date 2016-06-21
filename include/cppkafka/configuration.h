@@ -75,6 +75,7 @@ public:
     using SocketCallback = std::function<int(int domain, int type, int protoco)>;
 
     using ConfigurationBase<Configuration>::set;
+    using ConfigurationBase<Configuration>::get;
 
     /**
      * Default constructs a Configuration object

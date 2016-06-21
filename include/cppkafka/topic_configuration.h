@@ -64,6 +64,7 @@ public:
                                                       int32_t partition_count)>;
 
     using ConfigurationBase<TopicConfiguration>::set;
+    using ConfigurationBase<TopicConfiguration>::get;
 
     /**
      * Default constructs a topic configuration object
