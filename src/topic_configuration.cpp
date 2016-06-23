@@ -67,7 +67,7 @@ TopicConfiguration::TopicConfiguration(rd_kafka_topic_conf_t* ptr)
 
 }
 
-void TopicConfiguration::set(const string& name, const string& value) {
+TopicConfiguration& TopicConfiguration::set(const string& name, const string& value) {
     char error_buffer[512];
     rd_kafka_conf_res_t result;
     result = rd_kafka_topic_conf_set(handle_.get(), name.data(), value.data(), error_buffer,
@@ -75,15 +75,18 @@ void TopicConfiguration::set(const string& name, const string& value) {
     if (result != RD_KAFKA_CONF_OK) {
         throw ConfigException(name, error_buffer);
     }
+    return *this;
 }
 
-void TopicConfiguration::set_partitioner_callback(PartitionerCallback callback) {
+TopicConfiguration& TopicConfiguration::set_partitioner_callback(PartitionerCallback callback) {
     partitioner_callback_ = move(callback);
     rd_kafka_topic_conf_set_partitioner_cb(handle_.get(), &partitioner_callback_proxy);
+    return *this;
 }
 
-void TopicConfiguration::set_as_opaque() {
+TopicConfiguration& TopicConfiguration::set_as_opaque() {
     rd_kafka_topic_conf_set_opaque(handle_.get(), this);
+    return *this;
 }
 
 const TopicConfiguration::PartitionerCallback&

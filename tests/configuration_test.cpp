@@ -13,8 +13,9 @@ public:
 
 TEST_F(ConfigurationTest, GetSetConfig) {
     Configuration config;
-    config.set("group.id", "foo");
+    config.set("group.id", "foo").set("metadata.broker.list", "asd:9092");
     EXPECT_EQ("foo", config.get("group.id"));
+    EXPECT_EQ("asd:9092", config.get("metadata.broker.list"));
     EXPECT_EQ("foo", config.get<string>("group.id"));
 
     EXPECT_THROW(config.get("asd"), ConfigOptionNotFound);
@@ -22,8 +23,9 @@ TEST_F(ConfigurationTest, GetSetConfig) {
 
 TEST_F(ConfigurationTest, GetSetTopicConfig) {
     TopicConfiguration config;
-    config.set("auto.commit.enable", true);
+    config.set("auto.commit.enable", true).set("offset.store.method", "broker");
     EXPECT_EQ("true", config.get("auto.commit.enable"));
+    EXPECT_EQ("broker", config.get("offset.store.method"));
     EXPECT_EQ(true, config.get<bool>("auto.commit.enable"));
 
     EXPECT_THROW(config.get("asd"), ConfigOptionNotFound);

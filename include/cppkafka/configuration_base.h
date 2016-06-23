@@ -45,8 +45,8 @@ public:
     /**
      * Sets a bool value
      */
-    void set(const std::string& name, bool value) {
-        proxy_set(name, value ? "true" : "false");
+    Concrete& set(const std::string& name, bool value) {
+        return proxy_set(name, value ? "true" : "false");
     }
 
     /**
@@ -54,15 +54,15 @@ public:
      */
     template <typename T,
               typename = typename std::enable_if<std::is_integral<T>::value>::type>
-    void set(const std::string& name, T value) {
-        proxy_set(name, std::to_string(value));
+    Concrete& set(const std::string& name, T value) {
+        return proxy_set(name, std::to_string(value));
     }
 
     /**
      * Sets a cstring value
      */
-    void set(const std::string& name, const char* value) {
-        proxy_set(name, value);
+    Concrete& set(const std::string& name, const char* value) {
+        return proxy_set(name, value);
     }
 
     /**
@@ -92,8 +92,8 @@ protected:
         return output;
     }
 private:
-    void proxy_set(const std::string& name, const std::string& value) {
-        static_cast<Concrete&>(*this).set(name, value);
+    Concrete& proxy_set(const std::string& name, const std::string& value) {
+        return static_cast<Concrete&>(*this).set(name, value);
     }
 
     static std::string convert(const std::string& value, Type2Type<std::string>) {

@@ -90,47 +90,47 @@ public:
      * \param name The name of the attribute
      * \param value The value of the attribute
      */
-    void set(const std::string& name, const std::string& value);
+    Configuration& set(const std::string& name, const std::string& value);
 
     /**
      * Sets the delivery report callback (invokes rd_kafka_conf_set_dr_msg_cb)
      */
-    void set_delivery_report_callback(DeliveryReportCallback callback);
+    Configuration& set_delivery_report_callback(DeliveryReportCallback callback);
 
     /**
      * Sets the offset commit callback (invokes rd_kafka_conf_set_offset_commit_cb)
      */
-    void set_offset_commit_callback(OffsetCommitCallback callback);
+    Configuration& set_offset_commit_callback(OffsetCommitCallback callback);
 
     /** 
      * Sets the error callback (invokes rd_kafka_conf_set_error_cb)
      */
-    void set_error_callback(ErrorCallback callback);
+    Configuration& set_error_callback(ErrorCallback callback);
 
     /** 
      * Sets the throttle callback (invokes rd_kafka_conf_set_throttle_cb)
      */
-    void set_throttle_callback(ThrottleCallback callback);
+    Configuration& set_throttle_callback(ThrottleCallback callback);
 
     /** 
      * Sets the log callback (invokes rd_kafka_conf_set_log_cb)
      */
-    void set_log_callback(LogCallback callback);
+    Configuration& set_log_callback(LogCallback callback);
 
     /** 
      * Sets the stats callback (invokes rd_kafka_conf_set_stats_cb)
      */
-    void set_stats_callback(StatsCallback callback);
+    Configuration& set_stats_callback(StatsCallback callback);
 
     /** 
      * Sets the socket callback (invokes rd_kafka_conf_set_socket_cb)
      */
-    void set_socket_callback(SocketCallback callback);
+    Configuration& set_socket_callback(SocketCallback callback);
 
     /** 
      * Sets the default topic configuration
      */
-    void set_default_topic_configuration(boost::optional<TopicConfiguration> config);
+    Configuration& set_default_topic_configuration(boost::optional<TopicConfiguration> config);
 
     /**
      * Returns true iff the given property name has been set

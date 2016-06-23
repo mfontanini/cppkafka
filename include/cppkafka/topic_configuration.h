@@ -77,14 +77,14 @@ public:
      * \param name The name of the option
      * \param value The value of the option
      */
-    void set(const std::string& name, const std::string& value);
+    TopicConfiguration& set(const std::string& name, const std::string& value);
 
     /**
      * \brief Sets the partitioner callback
      *
      * This translates into a call to rd_kafka_topic_conf_set_partitioner_cb
      */
-    void set_partitioner_callback(PartitionerCallback callback);
+    TopicConfiguration& set_partitioner_callback(PartitionerCallback callback);
 
     /**
      * \brief Sets the "this" pointer as the opaque pointer for this handle
@@ -92,7 +92,7 @@ public:
      * This method will be called by consumers/producers when the topic configuration object
      * has been put in a persistent memory location. Users of cppkafka do not need to use this.
      */
-    void set_as_opaque();
+    TopicConfiguration& set_as_opaque();
 
     /** 
      * Gets the partitioner callback
