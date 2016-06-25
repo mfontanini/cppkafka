@@ -29,8 +29,9 @@ using namespace cppkafka;
 
 int main() {
     // Create the config
-    Configuration config;
-    config.set("metadata.broker.list", "127.0.0.1:2181");
+    Configuration config = {
+        { "metadata.broker.list", "127.0.0.1:9092" }
+    };
 
     // Create the producer
     Producer producer(config);

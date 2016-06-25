@@ -54,9 +54,10 @@ class TopicConfiguration;
  *
  * \code
  * // Create a configuration and set the group.id and broker list fields 
- * Configuration config;
- * config.set("metadata.broker.list", "127.0.0.1:9092");
- * config.set("group.id", "foo");
+ * Configuration config = {
+ *     { "metadata.broker.list", "127.0.0.1:9092" },
+ *     { "group.id", "foo" }
+ * };
  *
  * // Create a consumer
  * Consumer consumer(config);

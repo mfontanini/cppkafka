@@ -39,6 +39,7 @@ using std::string;
 using std::map;
 using std::move;
 using std::vector;
+using std::initializer_list;
 
 using boost::optional;
 
@@ -120,6 +121,16 @@ Configuration::Configuration()
 
 }
 
+Configuration::Configuration(const vector<ConfigurationOption>& options)
+: Configuration() {
+    set(options);
+}
+
+Configuration::Configuration(const initializer_list<ConfigurationOption>& options)
+: Configuration() {
+    set(options);
+}
+
 Configuration::Configuration(rd_kafka_conf_t* ptr) 
 : handle_(make_handle(ptr)) {
 
@@ -179,7 +190,7 @@ Configuration& Configuration::set_socket_callback(SocketCallback callback) {
 }
 
 Configuration&
-Configuration::set_default_topic_configuration(optional<TopicConfiguration> config) {
+Configuration::set_default_topic_configuration(TopicConfiguration config) {
     default_topic_config_ = std::move(config);
     return *this;
 }

@@ -1,6 +1,7 @@
 set(SOURCES
     configuration.cpp
     topic_configuration.cpp
+    configuration_option.cpp
     exceptions.cpp
     topic.cpp
     partition.cpp

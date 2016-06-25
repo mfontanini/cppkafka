@@ -31,6 +31,41 @@ TEST_F(ConfigurationTest, GetSetTopicConfig) {
     EXPECT_THROW(config.get("asd"), ConfigOptionNotFound);
 }
 
+TEST_F(ConfigurationTest, ConfigSetMultiple) {
+    Configuration config = {
+        { "group.id", "foo" },
+        { "metadata.broker.list", string("asd:9092") },
+        { "message.max.bytes", 2000 },
+        { "topic.metadata.refresh.sparse", true }
+    };
+    EXPECT_EQ("foo", config.get("group.id"));
+    EXPECT_EQ("asd:9092", config.get("metadata.broker.list"));
+    EXPECT_EQ(2000, config.get<int>("message.max.bytes"));
+    EXPECT_EQ(true, config.get<bool>("topic.metadata.refresh.sparse"));
+}
+
+TEST_F(ConfigurationTest, TopicConfigSetMultiple) {
+    TopicConfiguration config = {
+        { "compression.codec", "none" },
+        { "offset.store.method", string("file") },
+        { "request.required.acks", 2 },
+        { "produce.offset.report", true }
+    };
+    EXPECT_EQ("none", config.get("compression.codec"));
+    EXPECT_EQ("file", config.get("offset.store.method"));
+    EXPECT_EQ(2, config.get<int>("request.required.acks"));
+    EXPECT_EQ(true, config.get<bool>("produce.offset.report"));
+}
+
+TEST_F(ConfigurationTest, SetDefaultTopicConfiguration) {
+    Configuration config;
+    config.set_default_topic_configuration({{ "request.required.acks", 2 }});
+
+    const auto& topic_config = config.get_default_topic_configuration();
+    EXPECT_TRUE(topic_config);
+    EXPECT_EQ(2, topic_config->get<int>("request.required.acks"));
+}
+
 TEST_F(ConfigurationTest, SetOverloads) {
     Configuration config;
     config.set("enable.auto.commit", true);

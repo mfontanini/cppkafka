@@ -32,6 +32,7 @@
 
 #include <string>
 #include <functional>
+#include <initializer_list>
 #include <librdkafka/rdkafka.h>
 #include "clonable_ptr.h"
 #include "configuration_base.h"
@@ -70,6 +71,16 @@ public:
      * Default constructs a topic configuration object
      */
     TopicConfiguration();
+
+    /**
+     * Constructs a TopicConfiguration object using a list of options
+     */
+    TopicConfiguration(const std::vector<ConfigurationOption>& options);
+
+    /**
+     * Constructs a TopicConfiguration object using a list of options
+     */
+    TopicConfiguration(const std::initializer_list<ConfigurationOption>& options);
 
     /**
      * Sets an option

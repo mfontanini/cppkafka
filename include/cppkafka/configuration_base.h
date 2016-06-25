@@ -32,7 +32,9 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include "exceptions.h"
+#include "configuration_option.h"
 
 namespace cppkafka {
 
@@ -63,6 +65,16 @@ public:
      */
     Concrete& set(const std::string& name, const char* value) {
         return proxy_set(name, value);
+    }
+
+    /**
+     * Sets a list of options
+     */
+    Concrete& set(const std::vector<ConfigurationOption>& options) {
+        for (const auto& option : options) {
+            proxy_set(option.get_key(), option.get_value());
+        }
+        return static_cast<Concrete&>(*this);
     }
 
     /**

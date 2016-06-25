@@ -37,6 +37,7 @@
 using std::string;
 using std::map;
 using std::vector;
+using std::initializer_list;
 
 namespace cppkafka {
 
@@ -60,6 +61,16 @@ int32_t partitioner_callback_proxy(const rd_kafka_topic_t* handle, const void *k
 TopicConfiguration::TopicConfiguration() 
 : handle_(make_handle(rd_kafka_topic_conf_new())) {
 
+}
+
+TopicConfiguration::TopicConfiguration(const vector<ConfigurationOption>& options)
+: TopicConfiguration() {
+    set(options);
+}
+
+TopicConfiguration::TopicConfiguration(const initializer_list<ConfigurationOption>& options)
+: TopicConfiguration() {
+    set(options);
 }
 
 TopicConfiguration::TopicConfiguration(rd_kafka_topic_conf_t* ptr) 

@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <initializer_list>
 #include <chrono>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
@@ -83,6 +84,16 @@ public:
     Configuration();
 
     /**
+     * Constructs a Configuration object using a list of options
+     */
+    Configuration(const std::vector<ConfigurationOption>& options);
+
+    /**
+     * Constructs a Configuration object using a list of options
+     */
+    Configuration(const std::initializer_list<ConfigurationOption>& options);
+
+    /**
      * \brief Sets an attribute.
      *
      * This will call rd_kafka_conf_set under the hood.
@@ -130,7 +141,7 @@ public:
     /** 
      * Sets the default topic configuration
      */
-    Configuration& set_default_topic_configuration(boost::optional<TopicConfiguration> config);
+    Configuration& set_default_topic_configuration(TopicConfiguration config);
 
     /**
      * Returns true iff the given property name has been set

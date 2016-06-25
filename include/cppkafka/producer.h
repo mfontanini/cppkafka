@@ -57,8 +57,9 @@ class TopicConfiguration;
  *
  * \code
  * // Set the broker list
- * Configuration config;
- * config.set("metadata.broker.list", "127.0.0.1:9092");
+ * Configuration config = {
+ *     { "metadata.broker.list", "127.0.0.1:9092" }
+ * };
  *
  * // Create a producer 
  * Producer producer(config);

@@ -55,8 +55,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Construct the configuration
-    Configuration config;
-    config.set("metadata.broker.list", brokers);
+    Configuration config = {
+        { "metadata.broker.list", brokers }
+    };
 
     // Create the producer
     Producer producer(config);

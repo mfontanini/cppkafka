@@ -52,11 +52,12 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, [](int) { running = false; });
 
     // Construct the configuration
-    Configuration config;
-    config.set("metadata.broker.list", brokers);
-    config.set("group.id", group_id);
-    // Disable auto commit
-    config.set("enable.auto.commit", false);
+    Configuration config = {
+        { "metadata.broker.list", brokers },
+        { "group.id", group_id },
+        // Disable auto commit
+        { "enable.auto.commit", false }
+    };
 
     // Create the consumer
     Consumer consumer(config);
