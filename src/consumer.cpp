@@ -180,6 +180,18 @@ string Consumer::get_member_id() const {
     return rd_kafka_memberid(get_handle());
 }
 
+const Consumer::AssignmentCallback& Consumer::get_assignment_callback() const {
+    return assignment_callback_;
+}
+
+const Consumer::RevocationCallback& Consumer::get_revocation_callback() const {
+    return revocation_callback_;
+}
+
+const Consumer::RebalanceErrorCallback& Consumer::get_rebalance_error_callback() const {
+    return rebalance_error_callback_;
+}
+
 Message Consumer::poll() {
     rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), 
                                                          get_timeout().count());

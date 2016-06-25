@@ -283,6 +283,21 @@ public:
     std::string get_member_id() const;
 
     /**
+     * Gets the partition assignment callback.
+     */
+    const AssignmentCallback& get_assignment_callback() const;
+
+    /**
+     * Gets the partition revocation callback.
+     */
+    const RevocationCallback& get_revocation_callback() const;
+
+    /**
+     * Gets the rebalance error callback.
+     */
+    const RebalanceErrorCallback& get_rebalance_error_callback() const;
+
+    /**
      * \brief Polls for new messages
      *
      * This will call rd_kafka_consumer_poll.
