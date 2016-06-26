@@ -113,6 +113,11 @@ public:
     void set_offset(int64_t offset);
 
     /**
+     * Compare the (topic, partition) for less-than equality
+     */
+    bool operator<(const TopicPartition& rhs) const;
+
+    /**
      * Print to a stream
      */
     friend std::ostream& operator<<(std::ostream& output, const TopicPartition& rhs);

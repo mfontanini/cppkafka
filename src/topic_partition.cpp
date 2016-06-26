@@ -28,11 +28,13 @@
  */
 
 #include <iostream>
+#include <tuple>
 #include <librdkafka/rdkafka.h>
 #include "topic_partition.h"
 
 using std::string;
 using std::ostream;
+using std::tie;
 
 namespace cppkafka {
 
@@ -75,6 +77,10 @@ int64_t TopicPartition::get_offset() const {
 
 void TopicPartition::set_offset(int64_t offset) {
     offset_ = offset;
+}
+
+bool TopicPartition::operator<(const TopicPartition& rhs) const {
+    return tie(topic_, partition_) < tie(rhs.topic_, rhs.partition_);
 }
 
 ostream& operator<<(ostream& output, const TopicPartition& rhs) {
