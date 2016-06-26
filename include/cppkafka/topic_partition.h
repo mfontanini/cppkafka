@@ -108,6 +108,11 @@ public:
     int64_t get_offset() const;
 
     /**
+     * Sets the offset
+     */
+    void set_offset(int64_t offset);
+
+    /**
      * Print to a stream
      */
     friend std::ostream& operator<<(std::ostream& output, const TopicPartition& rhs);

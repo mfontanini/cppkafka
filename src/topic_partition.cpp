@@ -73,6 +73,10 @@ int64_t TopicPartition::get_offset() const {
     return offset_;
 }
 
+void TopicPartition::set_offset(int64_t offset) {
+    offset_ = offset;
+}
+
 ostream& operator<<(ostream& output, const TopicPartition& rhs) {
     return output << rhs.get_topic() << "[" << rhs.get_partition() << "]";
 }
