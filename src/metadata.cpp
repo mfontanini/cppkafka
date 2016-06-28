@@ -28,6 +28,7 @@
  */
 
 #include "metadata.h"
+#include "error.h"
 
 using std::string;
 using std::vector;
@@ -51,7 +52,7 @@ uint32_t PartitionMetadata::get_id() const {
     return id_;
 }
 
-rd_kafka_resp_err_t PartitionMetadata::get_error() const {
+Error PartitionMetadata::get_error() const {
     return error_;
 }
 
@@ -80,7 +81,7 @@ const string& TopicMetadata::get_topic() const {
     return topic_;
 }
 
-rd_kafka_resp_err_t TopicMetadata::get_error() const {
+Error TopicMetadata::get_error() const {
     return error_;
 }
 

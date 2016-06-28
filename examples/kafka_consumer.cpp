@@ -83,9 +83,9 @@ int main(int argc, char* argv[]) {
         Message msg = consumer.poll();
         if (msg) {
             // If we managed to get a message
-            if (msg.has_error()) {
+            if (msg.get_error()) {
                 if (msg.get_error() != RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-                    cout << "[+] Received error notification: " << msg.get_error_string() << endl;
+                    cout << "[+] Received error notification: " << msg.get_error() << endl;
                 }
             }
             else {

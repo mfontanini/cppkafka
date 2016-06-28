@@ -66,16 +66,8 @@ Message::Message(HandlePtr handle)
 
 }
 
-bool Message::has_error() const {
-    return get_error() != RD_KAFKA_RESP_ERR_NO_ERROR;
-}
-
-rd_kafka_resp_err_t Message::get_error() const {
+Error Message::get_error() const {
     return handle_->err;
-}
-
-string Message::get_error_string() const {
-    return rd_kafka_err2str(handle_->err);
 }
 
 bool Message::is_eof() const {

@@ -46,6 +46,7 @@
 namespace cppkafka {
 
 class Message;
+class Error;
 class Producer;
 class Consumer;
 class KafkaHandleBase;
@@ -61,7 +62,7 @@ class KafkaHandleBase;
 class CPPKAFKA_API Configuration : public ConfigurationBase<Configuration> {
 public:
     using DeliveryReportCallback = std::function<void(Producer& producer, const Message&)>;
-    using OffsetCommitCallback = std::function<void(Consumer& consumer, rd_kafka_resp_err_t,
+    using OffsetCommitCallback = std::function<void(Consumer& consumer, Error,
                                                     const TopicPartitionList& topic_partitions)>;
     using ErrorCallback = std::function<void(KafkaHandleBase& handle, int error,
                                              const std::string& reason)>;

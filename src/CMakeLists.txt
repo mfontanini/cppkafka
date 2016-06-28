@@ -10,6 +10,7 @@ set(SOURCES
     topic_partition.cpp
     topic_partition_list.cpp
     metadata.cpp
+    error.cpp
 
     kafka_handle_base.cpp
     producer.cpp

@@ -37,7 +37,8 @@ public:
             auto start = system_clock::now();
             while (system_clock::now() - start < seconds(10) && messages_.size() < expected) {
                 Message msg = consumer_.poll();
-                if (msg && number_eofs != partitions && msg.get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+                if (msg && number_eofs != partitions &&
+                    msg.get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
                     number_eofs++;
                     if (number_eofs == partitions) {
                         lock_guard<mutex> _(mtx);
@@ -45,7 +46,7 @@ public:
                         cond.notify_one();
                     }
                 }
-                else if (msg && msg.get_error() == 0) {
+                else if (msg && !msg.get_error()) {
                     messages_.push_back(move(msg));
                 }
             }
@@ -124,7 +125,7 @@ TEST_F(ProducerTest, OneMessageOnFixedPartition) {
     EXPECT_FALSE(message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
-    EXPECT_EQ(0, message.get_error());
+    EXPECT_FALSE(message.get_error());
 
     int64_t low;
     int64_t high;
@@ -155,7 +156,7 @@ TEST_F(ProducerTest, OneMessageUsingKey) {
     EXPECT_EQ(Buffer(key), message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
-    EXPECT_EQ(0, message.get_error());
+    EXPECT_FALSE(message.get_error());
     // NOTE: if this line fails, then you're using kafka 0.10+ and that's okay
     EXPECT_FALSE(message.get_timestamp());
 }
@@ -186,7 +187,7 @@ TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {
     for (const auto& message : messages) {
         EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
         EXPECT_EQ(1, payloads.erase(message.get_payload()));
-        EXPECT_EQ(0, message.get_error());
+        EXPECT_FALSE(message.get_error());
         EXPECT_FALSE(message.get_key());
         EXPECT_GE(message.get_partition(), 0);
         EXPECT_LT(message.get_partition(), 3);
@@ -233,7 +234,7 @@ TEST_F(ProducerTest, Callbacks) {
     EXPECT_EQ(Buffer(key), message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
-    EXPECT_EQ(0, message.get_error());
+    EXPECT_FALSE(message.get_error());
     EXPECT_TRUE(deliver_report_called);
 }
 

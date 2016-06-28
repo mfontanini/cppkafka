@@ -27,53 +27,41 @@
  *
  */
 
-#include "exceptions.h"
+#include <iostream>
+#include "error.h"
 
 using std::string;
+using std::ostream;
 
 namespace cppkafka {
 
-// Exception
-
-Exception::Exception(string message) 
-: message_(move(message)) {
+Error::Error(rd_kafka_resp_err_t error) 
+: error_(error) {
 
 }
 
-const char* Exception::what() const noexcept {
-    return message_.data();
-}
-
-// ConfigException
-
-ConfigException::ConfigException(const string& config_name, const string& error)
-: Exception("Failed to set " + config_name + ": " + error) {
-
-}
-
-// ConfigOptionNotFound
-
-ConfigOptionNotFound::ConfigOptionNotFound(const string& config_name) 
-: Exception(config_name + " not found") {
-
-}
-
-// InvalidConfigOptionType
-
-InvalidConfigOptionType::InvalidConfigOptionType(const string& config_name, const string& type) 
-: Exception(config_name + " could not be converted to " + type) {
-
-}
-
-// HandleException
-
-HandleException::HandleException(Error error) 
-: Exception(error.to_string()), error_(error) {
-
-}
-
-Error HandleException::get_error() const {
+rd_kafka_resp_err_t Error::get_error() const {
     return error_;
+}
+
+string Error::to_string() const {
+    return rd_kafka_err2str(error_);
+}
+
+Error::operator bool() const {
+    return error_ != RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+bool Error::operator==(const Error& rhs) const {
+    return error_ == rhs.error_;
+}
+
+bool Error::operator!=(const Error& rhs) const {
+    return !(*this == rhs);
+}
+
+ostream& operator<<(ostream& output, const Error& rhs) {
+    return output << rhs.to_string();
 }
 
 } // cppkafka

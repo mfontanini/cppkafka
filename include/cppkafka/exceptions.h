@@ -34,6 +34,7 @@
 #include <string>
 #include <librdkafka/rdkafka.h>
 #include "macros.h"
+#include "error.h"
 
 namespace cppkafka {
 
@@ -78,11 +79,11 @@ public:
  */
 class CPPKAFKA_API HandleException : public Exception {
 public:
-    HandleException(rd_kafka_resp_err_t error_code);
+    HandleException(Error error);
 
-    rd_kafka_resp_err_t get_error_code() const;
+    Error get_error() const;
 private:
-    rd_kafka_resp_err_t error_code_;
+    Error error_;
 };
 
 } // cppkafka

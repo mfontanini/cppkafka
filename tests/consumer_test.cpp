@@ -45,7 +45,7 @@ public:
                         cond.notify_one();
                     }
                 }
-                else if (msg && msg.get_error() == 0 && number_eofs == partitions) {
+                else if (msg && !msg.get_error() && number_eofs == partitions) {
                     messages_.push_back(move(msg));
                 }
             }
@@ -198,10 +198,10 @@ TEST_F(ConsumerTest, OffsetCommit) {
 
     // Create a consumer and subscribe to the topic
     Configuration config = make_consumer_config("offset_commit");
-    config.set_offset_commit_callback([&](Consumer&, rd_kafka_resp_err_t error,
+    config.set_offset_commit_callback([&](Consumer&, Error error,
                                           const TopicPartitionList& topic_partitions) {
         offset_commit_called = true;
-        EXPECT_EQ(0, error);
+        EXPECT_FALSE(error);
         ASSERT_EQ(1, topic_partitions.size());
         EXPECT_EQ(KAFKA_TOPIC, topic_partitions[0].get_topic());
         EXPECT_EQ(0, topic_partitions[0].get_partition());

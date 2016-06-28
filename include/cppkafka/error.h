@@ -27,53 +27,59 @@
  *
  */
 
-#include "exceptions.h"
+#ifndef CPPKAFKA_ERROR_H
+#define CPPKAFKA_ERROR_H
 
-using std::string;
+#include <string>
+#include <iosfwd>
+#include <librdkafka/rdkafka.h>
+#include "macros.h"
 
 namespace cppkafka {
 
-// Exception
+/**
+ * Abstraction for an rdkafka error
+ */
+class CPPKAFKA_API Error {
+public:
+    /**
+     * Constructs an error object
+     */
+    Error(rd_kafka_resp_err_t error);
 
-Exception::Exception(string message) 
-: message_(move(message)) {
+    /**
+     * Gets the error value
+     */
+    rd_kafka_resp_err_t get_error() const;
 
-}
+    /**
+     * Gets the error string
+     */
+    std::string to_string() const;
 
-const char* Exception::what() const noexcept {
-    return message_.data();
-}
+    /**
+     * Checks whether this error contains an actual error (and not RD_KAFKA_RESP_ERR_NO_ERROR)
+     */
+    explicit operator bool() const;
 
-// ConfigException
+    /**
+     * Compares this error for equality
+     */
+    bool operator==(const Error& rhs) const;
 
-ConfigException::ConfigException(const string& config_name, const string& error)
-: Exception("Failed to set " + config_name + ": " + error) {
+    /**
+     * Compares this error for inequality
+     */
+    bool operator!=(const Error& rhs) const;
 
-}
-
-// ConfigOptionNotFound
-
-ConfigOptionNotFound::ConfigOptionNotFound(const string& config_name) 
-: Exception(config_name + " not found") {
-
-}
-
-// InvalidConfigOptionType
-
-InvalidConfigOptionType::InvalidConfigOptionType(const string& config_name, const string& type) 
-: Exception(config_name + " could not be converted to " + type) {
-
-}
-
-// HandleException
-
-HandleException::HandleException(Error error) 
-: Exception(error.to_string()), error_(error) {
-
-}
-
-Error HandleException::get_error() const {
-    return error_;
-}
+    /**
+     * Writes this error's string representation into a stream
+     */
+    friend std::ostream& operator<<(std::ostream& output, const Error& rhs);
+private:
+    rd_kafka_resp_err_t error_;
+};
 
 } // cppkafka
+
+#endif // CPPKAFKA_ERROR_H

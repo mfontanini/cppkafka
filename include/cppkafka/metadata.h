@@ -40,6 +40,8 @@
 
 namespace cppkafka {
 
+class Error;
+
 /**
  * Represents the metadata for a partition
  */
@@ -55,7 +57,7 @@ public:
     /**
      * Gets the partition error as reported by the broker
      */
-    rd_kafka_resp_err_t get_error() const;
+    Error get_error() const;
 
     /**
      * Gets the leader broker id
@@ -94,7 +96,7 @@ public:
     /**
      * Gets the topic error
      */
-    rd_kafka_resp_err_t get_error() const;
+    Error get_error() const;
 
     /**
      * Gets the partitions' metadata

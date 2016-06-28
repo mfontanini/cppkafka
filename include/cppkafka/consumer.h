@@ -37,6 +37,7 @@
 #include "kafka_handle_base.h"
 #include "message.h"
 #include "macros.h"
+#include "error.h"
 
 namespace cppkafka {
 
@@ -82,7 +83,7 @@ class TopicConfiguration;
  *     Message msg = consumer.poll(); 
  *     if (msg) {
  *         // It's a valid message!
- *         if (!msg.has_error()) {
+ *         if (!msg.get_error()) {
  *             // It's an actual message. Get the payload and print it to stdout
  *             cout << msg.get_payload().as_string() << endl;
  *         }
@@ -98,7 +99,7 @@ class CPPKAFKA_API Consumer : public KafkaHandleBase {
 public:
     using AssignmentCallback = std::function<void(TopicPartitionList&)>;
     using RevocationCallback = std::function<void(const TopicPartitionList&)>;
-    using RebalanceErrorCallback = std::function<void(rd_kafka_resp_err_t)>;
+    using RebalanceErrorCallback = std::function<void(Error)>;
 
     /**
      * \brief Creates an instance of a consumer.

@@ -37,6 +37,7 @@
 #include "buffer.h"
 #include "topic.h"
 #include "macros.h"
+#include "error.h"
 
 namespace cppkafka {
 
@@ -79,19 +80,9 @@ public:
     Message& operator=(Message&& rhs) = default;
 
     /**
-     * Indicates whether this is a message carrying an error notification
-     */
-    bool has_error() const;
-
-    /**
      * Gets the error attribute
      */
-    rd_kafka_resp_err_t get_error() const;
-
-    /**
-     * Gets the error as a string
-     */
-    std::string get_error_string() const;    
+    Error get_error() const;  
 
     /**
      * Utility function to check for get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF
