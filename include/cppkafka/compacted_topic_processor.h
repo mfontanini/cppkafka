@@ -134,6 +134,11 @@ public:
     using EventHandler = std::function<void(Event)>;
 
     /**
+     * Callback used for error handling
+     */
+    using ErrorHandler = std::function<void(Message)>;
+
+    /**
      * \brief Constructs an instance
      */
     CompactedTopicProcessor(Consumer& consumer);
@@ -159,6 +164,11 @@ public:
      */
     void set_event_handler(EventHandler callback);
 
+    /**
+     * \brief Sets the error handler callback
+     */
+    void set_error_handler(ErrorHandler callback);
+
     /** 
      * \brief Processes the next event
      */
@@ -170,6 +180,7 @@ private:
     KeyDecoder key_decoder_;
     ValueDecoder value_decoder_;
     EventHandler event_handler_;
+    ErrorHandler error_handler_;
     std::map<TopicPartition, int64_t> partition_offsets_;
     Consumer::AssignmentCallback original_assignment_callback_;
 };
@@ -255,11 +266,16 @@ void CompactedTopicProcessor<K, V>::set_event_handler(EventHandler callback) {
     event_handler_ = std::move(callback);
 }
 
+template <typename K, typename V>
+void CompactedTopicProcessor<K, V>::set_error_handler(ErrorHandler callback) {
+    error_handler_ = std::move(callback);
+}
+
 template <typename Key, typename Value>
 void CompactedTopicProcessor<Key, Value>::process_event() {
     Message message = consumer_.poll();
     if (message) {
-        if (!message.has_error()) {
+        if (!message.get_error()) {
             Key key = key_decoder_(message.get_key());
             if (message.get_payload()) {
                 // If there's a payload, generate a SET_ELEMENT event
@@ -280,6 +296,9 @@ void CompactedTopicProcessor<Key, Value>::process_event() {
             if (message.is_eof()) {
                 event_handler_({ Event::REACHED_EOF, message.get_topic(),
                                  message.get_partition() });
+            }
+            else if (error_handler_) {
+                error_handler_(std::move(message));
             }
         }
     }
