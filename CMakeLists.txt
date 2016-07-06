@@ -27,6 +27,7 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(RdKafka REQUIRED)
+include_directories(${RDKAFKA_INCLUDE_DIR})
 
 add_subdirectory(src)
 add_subdirectory(include)
