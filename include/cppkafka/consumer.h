@@ -194,13 +194,6 @@ public:
     void unassign();
 
     /**
-     * \brief Closes the consumer session
-     *
-     * This translates into a call to rd_kafka_consumer_close
-     */ 
-    void close();
-
-    /**
      * \brief Commits the given message synchronously
      *
      * This translates into a call to rd_kafka_commit_message
@@ -323,6 +316,7 @@ private:
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);
 
+    void close();
     void commit(const Message& msg, bool async);
     void commit(const TopicPartitionList& topic_partitions, bool async);
     void handle_rebalance(rd_kafka_resp_err_t err, TopicPartitionList& topic_partitions);

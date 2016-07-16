@@ -105,11 +105,6 @@ void Consumer::unassign() {
     check_error(error);
 }
 
-void Consumer::close() {
-    rd_kafka_resp_err_t error = rd_kafka_consumer_close(get_handle());
-    check_error(error);
-}
-
 void Consumer::commit(const Message& msg) {
     commit(msg, false);
 }
@@ -196,6 +191,11 @@ Message Consumer::poll() {
     rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), 
                                                          get_timeout().count());
     return message ? Message(message) : Message();
+}
+
+void Consumer::close() {
+    rd_kafka_resp_err_t error = rd_kafka_consumer_close(get_handle());
+    check_error(error);
 }
 
 void Consumer::commit(const Message& msg, bool async) {
