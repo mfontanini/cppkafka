@@ -35,7 +35,6 @@
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
 #include "buffer.h"
-#include "topic.h"
 #include "macros.h"
 #include "error.h"
 
