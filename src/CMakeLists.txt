@@ -18,6 +18,8 @@ set(SOURCES
 )
 
 add_library(cppkafka ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
+set_target_properties(cppkafka PROPERTIES VERSION ${CPPKAFKA_VERSION}
+                                          SOVERSION ${CPPKAFKA_VERSION})
 target_link_libraries(cppkafka ${RDKAFKA_LIBRARY})
 
 install( 
