@@ -71,3 +71,9 @@ If you want to use _cppkafka_, you'll need to link your application with:
 
 * _cppkafka_
 * _rdkafka_
+
+# Documentation
+
+You can generate the documentation by running `make docs` inside the build directory. This requires
+_Doxygen_ to be installed. The documentation will be written in html format at
+`<build-dir>/docs/html/`.

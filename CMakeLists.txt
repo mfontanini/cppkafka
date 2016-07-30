@@ -39,6 +39,22 @@ add_subdirectory(include)
 
 add_subdirectory(examples)
 
+# Add a target to generate API documentation using Doxygen
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in 
+        ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile 
+        @ONLY
+    )
+    add_custom_target(
+        docs
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+endif(DOXYGEN_FOUND)
+
 set(GOOGLETEST_ROOT ${CMAKE_SOURCE_DIR}/third_party/googletest)
 if(EXISTS "${GOOGLETEST_ROOT}/CMakeLists.txt")
     set(GOOGLETEST_INCLUDE ${GOOGLETEST_ROOT}/googletest/include)

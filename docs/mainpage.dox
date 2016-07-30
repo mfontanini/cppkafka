@@ -1,0 +1,11 @@
+/** 
+ * \mainpage Documentation
+ *
+ * \section intro_sec Introduction
+ *
+ * <i>cppkafka</i> is a C++11 wrapper for <i>rdkafka</i>, an <i>Apache Kafka</i> client library.
+ * 
+ * <i>cppkafka</i> provides a high level interface for producing and consuming <i>Kafka</i> 
+ * messages.
+ *
+ */
