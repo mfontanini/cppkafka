@@ -156,7 +156,7 @@ TEST_F(ConsumerTest, Rebalance) {
     consumer1.set_revocation_callback([&](const vector<TopicPartition>&) {
         revocation_called = true;
     });
-    consumer1.subscribe(KAFKA_TOPIC);
+    consumer1.subscribe({ KAFKA_TOPIC });
     ConsumerRunner runner1(consumer1, 1, 3);
 
     // Create a second consumer and subscribe to the topic
