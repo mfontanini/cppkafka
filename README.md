@@ -2,8 +2,6 @@
 ---
 High level C++ wrapper for _rdkafka_
 
-**Still in development!**
-
 ---
 
 # Features
