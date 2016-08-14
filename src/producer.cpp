@@ -61,16 +61,16 @@ Producer::PayloadPolicy Producer::get_payload_policy() const {
 }
 
 void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& payload) {
-    produce(topic, partition, payload, Buffer{} /*key*/, nullptr /*user_data*/);
+    produce(topic, partition, Buffer{} /*key*/, payload, nullptr /*user_data*/);
 }
 
-void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& payload,
-                       const Buffer& key) {
-    produce(topic, partition, payload, key, nullptr /*user_data*/);
+void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& key,
+                       const Buffer& payload) {
+    produce(topic, partition, key, payload, nullptr /*user_data*/);
 }
 
-void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& payload,
-                       const Buffer& key, void* user_data) {
+void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& key,
+                       const Buffer& payload, void* user_data) {
     void* payload_ptr = (void*)payload.get_data(); 
     void* key_ptr = (void*)key.get_data(); 
     const int policy = static_cast<int>(message_payload_policy_);

@@ -75,7 +75,7 @@ class TopicConfiguration;
  * producer.produce(topic, Partition(), payload);
  *
  * // Write using a key on a fixed partition (42)
- * producer.produce(topic, 42, payload, key);
+ * producer.produce(topic, 42, key, payload);
  * 
  * \endcode
  */
@@ -119,23 +119,23 @@ public:
      *
      * \param topic The topic to write the message to
      * \param partition The partition to write the message to
-     * \param payload The message payload
      * \param key The message key
+     * \param payload The message payload
      */
-    void produce(const Topic& topic, const Partition& partition, const Buffer& payload,
-                 const Buffer& key);
+    void produce(const Topic& topic, const Partition& partition, const Buffer& key,
+                 const Buffer& payload);
     
     /**
      * Produces a message
      *
      * \param topic The topic to write the message to
      * \param partition The partition to write the message to
-     * \param payload The message payload
      * \param key The message key
+     * \param payload The message payload
      * \param user_data The opaque data pointer to be used (accesible via Message::private_data)
      */
-    void produce(const Topic& topic, const Partition& partition, const Buffer& payload,
-                 const Buffer& key, void* user_data);
+    void produce(const Topic& topic, const Partition& partition, const Buffer& key,
+                 const Buffer& payload, void* user_data);
 
     /**
      * \brief Polls on this handle

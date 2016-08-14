@@ -146,7 +146,7 @@ TEST_F(ProducerTest, OneMessageUsingKey) {
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     string payload = "Hello world! 2";
     string key = "such key";
-    producer.produce(topic, partition, payload, key);
+    producer.produce(topic, partition, key, payload);
     runner.try_join();
 
     const auto& messages = runner.get_messages();
@@ -223,7 +223,7 @@ TEST_F(ProducerTest, Callbacks) {
 
     Producer producer(move(config));
     Topic topic = producer.get_topic(KAFKA_TOPIC, topic_config);
-    producer.produce(topic, {}, payload, key);
+    producer.produce(topic, {}, key, payload);
     producer.poll();
     runner.try_join();
 
@@ -265,7 +265,7 @@ TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
 
     Producer producer(move(config));
     Topic topic = producer.get_topic(KAFKA_TOPIC);
-    producer.produce(topic, {}, payload, key);
+    producer.produce(topic, {}, key, payload);
     producer.poll();
     runner.try_join();
 
