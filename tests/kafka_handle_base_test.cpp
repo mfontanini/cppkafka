@@ -91,7 +91,7 @@ TEST_F(KafkaHandleBaseTest, TopicsMetadata) {
     // Find by names
     EXPECT_EQ(topic_names.size(), metadata.get_topics(topic_names).size());
     // Find by prefix
-    EXPECT_EQ(topic_names.size(), metadata.get_topics("cppkafka_").size());
+    EXPECT_EQ(topic_names.size(), metadata.get_topics_prefixed("cppkafka_").size());
 
     // Now get the whole metadata only for this topic
     Topic topic = producer.get_topic(KAFKA_TOPIC);

@@ -164,7 +164,7 @@ public:
      *
      * \param prefix The prefix to be looked up
      */
-    std::vector<TopicMetadata> get_topics(const std::string& prefix) const;
+    std::vector<TopicMetadata> get_topics_prefixed(const std::string& prefix) const;
 private:
     using HandlePtr = std::unique_ptr<const rd_kafka_metadata_t, decltype(&rd_kafka_metadata_destroy)>;
 

@@ -144,7 +144,7 @@ vector<TopicMetadata> Metadata::get_topics(const unordered_set<string>& topics) 
     return output;
 }
 
-vector<TopicMetadata> Metadata::get_topics(const string& prefix) const {
+vector<TopicMetadata> Metadata::get_topics_prefixed(const string& prefix) const {
     vector<TopicMetadata> output;
     for (int i = 0; i < handle_->topic_cnt; ++i) {
         const rd_kafka_metadata_topic_t& topic = handle_->topics[i];
