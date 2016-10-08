@@ -166,6 +166,13 @@ public:
      * Gets the handle's configuration
      */ 
     const Configuration& get_configuration() const;
+
+    /**
+     * \brief Gets the length of the out queue 
+     *
+     * This calls rd_kafka_outq_len
+     */
+    int get_out_queue_length() const;
 protected:
     KafkaHandleBase(Configuration config);
 

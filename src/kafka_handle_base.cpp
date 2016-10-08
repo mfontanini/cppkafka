@@ -131,6 +131,10 @@ const Configuration& KafkaHandleBase::get_configuration() const {
     return config_;
 }
 
+int KafkaHandleBase::get_out_queue_length() const {
+    return rd_kafka_outq_len(handle_.get());
+}
+
 void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
     handle_ = HandlePtr(handle, &rd_kafka_destroy);
 }
