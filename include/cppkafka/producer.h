@@ -140,9 +140,20 @@ public:
     /**
      * \brief Polls on this handle
      *
-     * This translates into a call to rd_kafka_poll
+     * This translates into a call to rd_kafka_poll.
+     *
+     * The timeout used on this call is the one configured via Producer::set_timeout.
      */
     int poll();
+
+    /**
+     * \brief Polls on this handle
+     *
+     * This translates into a call to rd_kafka_poll.
+     *
+     * \param timeout The timeout used on this call
+     */
+    int poll(std::chrono::milliseconds timeout);
 private:
     PayloadPolicy message_payload_policy_;
 };

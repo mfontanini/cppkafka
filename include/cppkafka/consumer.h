@@ -301,6 +301,8 @@ public:
      * will think this consumer is down and will trigger a rebalance (if using dynamic 
      * subscription).
      *
+     * The timeout used on this call will be the one configured via Consumer::set_timeout.
+     *
      * The returned message *might* be empty. If's necessary to check that it's a valid one before
      * using it:
      * 
@@ -312,6 +314,16 @@ public:
      * \endcode
      */
     Message poll();
+
+    /**
+     * \brief Polls for new messages
+     *
+     * Same as the other overload of Consumer::poll but the provided timeout will be used
+     * instead of the one configured on this Consumer.
+     *
+     * \param timeout The timeout to be used on this call
+     */
+    Message poll(std::chrono::milliseconds timeout);
 private:
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);

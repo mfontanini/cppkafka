@@ -34,6 +34,8 @@
 using std::move;
 using std::string;
 
+using std::chrono::milliseconds;
+
 namespace cppkafka {
 
 Producer::Producer(Configuration config)
@@ -83,7 +85,11 @@ void Producer::produce(const Topic& topic, const Partition& partition, const Buf
 }
 
 int Producer::poll() {
-    return rd_kafka_poll(get_handle(), get_timeout().count());
+    return poll(get_timeout());
+}
+
+int Producer::poll(milliseconds timeout) {
+    return rd_kafka_poll(get_handle(), timeout.count());
 }
 
 } // cppkafka

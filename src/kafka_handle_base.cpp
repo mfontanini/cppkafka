@@ -70,7 +70,7 @@ void KafkaHandleBase::resume_partitions(const TopicPartitionList& topic_partitio
     check_error(error);
 }
 
-void KafkaHandleBase::set_timeout(const milliseconds& timeout) {
+void KafkaHandleBase::set_timeout(milliseconds timeout) {
     timeout_ms_ = timeout;
 }
 

@@ -87,7 +87,7 @@ public:
      *
      * \param timeout The timeout to be set
      */
-    void set_timeout(const std::chrono::milliseconds& timeout);
+    void set_timeout(std::chrono::milliseconds timeout);
 
     /**
      * \brief Adds one or more brokers to this handle's broker list

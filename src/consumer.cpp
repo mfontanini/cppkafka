@@ -188,8 +188,11 @@ const Consumer::RebalanceErrorCallback& Consumer::get_rebalance_error_callback()
 }
 
 Message Consumer::poll() {
-    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), 
-                                                         get_timeout().count());
+    return poll(get_timeout());
+}
+
+Message Consumer::poll(milliseconds timeout) {
+    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), timeout.count());
     return message ? Message(message) : Message();
 }
 
