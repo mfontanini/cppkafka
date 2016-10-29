@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 #include "cppkafka/producer.h"
 #include "cppkafka/consumer.h"
+#include "cppkafka/utils/buffered_producer.h"
 
 using std::string;
 using std::to_string;
@@ -274,4 +275,34 @@ TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
     const auto& message = messages[0];
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_TRUE(callback_called);   
+}
+
+TEST_F(ProducerTest, BufferedProducer) {
+    int partition = 0;
+
+    // Create a consumer and assign this topic/partition
+    Consumer consumer(make_consumer_config());
+    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    ConsumerRunner runner(consumer, 2, 1);
+
+    // Now create a buffered producer and produce two messages
+    BufferedProducer<string> producer(make_producer_config());
+    string payload = "Hello world! 2";
+    string key = "such key";
+    producer.add_message(KAFKA_TOPIC, partition, key, payload);
+    producer.add_message(KAFKA_TOPIC, partition, payload);
+    producer.flush();
+    runner.try_join();
+
+    const auto& messages = runner.get_messages();
+    ASSERT_EQ(2, messages.size());
+    const auto& message = messages[0];
+    EXPECT_EQ(Buffer(payload), message.get_payload());
+    EXPECT_EQ(Buffer(key), message.get_key());
+    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
+    EXPECT_EQ(partition, message.get_partition());
+    EXPECT_FALSE(message.get_error());
+
+    EXPECT_FALSE(messages[1].get_key());
+    EXPECT_EQ(Buffer(payload), messages[1].get_payload());
 }
