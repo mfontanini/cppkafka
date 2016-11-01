@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <map>
 #include <boost/optional.hpp>
-#include "producer.h"
+#include "../producer.h"
 
 namespace cppkafka {
 

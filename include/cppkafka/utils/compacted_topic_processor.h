@@ -35,8 +35,8 @@
 #include <map>
 #include <set>
 #include <boost/optional.hpp>
-#include "buffer.h"
-#include "consumer.h"
+#include "../buffer.h"
+#include "../consumer.h"
 
 namespace cppkafka {
 /**
