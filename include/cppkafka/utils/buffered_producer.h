@@ -10,6 +10,7 @@
 #include <map>
 #include <boost/optional.hpp>
 #include "../producer.h"
+#include "../message.h"
 
 namespace cppkafka {
 
