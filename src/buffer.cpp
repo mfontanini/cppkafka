@@ -74,17 +74,6 @@ Buffer::operator string() const {
     return string(data_, data_ + size_);
 }
 
-bool Buffer::operator==(const Buffer& rhs) const {
-    if (get_size() != rhs.get_size()) {
-        return false;
-    }
-    return equal(get_data(), get_data() + get_size(), rhs.get_data());
-}
-
-bool Buffer::operator!=(const Buffer& rhs) const { 
-    return !(*this == rhs);
-}
-
 ostream& operator<<(ostream& output, const Buffer& rhs) {
     for (const uint8_t value : rhs) {
         if (value >= 0x20 && value < 0x7f) {
@@ -99,6 +88,17 @@ ostream& operator<<(ostream& output, const Buffer& rhs) {
         }
     }
     return output;
+}
+
+bool operator==(const Buffer& lhs, const Buffer& rhs) {
+    if (lhs.get_size() != rhs.get_size()) {
+        return false;
+    }
+    return equal(lhs.get_data(), lhs.get_data() + lhs.get_size(), rhs.get_data());
+}
+
+bool operator!=(const Buffer& lhs, const Buffer& rhs) { 
+    return !(lhs == rhs);
 }
 
 } // cppkafka
