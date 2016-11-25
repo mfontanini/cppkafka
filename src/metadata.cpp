@@ -71,14 +71,14 @@ const vector<int32_t>& PartitionMetadata::get_in_sync_replica_brokers() const {
 // TopicMetadata 
 
 TopicMetadata::TopicMetadata(const rd_kafka_metadata_topic& topic) 
-: topic_(topic.topic), error_(topic.err) {
+: name_(topic.topic), error_(topic.err) {
     for (int i = 0; i < topic.partition_cnt; ++i) {
         partitions_.emplace_back(topic.partitions[i]);
     }
 }
 
-const string& TopicMetadata::get_topic() const {
-    return topic_;
+const string& TopicMetadata::get_name() const {
+    return name_;
 }
 
 Error TopicMetadata::get_error() const {

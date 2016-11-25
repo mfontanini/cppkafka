@@ -91,7 +91,7 @@ public:
     /**
      * Gets the topic name
      */
-    const std::string& get_topic() const;
+    const std::string& get_name() const;
 
     /**
      * Gets the topic error
@@ -103,7 +103,7 @@ public:
      */
     const std::vector<PartitionMetadata>& get_partitions() const;
 private:
-    std::string topic_;
+    std::string name_;
     rd_kafka_resp_err_t error_;
     std::vector<PartitionMetadata> partitions_;
 };

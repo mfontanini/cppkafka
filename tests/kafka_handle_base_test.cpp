@@ -70,7 +70,7 @@ TEST_F(KafkaHandleBaseTest, TopicsMetadata) {
     ASSERT_GE(topics.size(), 2);
 
     for (const auto& topic : topics) {
-        if (topic_names.count(topic.get_topic()) == 1) {
+        if (topic_names.count(topic.get_name()) == 1) {
             const vector<PartitionMetadata>& partitions = topic.get_partitions();
             EXPECT_EQ(3, partitions.size());
             set<int32_t> expected_ids = { 0, 1, 2 };
@@ -95,5 +95,5 @@ TEST_F(KafkaHandleBaseTest, TopicsMetadata) {
 
     // Now get the whole metadata only for this topic
     Topic topic = producer.get_topic(KAFKA_TOPIC);
-    EXPECT_EQ(KAFKA_TOPIC, producer.get_metadata(topic).get_topic());
+    EXPECT_EQ(KAFKA_TOPIC, producer.get_metadata(topic).get_name());
 }
