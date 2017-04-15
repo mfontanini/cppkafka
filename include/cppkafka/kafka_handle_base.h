@@ -136,9 +136,11 @@ public:
     /**
      * \brief Gets metadata for brokers, topics, partitions, etc
      *
+     * \param all_topics Whether to fetch metadata about all topics or only locally known ones
+     *
      * This translates into a call to rd_kafka_metadata
      */
-    Metadata get_metadata() const;
+    Metadata get_metadata(bool all_topics = true) const;
 
     /**
      * \brief Gets general metadata but only fetches metadata for the given topic rather than 
@@ -186,7 +188,7 @@ private:
     using TopicConfigurationMap = std::unordered_map<std::string, TopicConfiguration>;
 
     Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
-    Metadata get_metadata(rd_kafka_topic_t* topic_ptr) const;
+    Metadata get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const;
     void save_topic_config(const std::string& topic_name, TopicConfiguration config);
 
     HandlePtr handle_;

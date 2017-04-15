@@ -12,6 +12,7 @@ macro(create_test test_name)
     add_executable(${test_name}_test EXCLUDE_FROM_ALL "${test_name}_test.cpp")
     add_test(${test_name} ${test_name}_test)
     add_dependencies(tests ${test_name}_test)
+    add_dependencies(${test_name}_test cppkafka)
 endmacro()
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")

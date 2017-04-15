@@ -106,12 +106,12 @@ KafkaHandleBase::query_offsets(const TopicPartition& topic_partition) const {
     return make_tuple(low, high);
 }
 
-Metadata KafkaHandleBase::get_metadata() const {
-    return get_metadata(nullptr);
+Metadata KafkaHandleBase::get_metadata(bool all_topics) const {
+    return get_metadata(all_topics, nullptr);
 }
 
 TopicMetadata KafkaHandleBase::get_metadata(const Topic& topic) const {
-    Metadata md = get_metadata(topic.get_handle());
+    Metadata md = get_metadata(false, topic.get_handle());
     auto topics = md.get_topics();
     if (topics.empty()) {
         throw Exception("Failed to find metadata for topic");
@@ -147,9 +147,9 @@ Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf
     return Topic(topic);
 }
 
-Metadata KafkaHandleBase::get_metadata(rd_kafka_topic_t* topic_ptr) const {
+Metadata KafkaHandleBase::get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const {
     const rd_kafka_metadata_t* metadata;
-    rd_kafka_resp_err_t error = rd_kafka_metadata(get_handle(), topic_ptr != nullptr, 
+    rd_kafka_resp_err_t error = rd_kafka_metadata(get_handle(), !!all_topics, 
                                                   topic_ptr, &metadata, timeout_ms_.count());
     check_error(error);
     return Metadata(metadata);
