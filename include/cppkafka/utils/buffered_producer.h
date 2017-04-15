@@ -29,24 +29,9 @@ public:
      *
      * The message won't be sent until flush is called.
      *
-     * \param topic The topic in which this message should be written to
-     * \param partition The partition in which this message should be written to
-     * \param payload The message's payload
+     * \param builder The builder that contains the message to be added
      */
-    void add_message(const std::string& topic, const Partition& partition, BufferType payload);
-
-    /**
-     * \brief Adds a message to the producer's buffer. 
-     *
-     * The message won't be sent until flush is called.
-     *
-     * \param topic The topic in which this message should be written to
-     * \param partition The partition in which this message should be written to
-     * \param key The message's key
-     * \param payload The message's payload
-     */
-    void add_message(const std::string& topic, const Partition& partition, BufferType key,
-                     BufferType payload);
+    void add_message(const MessageBuilder& builder);
 
     /**
      * \brief Flushes the buffered messages.
@@ -68,34 +53,13 @@ private:
     // Pick the most appropriate index type depending on the platform we're using
     using IndexType = std::conditional<sizeof(void*) == 8, uint64_t, uint32_t>::type;
 
-    struct BufferedMessage {
-        BufferedMessage(unsigned topic_index, Partition partition, BufferType key,
-                        BufferType payload) 
-        : key(std::move(key)), payload(std::move(payload)), topic_index(topic_index),
-          partition(partition) {
-
-        }
-
-        BufferedMessage(unsigned topic_index, Partition partition, BufferType payload)
-        : payload(std::move(payload)), topic_index(topic_index), partition(partition) {
-            
-        }
-
-        boost::optional<BufferType> key;
-        BufferType payload;
-        unsigned topic_index;
-        Partition partition;
-    };
-
-    template <typename... Args>
-    void buffer_message(const std::string& topic, Args&&... args);
-    unsigned get_topic_index(const std::string& topic);
-    void produce_message(IndexType index, const BufferedMessage& message);
+    const Topic& get_topic(const std::string& topic);
+    void produce_message(IndexType index, MessageBuilder& message);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
 
     Producer producer_;
-    std::map<IndexType, BufferedMessage> messages_;
+    std::map<IndexType, MessageBuilder> messages_;
     std::vector<IndexType> failed_indexes_;
     IndexType current_index_{0};
     std::vector<Topic> topics_;
@@ -109,15 +73,19 @@ BufferedProducer<BufferType>::BufferedProducer(Configuration config)
 }
 
 template <typename BufferType>
-void BufferedProducer<BufferType>::add_message(const std::string& topic,
-                                               const Partition& partition,
-                                               BufferType payload) {
-    buffer_message(topic, partition, payload);
+void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
+    MessageBuilder local_builder(get_topic(builder.topic().get_name()));
+    local_builder.partition(builder.partition());
+    local_builder.key(builder.key());
+    local_builder.payload(builder.payload());
+
+    IndexType index = messages_.size();
+    messages_.emplace(index, std::move(local_builder));
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
-    for (const auto& message_pair : messages_) {
+    for (auto& message_pair : messages_) {
         produce_message(message_pair.first, message_pair.second);
     }
 
@@ -143,45 +111,24 @@ const Producer& BufferedProducer<BufferType>::get_producer() const {
 }
 
 template <typename BufferType>
-void BufferedProducer<BufferType>::add_message(const std::string& topic,
-                                               const Partition& partition,
-                                               BufferType key, BufferType payload) {
-    buffer_message(topic, partition, key, payload);
-}
-
-template <typename BufferType>
-template <typename... Args>
-void BufferedProducer<BufferType>::buffer_message(const std::string& topic, Args&&... args) {
-    IndexType index = messages_.size();
-    BufferedMessage message{get_topic_index(topic), std::forward<Args>(args)...};
-    messages_.emplace(index, std::move(message));
-}
-
-template <typename BufferType>
-unsigned BufferedProducer<BufferType>::get_topic_index(const std::string& topic) {
+const Topic& BufferedProducer<BufferType>::get_topic(const std::string& topic) {
     auto iter = topic_mapping_.find(topic);
     if (iter == topic_mapping_.end()) {
         unsigned index = topics_.size();
         topics_.push_back(producer_.get_topic(topic));
         iter = topic_mapping_.emplace(topic, index).first;
     }
-    return iter->second;
+    return topics_[iter->second];
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce_message(IndexType index,
-                                                   const BufferedMessage& message) {
+                                                   MessageBuilder& builder) {
     bool sent = false;
+    builder.user_data(reinterpret_cast<void*>(index));
     while (!sent) {
         try {
-            if (message.key) {
-                producer_.produce(topics_[message.topic_index], message.partition, *message.key,
-                                  message.payload, reinterpret_cast<void*>(index));
-            }
-            else {
-                producer_.produce(topics_[message.topic_index], message.partition, {} /*key*/,
-                                  message.payload, reinterpret_cast<void*>(index));
-            }
+            producer_.produce(builder);
             sent = true;
         }
         catch (const HandleException& ex) {

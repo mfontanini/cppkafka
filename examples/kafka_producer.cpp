@@ -15,6 +15,7 @@ using cppkafka::Producer;
 using cppkafka::Configuration;
 using cppkafka::Topic;
 using cppkafka::Partition;
+using cppkafka::MessageBuilder;
 
 namespace po = boost::program_options;
 
@@ -70,6 +71,6 @@ int main(int argc, char* argv[]) {
     string line;
     while (getline(cin, line)) {
         // Write the string into the partition
-        producer.produce(topic, partition, line);
+        producer.produce(MessageBuilder(topic).partition(partition).payload(line));
     }
 }

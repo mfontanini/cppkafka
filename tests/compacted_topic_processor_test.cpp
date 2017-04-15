@@ -88,11 +88,13 @@ TEST_F(CompactedTopicProcessorTest, Consume) {
     };
     for (const auto& element_pair : elements) { 
         const ElementType& element = element_pair.second;
-        producer.produce(topic, element.partition, element_pair.first, element.value);
+        MessageBuilder builder(topic);
+        builder.partition(element.partition).key(element_pair.first).payload(element.value);
+        producer.produce(builder);
     }
     // Now erase the first element
     string deleted_key = "42";
-    producer.produce(topic, 0, deleted_key, {} /*no payload*/);
+    producer.produce(MessageBuilder(topic).partition(0).key(deleted_key));
 
     for (size_t i = 0; i < 10; ++i) {
         compacted_consumer.process_event();

@@ -62,23 +62,14 @@ Producer::PayloadPolicy Producer::get_payload_policy() const {
     return message_payload_policy_;
 }
 
-void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& payload) {
-    produce(topic, partition, Buffer{} /*key*/, payload, nullptr /*user_data*/);
-}
-
-void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& key,
-                       const Buffer& payload) {
-    produce(topic, partition, key, payload, nullptr /*user_data*/);
-}
-
-void Producer::produce(const Topic& topic, const Partition& partition, const Buffer& key,
-                       const Buffer& payload, void* user_data) {
-    void* payload_ptr = (void*)payload.get_data(); 
-    void* key_ptr = (void*)key.get_data(); 
+void Producer::produce(const MessageBuilder& builder) {
+    void* payload_ptr = (void*)builder.payload().get_data();
+    void* key_ptr = (void*)builder.key().get_data();
     const int policy = static_cast<int>(message_payload_policy_);
-    int result = rd_kafka_produce(topic.get_handle(), partition.get_partition(),
-                                  policy, payload_ptr, payload.get_size(),
-                                  key_ptr, key.get_size(), user_data);
+    int result = rd_kafka_produce(builder.topic().get_handle(),
+                                  builder.partition().get_partition(),
+                                  policy, payload_ptr, builder.payload().get_size(),
+                                  key_ptr, builder.key().get_size(), builder.user_data());
     if (result == -1) {
         throw HandleException(rd_kafka_errno2err(errno));
     }
