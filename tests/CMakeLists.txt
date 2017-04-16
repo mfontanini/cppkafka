@@ -1,5 +1,6 @@
 include_directories(${GOOGLETEST_INCLUDE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${RDKAFKA_INCLUDE_DIR})
 
 link_directories(${GOOGLETEST_LIBRARY})
 link_libraries(cppkafka ${RDKAFKA_LIBRARY} gtest gtest_main pthread)

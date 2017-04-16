@@ -18,6 +18,11 @@ template <typename BufferType>
 class BufferedProducer {
 public:
     /**
+     * Concrete builder
+     */
+    using Builder = ConcreteMessageBuilder<BufferType>;
+
+    /**
      * \brief Constructs a buffered producer using the provided configuration
      *
      * \param config The configuration to be used on the actual Producer object
@@ -54,12 +59,12 @@ private:
     using IndexType = std::conditional<sizeof(void*) == 8, uint64_t, uint32_t>::type;
 
     const Topic& get_topic(const std::string& topic);
-    void produce_message(IndexType index, MessageBuilder& message);
+    void produce_message(IndexType index, Builder& message);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
 
     Producer producer_;
-    std::map<IndexType, MessageBuilder> messages_;
+    std::map<IndexType, Builder> messages_;
     std::vector<IndexType> failed_indexes_;
     IndexType current_index_{0};
     std::vector<Topic> topics_;
@@ -74,7 +79,7 @@ BufferedProducer<BufferType>::BufferedProducer(Configuration config)
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
-    MessageBuilder local_builder(get_topic(builder.topic().get_name()));
+    Builder local_builder(get_topic(builder.topic().get_name()));
     local_builder.partition(builder.partition());
     local_builder.key(builder.key());
     local_builder.payload(builder.payload());
@@ -122,13 +127,16 @@ const Topic& BufferedProducer<BufferType>::get_topic(const std::string& topic) {
 }
 
 template <typename BufferType>
-void BufferedProducer<BufferType>::produce_message(IndexType index,
-                                                   MessageBuilder& builder) {
+void BufferedProducer<BufferType>::produce_message(IndexType index, Builder& builder) {
     bool sent = false;
-    builder.user_data(reinterpret_cast<void*>(index));
+    MessageBuilder local_builder(builder.topic());
+    local_builder.partition(builder.partition())
+                 .key(builder.key())
+                 .payload(builder.payload())
+                 .user_data(reinterpret_cast<void*>(index));
     while (!sent) {
         try {
-            producer_.produce(builder);
+            producer_.produce(local_builder);
             sent = true;
         }
         catch (const HandleException& ex) {

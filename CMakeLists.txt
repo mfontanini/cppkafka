@@ -25,14 +25,9 @@ else()
     add_definitions("-DCPPKAFKA_STATIC=1")
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/include/cppkafka)
-
 # Look for Boost (just need boost.optional headers here)
 find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-
 find_package(RdKafka REQUIRED)
-include_directories(${RDKAFKA_INCLUDE_DIR})
 
 if (HAVE_OFFSETS_FOR_TIMES)
     message(STATUS "Enabling support for KafkaHandleBase::get_offsets_for_times")
