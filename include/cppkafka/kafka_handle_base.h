@@ -34,14 +34,17 @@
 #include <memory>
 #include <chrono>
 #include <unordered_map>
+#include <map>
 #include <mutex>
 #include <tuple>
+#include <chrono>
 #include <librdkafka/rdkafka.h>
 #include "topic_partition.h"
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
 #include "configuration.h"
 #include "macros.h"
+#include "config.h"
 
 namespace cppkafka {
 
@@ -55,6 +58,7 @@ class TopicMetadata;
 class CPPKAFKA_API KafkaHandleBase {
 public:
     using OffsetTuple = std::tuple<int64_t, int64_t>;
+    using TopicPartitionsTimestampsMap = std::map<TopicPartition, std::chrono::milliseconds>;
 
     virtual ~KafkaHandleBase() = default;
     KafkaHandleBase(const KafkaHandleBase&) = delete;
@@ -151,6 +155,19 @@ public:
      * \param topic The topic to fetch information for
      */
     TopicMetadata get_metadata(const Topic& topic) const;
+
+    #ifdef CPPKAFKA_HAVE_OFFSET_FOR_TIMES
+
+    /**
+     * \brief Gets topic/partition offsets based on timestamps
+     *
+     * This translates into a call to rd_kafka_offsets_for_times
+     *
+     * \param queries A map from topic/partition to the timestamp to be used
+     */
+    TopicPartitionList get_offsets_for_times(const TopicPartitionsTimestampsMap& queries) const;
+
+    #endif // CPPKAFKA_HAVE_OFFSET_FOR_TIMES
 
     /**
      * Returns the kafka handle name

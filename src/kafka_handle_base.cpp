@@ -119,6 +119,23 @@ TopicMetadata KafkaHandleBase::get_metadata(const Topic& topic) const {
     return topics.front();
 }
 
+#ifdef CPPKAFKA_HAVE_OFFSET_FOR_TIMES
+TopicPartitionList
+KafkaHandleBase::get_offsets_for_times(const TopicPartitionsTimestampsMap& queries) const {
+    TopicPartitionList topic_partitions;
+    for (const auto& query : queries) {
+        const TopicPartition& topic_partition = query.first;
+        topic_partitions.emplace_back(topic_partition.get_topic(), topic_partition.get_partition(),
+                                      query.second.count());
+    }
+    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+    rd_kafka_resp_err_t result = rd_kafka_offsets_for_times(handle_.get(), topic_list_handle.get(),
+                                                            timeout_ms_.count());
+    check_error(result);
+    return convert(topic_list_handle);
+}
+#endif // CPPKAFKA_HAVE_OFFSET_FOR_TIMES
+
 string KafkaHandleBase::get_name() const {
     return rd_kafka_name(handle_.get());
 }
