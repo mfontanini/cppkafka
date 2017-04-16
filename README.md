@@ -47,7 +47,7 @@ int main() {
 
 In order to compile _cppkafka_ you need:
 
-* _rdkafka >= 0.9.1_
+* _rdkafka >= 0.9.4_
 * _CMake_
 * A compiler with good C++11 support (e.g. gcc >= 4.8). This was tested successfully on
 _g++ 4.8.3_. 
