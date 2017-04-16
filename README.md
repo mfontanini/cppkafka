@@ -39,7 +39,7 @@ int main() {
 
     // Produce a message!
     string message = "hey there!";
-    producer.produce(topic, 0 /*partition*/, message);
+    producer.produce(MessageBuilder(topic).partition(0).payload(message));
 }
 ```
 
