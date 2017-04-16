@@ -88,16 +88,19 @@ public:
     static const string KAFKA_TOPIC;
 
     Configuration make_producer_config() {
-        Configuration config;
-        config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
+        Configuration config = {
+            { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+            { "queue.buffering.max.ms", 0 }
+        };
         return config;
     }
 
     Configuration make_consumer_config() {
-        Configuration config;
-        config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
-        config.set("enable.auto.commit", false);
-        config.set("group.id", "producer_test");
+        Configuration config = {
+            { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+            { "enable.auto.commit", false },
+            { "group.id", "producer_test" }
+        };
         return config;
     }
 };
@@ -206,11 +209,11 @@ TEST_F(ProducerTest, Callbacks) {
     // Now create a producer and produce a message
     string payload = "Hello world! 3";
     string key = "hehe";
-    bool deliver_report_called = false;
+    bool delivery_report_called = false;
     Configuration config = make_producer_config();
     config.set_delivery_report_callback([&](Producer&, const Message& msg) {
         EXPECT_EQ(Buffer(payload), msg.get_payload());
-        deliver_report_called = true;
+        delivery_report_called = true;
     });
 
     TopicConfiguration topic_config;
@@ -236,7 +239,7 @@ TEST_F(ProducerTest, Callbacks) {
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_FALSE(message.get_error());
-    EXPECT_TRUE(deliver_report_called);
+    EXPECT_TRUE(delivery_report_called);
 }
 
 TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
