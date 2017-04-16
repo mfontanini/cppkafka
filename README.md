@@ -14,6 +14,9 @@ only supported via the high level consumer API. _cppkafka_ requires **rdkakfa >=
 order to use it. Other wrapped functionalities are also provided, like fetching metadata, 
 offsets, etc.
 
+**Note**: _cppkafka_ is under development so the API might change through time. Once there's an
+actual release, it should become more stable.
+
 # It's simple!
 
 _cppkafka_'s API is simple. For example, this code creates a producer writes a message into some 
