@@ -44,7 +44,6 @@
 #include "topic_configuration.h"
 #include "configuration.h"
 #include "macros.h"
-#include "config.h"
 
 namespace cppkafka {
 
@@ -156,8 +155,6 @@ public:
      */
     TopicMetadata get_metadata(const Topic& topic) const;
 
-    #ifdef CPPKAFKA_HAVE_OFFSET_FOR_TIMES
-
     /**
      * \brief Gets topic/partition offsets based on timestamps
      *
@@ -166,8 +163,6 @@ public:
      * \param queries A map from topic/partition to the timestamp to be used
      */
     TopicPartitionList get_offsets_for_times(const TopicPartitionsTimestampsMap& queries) const;
-
-    #endif // CPPKAFKA_HAVE_OFFSET_FOR_TIMES
 
     /**
      * Returns the kafka handle name

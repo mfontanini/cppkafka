@@ -29,18 +29,6 @@ endif()
 find_package(Boost REQUIRED)
 find_package(RdKafka REQUIRED)
 
-if (HAVE_OFFSETS_FOR_TIMES)
-    message(STATUS "Enabling support for KafkaHandleBase::get_offsets_for_times")
-    set(CPPKAFKA_HAVE_OFFSET_FOR_TIMES ON)
-else()
-    message(STATUS "Disabling support for KafkaHandleBase::get_offsets_for_times")
-endif()
-# Configuration file
-configure_file(
-    "${PROJECT_SOURCE_DIR}/include/cppkafka/config.h.in"
-    "${PROJECT_SOURCE_DIR}/include/cppkafka/config.h"
-)
-
 add_subdirectory(src)
 add_subdirectory(include)
 

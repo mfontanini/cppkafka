@@ -119,7 +119,6 @@ TopicMetadata KafkaHandleBase::get_metadata(const Topic& topic) const {
     return topics.front();
 }
 
-#ifdef CPPKAFKA_HAVE_OFFSET_FOR_TIMES
 TopicPartitionList
 KafkaHandleBase::get_offsets_for_times(const TopicPartitionsTimestampsMap& queries) const {
     TopicPartitionList topic_partitions;
@@ -134,7 +133,6 @@ KafkaHandleBase::get_offsets_for_times(const TopicPartitionsTimestampsMap& queri
     check_error(result);
     return convert(topic_list_handle);
 }
-#endif // CPPKAFKA_HAVE_OFFSET_FOR_TIMES
 
 string KafkaHandleBase::get_name() const {
     return rd_kafka_name(handle_.get());

@@ -23,8 +23,7 @@ find_package_handle_standard_args(RDKAFKA DEFAULT_MSG
 include(CheckFunctionExists)
 
 set(CMAKE_REQUIRED_LIBRARIES ${RDKAFKA_LIBRARY})
-check_function_exists(rd_kafka_committed HAVE_VALID_KAFKA_VERSION)
-check_function_exists(rd_kafka_offsets_for_times HAVE_OFFSETS_FOR_TIMES)
+check_function_exists(rd_kafka_offsets_for_times HAVE_VALID_KAFKA_VERSION)
 set(CMAKE_REQUIRED_LIBRARIES)
 
 if (HAVE_VALID_KAFKA_VERSION)
