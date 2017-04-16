@@ -34,6 +34,7 @@
 #include "buffer.h"
 #include "topic.h"
 #include "partition.h"
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -41,6 +42,9 @@ namespace cppkafka {
  * \brief Message builder class
  * 
  * Allows building a message including topic, partition, key, payload, etc.
+ *
+ * The topic and buffer objects used <b>must</b> be kept alive while the message builder object
+ * is still being used.
  *
  * Example:
  *
@@ -52,7 +56,7 @@ namespace cppkafka {
  * producer.produce(MessageBuilder(topic).partition(5).payload(payload));
  * \endcode
  */
-class MessageBuilder {
+class CPPKAFKA_API MessageBuilder {
 public:
     /**
      * Construct a MessageBuilder
