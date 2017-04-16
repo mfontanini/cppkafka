@@ -294,7 +294,7 @@ TEST_F(ProducerTest, BufferedProducer) {
     string key = "such key";
     Topic topic = producer.get_producer().get_topic(KAFKA_TOPIC);
     producer.add_message(MessageBuilder(topic).partition(partition).key(key).payload(payload));
-    producer.add_message(MessageBuilder(topic).partition(partition).payload(payload));
+    producer.add_message(producer.make_builder(topic).partition(partition).payload(payload));
     producer.flush();
     runner.try_join();
 

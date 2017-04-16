@@ -109,9 +109,19 @@ public:
     const BufferType& key() const;
 
     /**
+     * Gets the message's key
+     */
+    BufferType& key();
+
+    /**
      * Gets the message's payload
      */
     const BufferType& payload() const;
+
+    /**
+     * Gets the message's payload
+     */
+    BufferType& payload();
 
     /**
      * Gets the message's user data pointer
@@ -184,7 +194,17 @@ const T& BasicMessageBuilder<T, C>::key() const {
 }
 
 template <typename T, typename C>
+T& BasicMessageBuilder<T, C>::key() {
+    return key_;
+}
+
+template <typename T, typename C>
 const T& BasicMessageBuilder<T, C>::payload() const {
+    return payload_;
+}
+
+template <typename T, typename C>
+T& BasicMessageBuilder<T, C>::payload() {
     return payload_;
 }
 
