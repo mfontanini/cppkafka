@@ -10,7 +10,7 @@ High level C++ wrapper for _rdkafka_
 simple, less error prone way. 
 
 * _cppkafka_ provides an API to produce messages as well as consuming messages, but the latter is 
-only supported via the high level consumer API. _cppkafka_ requires **rdkakfa >= 0.9.1** in 
+only supported via the high level consumer API. _cppkafka_ requires **rdkakfa >= 0.9.4** in 
 order to use it. Other wrapped functionalities are also provided, like fetching metadata, 
 offsets, etc.
 
