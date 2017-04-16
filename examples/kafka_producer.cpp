@@ -48,11 +48,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    MessageBuilder builder(topic_name);
     // Get the partition we want to write to. If no partition is provided, this will be
     // an unassigned one
-    Partition partition;
     if (partition_value != -1) {
-        partition = partition_value;
+        builder.partition(partition_value);
     }
 
     // Construct the configuration
@@ -62,15 +62,14 @@ int main(int argc, char* argv[]) {
 
     // Create the producer
     Producer producer(config);
-    // Get the topic we want
-    Topic topic = producer.get_topic(topic_name);
 
     cout << "Producing messages into topic " << topic_name << endl;
 
     // Now read lines and write them into kafka
     string line;
     while (getline(cin, line)) {
+        builder.payload(line);
         // Write the string into the partition
-        producer.produce(MessageBuilder(topic).partition(partition).payload(line));
+        producer.produce(builder);
     }
 }

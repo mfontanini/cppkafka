@@ -30,10 +30,8 @@
 #ifndef CPPKAFKA_MESSAGE_BUILDER_H
 #define CPPKAFKA_MESSAGE_BUILDER_H
 
-#include <boost/optional.hpp>
 #include "buffer.h"
 #include "topic.h"
-#include "partition.h"
 #include "macros.h"
 
 namespace cppkafka {
@@ -49,14 +47,21 @@ public:
      *
      * \param topic The topic into which this message would be produced
      */
-    BasicMessageBuilder(const Topic& topic);
+    BasicMessageBuilder(std::string topic);
+
+    /**
+     * Sets the topic in which this message will be produced
+     *
+     * \param value The topic to be used
+     */
+    Concrete& topic(std::string value);
 
     /**
      * Sets the partition into which this message will be produced
      *
      * \param value The partition to be used  
      */
-    Concrete& partition(Partition value);
+    Concrete& partition(int value);
 
     /**
      * Sets the message's key
@@ -96,12 +101,12 @@ public:
     /**
      * Gets the topic this message will be produced into
      */
-    const Topic& topic() const;
+    const std::string& topic() const;
 
     /**
      * Gets the partition this message will be produced into
      */
-    const Partition& partition() const;
+    int partition() const;
 
     /**
      * Gets the message's key
@@ -130,20 +135,26 @@ public:
 private:
     void construct_buffer(BufferType& lhs, const BufferType& rhs);
 
-    const Topic& topic_;
-    Partition partition_;
+    std::string topic_;
+    int partition_{-1};
     BufferType key_;
     BufferType payload_;
     void* user_data_;
 };
 
 template <typename T, typename C>
-BasicMessageBuilder<T, C>::BasicMessageBuilder(const Topic& topic)
-: topic_(topic) {
+BasicMessageBuilder<T, C>::BasicMessageBuilder(std::string topic)
+: topic_(std::move(topic)) {
 }
 
 template <typename T, typename C>
-C& BasicMessageBuilder<T, C>::partition(Partition value) {
+C& BasicMessageBuilder<T, C>::topic(std::string value) {
+    topic_ = std::move(value);
+    return static_cast<C&>(*this);
+}
+
+template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::partition(int value) {
     partition_ = value;
     return static_cast<C&>(*this);
 }
@@ -179,12 +190,12 @@ C& BasicMessageBuilder<T, C>::user_data(void* value) {
 }
 
 template <typename T, typename C>
-const Topic& BasicMessageBuilder<T, C>::topic() const {
+const std::string& BasicMessageBuilder<T, C>::topic() const {
     return topic_;
 }
 
 template <typename T, typename C>
-const Partition& BasicMessageBuilder<T, C>::partition() const {
+int BasicMessageBuilder<T, C>::partition() const {
     return partition_;
 }
 
@@ -223,17 +234,13 @@ void BasicMessageBuilder<T, C>::construct_buffer(T& lhs, const T& rhs) {
  * 
  * Allows building a message including topic, partition, key, payload, etc.
  *
- * The topic and buffer objects used <b>must</b> be kept alive while the message builder object
- * is still being used.
- *
  * Example:
  *
  * \code
  * Producer producer(...);
- * Topic topic = producer.get_topic("test");
  * 
  * string payload = "hello world";
- * producer.produce(MessageBuilder(topic).partition(5).payload(payload));
+ * producer.produce(MessageBuilder("test").partition(5).payload(payload));
  * \endcode
  */
 class MessageBuilder : public BasicMessageBuilder<Buffer, MessageBuilder> {

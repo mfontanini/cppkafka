@@ -4,7 +4,6 @@ set(SOURCES
     configuration_option.cpp
     exceptions.cpp
     topic.cpp
-    partition.cpp
     buffer.cpp
     message.cpp
     topic_partition.cpp

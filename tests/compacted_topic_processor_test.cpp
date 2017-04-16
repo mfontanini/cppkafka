@@ -76,7 +76,6 @@ TEST_F(CompactedTopicProcessorTest, Consume) {
     consumer.poll();
 
     Producer producer(make_producer_config());
-    Topic topic = producer.get_topic(KAFKA_TOPIC);
 
     struct ElementType {
         string value;
@@ -88,13 +87,13 @@ TEST_F(CompactedTopicProcessorTest, Consume) {
     };
     for (const auto& element_pair : elements) { 
         const ElementType& element = element_pair.second;
-        MessageBuilder builder(topic);
+        MessageBuilder builder(KAFKA_TOPIC);
         builder.partition(element.partition).key(element_pair.first).payload(element.value);
         producer.produce(builder);
     }
     // Now erase the first element
     string deleted_key = "42";
-    producer.produce(MessageBuilder(topic).partition(0).key(deleted_key));
+    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(0).key(deleted_key));
 
     for (size_t i = 0; i < 10; ++i) {
         compacted_consumer.process_event();

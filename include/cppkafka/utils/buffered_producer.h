@@ -70,14 +70,13 @@ public:
     /**
      * Simple helper to construct a builder object
      */
-    Builder make_builder(const Topic& topic);
+    Builder make_builder(std::string topic);
 private:
     // Pick the most appropriate index type depending on the platform we're using
     using IndexType = std::conditional<sizeof(void*) == 8, uint64_t, uint32_t>::type;
 
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder);
-    const Topic& get_topic(const std::string& topic);
     void produce_message(IndexType index, Builder& message);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
@@ -86,7 +85,6 @@ private:
     std::map<IndexType, Builder> messages_;
     std::vector<IndexType> failed_indexes_;
     IndexType current_index_{0};
-    std::vector<Topic> topics_;
     std::unordered_map<std::string, unsigned> topic_mapping_;
 };
 
@@ -126,10 +124,10 @@ void BufferedProducer<BufferType>::flush() {
 template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
-    Builder local_builder(get_topic(builder.topic().get_name()));
-    local_builder.partition(builder.partition());
-    local_builder.key(std::move(builder.key()));
-    local_builder.payload(std::move(builder.payload()));
+    Builder local_builder(builder.topic());
+    local_builder.partition(builder.partition())
+                 .key(std::move(builder.key()))
+                 .payload(std::move(builder.payload()));
 
     IndexType index = messages_.size();
     messages_.emplace(index, std::move(local_builder));
@@ -147,19 +145,8 @@ const Producer& BufferedProducer<BufferType>::get_producer() const {
 
 template <typename BufferType>
 typename BufferedProducer<BufferType>::Builder
-BufferedProducer<BufferType>::make_builder(const Topic& topic) {
-    return Builder(topic);
-}
-
-template <typename BufferType>
-const Topic& BufferedProducer<BufferType>::get_topic(const std::string& topic) {
-    auto iter = topic_mapping_.find(topic);
-    if (iter == topic_mapping_.end()) {
-        unsigned index = topics_.size();
-        topics_.push_back(producer_.get_topic(topic));
-        iter = topic_mapping_.emplace(topic, index).first;
-    }
-    return topics_[iter->second];
+BufferedProducer<BufferType>::make_builder(std::string topic) {
+    return Builder(std::move(topic));
 }
 
 template <typename BufferType>

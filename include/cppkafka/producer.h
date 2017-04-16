@@ -35,7 +35,6 @@
 #include "configuration.h"
 #include "buffer.h"
 #include "topic.h"
-#include "partition.h"
 #include "macros.h"
 #include "message_builder.h"
 
@@ -65,18 +64,15 @@ class TopicConfiguration;
  * // Create a producer 
  * Producer producer(config);
  *
- * // Get the topic we'll write into
- * Topic topic = producer.get_topic("foo");
- * 
  * // Create some key and payload
  * string key = "creative_key_name";
  * string payload = "some payload";
  *
  * // Write a message into an unassigned partition
- * producer.produce(MessageBuilder(topic).payload(payload));
+ * producer.produce(MessageBuilder("some_topic").payload(payload));
  *
  * // Write using a key on a fixed partition (42)
- * producer.produce(MessageBuilder(topic).partition(42).key(key).payload(payload));
+ * producer.produce(MessageBuilder("some_topic").partition(42).key(key).payload(payload));
  * 
  * \endcode
  */

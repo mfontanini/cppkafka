@@ -63,16 +63,18 @@ Producer::PayloadPolicy Producer::get_payload_policy() const {
 }
 
 void Producer::produce(const MessageBuilder& builder) {
-    void* payload_ptr = (void*)builder.payload().get_data();
-    void* key_ptr = (void*)builder.key().get_data();
+    const Buffer& payload = builder.payload();
+    const Buffer& key = builder.key();
     const int policy = static_cast<int>(message_payload_policy_);
-    int result = rd_kafka_produce(builder.topic().get_handle(),
-                                  builder.partition().get_partition(),
-                                  policy, payload_ptr, builder.payload().get_size(),
-                                  key_ptr, builder.key().get_size(), builder.user_data());
-    if (result == -1) {
-        throw HandleException(rd_kafka_errno2err(errno));
-    }
+    auto result = rd_kafka_producev(get_handle(),
+                                    RD_KAFKA_V_TOPIC(builder.topic().data()),
+                                    RD_KAFKA_V_PARTITION(builder.partition()),
+                                    RD_KAFKA_V_MSGFLAGS(policy),
+                                    RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
+                                    RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
+                                    RD_KAFKA_V_OPAQUE(builder.user_data()),
+                                    RD_KAFKA_V_END);
+    check_error(result);
 }
 
 int Producer::poll() {
