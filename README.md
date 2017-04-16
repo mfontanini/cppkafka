@@ -1,12 +1,11 @@
 # cppkafka
 ---
 High level C++ wrapper for _rdkafka_
-
 ---
 
 # Features
 
-* _cppkafka_ is a high level C++ wrapper for _rdkafka_, aiming at allowing to use _rdkafka_ in a 
+* _cppkafka_ is a high level C++ wrapper for _rdkafka_, aiming to allow using _rdkafka_ in a 
 simple, less error prone way. 
 
 * _cppkafka_ provides an API to produce messages as well as consuming messages, but the latter is 
@@ -14,13 +13,16 @@ only supported via the high level consumer API. _cppkafka_ requires **rdkakfa >=
 order to use it. Other wrapped functionalities are also provided, like fetching metadata, 
 offsets, etc.
 
+* _cppkafka_ tries to add minimal overhead over _librdkafka_. A very thin wrapper for _librdkafka_
+messages is used for consumption so there's virtually no overhead at all.
+
 **Note**: _cppkafka_ is under development so the API might change through time. Once there's an
 actual release, it should become more stable.
 
 # It's simple!
 
-_cppkafka_'s API is simple. For example, this code creates a producer writes a message into some 
-partition:
+_cppkafka_'s API is simple. For example, this code creates a producer that writes a message
+into some partition:
 
 ```c++
 #include <cppkafka/producer.h>
