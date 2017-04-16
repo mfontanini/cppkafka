@@ -124,13 +124,8 @@ void BufferedProducer<BufferType>::flush() {
 template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
-    Builder local_builder(builder.topic());
-    local_builder.partition(builder.partition())
-                 .key(std::move(builder.key()))
-                 .payload(std::move(builder.payload()));
-
     IndexType index = messages_.size();
-    messages_.emplace(index, std::move(local_builder));
+    messages_.emplace(index, std::move(builder));
 }
 
 template <typename BufferType>
@@ -152,11 +147,8 @@ BufferedProducer<BufferType>::make_builder(std::string topic) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce_message(IndexType index, Builder& builder) {
     bool sent = false;
-    MessageBuilder local_builder(builder.topic());
-    local_builder.partition(builder.partition())
-                 .key(builder.key())
-                 .payload(builder.payload())
-                 .user_data(reinterpret_cast<void*>(index));
+    MessageBuilder local_builder = builder;
+    local_builder.user_data(reinterpret_cast<void*>(index));
     while (!sent) {
         try {
             producer_.produce(local_builder);

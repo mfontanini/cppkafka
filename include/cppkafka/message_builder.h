@@ -30,6 +30,7 @@
 #ifndef CPPKAFKA_MESSAGE_BUILDER_H
 #define CPPKAFKA_MESSAGE_BUILDER_H
 
+#include <chrono>
 #include "buffer.h"
 #include "topic.h"
 #include "macros.h"
@@ -48,6 +49,21 @@ public:
      * \param topic The topic into which this message would be produced
      */
     BasicMessageBuilder(std::string topic);
+
+    /**
+     * \brief Construct a message builder from another one that uses a different buffer type
+     *
+     * Note that this can only be used if BufferType can be constructed from an OtherBufferType
+     *
+     * \param rhs The message builder to be constructed from
+     */
+    template <typename OtherBufferType, typename OtherConcrete>
+    BasicMessageBuilder(const BasicMessageBuilder<OtherBufferType, OtherConcrete>& rhs);
+
+    BasicMessageBuilder(BasicMessageBuilder&&) = default;
+    BasicMessageBuilder(const BasicMessageBuilder&) = default;
+    BasicMessageBuilder& operator=(BasicMessageBuilder&&) = default;
+    BasicMessageBuilder& operator=(const BasicMessageBuilder&) = default;
 
     /**
      * Sets the topic in which this message will be produced
@@ -92,6 +108,13 @@ public:
     Concrete& payload(BufferType&& value);
 
     /**
+     * Sets the message's timestamp
+     *
+     * \param value The timestamp to be used
+     */
+    Concrete& timestamp(std::chrono::milliseconds value);
+
+    /**
      * Sets the message's user data pointer
      *
      * \param value Pointer to the user data to be used on the produce call
@@ -129,16 +152,23 @@ public:
     BufferType& payload();
 
     /**
+     * Gets the message's timestamp
+     */
+    std::chrono::milliseconds timestamp() const;
+
+    /**
      * Gets the message's user data pointer
      */
     void* user_data() const;
 private:
     void construct_buffer(BufferType& lhs, const BufferType& rhs);
+    Concrete& get_concrete();
 
     std::string topic_;
     int partition_{-1};
     BufferType key_;
     BufferType payload_;
+    std::chrono::milliseconds timestamp_{0};
     void* user_data_;
 };
 
@@ -148,45 +178,60 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(std::string topic)
 }
 
 template <typename T, typename C>
+template <typename U, typename V>
+BasicMessageBuilder<T, C>::BasicMessageBuilder(const BasicMessageBuilder<U, V>& rhs)
+: topic_(rhs.topic()), partition_(rhs.partition()), timestamp_(rhs.timestamp()),
+  user_data_(rhs.user_data()) {
+    get_concrete().construct_buffer(key_, rhs.key());
+    get_concrete().construct_buffer(payload_, rhs.payload());
+}
+
+template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::topic(std::string value) {
     topic_ = std::move(value);
-    return static_cast<C&>(*this);
+    return get_concrete();
 }
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::partition(int value) {
     partition_ = value;
-    return static_cast<C&>(*this);
+    return get_concrete();
 }
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::key(const T& value) {
-    static_cast<C&>(*this).construct_buffer(key_, value);
-    return static_cast<C&>(*this);
+    get_concrete().construct_buffer(key_, value);
+    return get_concrete();
 }
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::key(T&& value) {
     key_ = std::move(value);
-    return static_cast<C&>(*this);
+    return get_concrete();
 }
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::payload(const T& value) {
-    static_cast<C&>(*this).construct_buffer(payload_, value);
-    return static_cast<C&>(*this);
+    get_concrete().construct_buffer(payload_, value);
+    return get_concrete();
 }
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::payload(T&& value) {
     payload_ = std::move(value);
-    return static_cast<C&>(*this);
+    return get_concrete();
+}
+
+template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::timestamp(std::chrono::milliseconds value) {
+    timestamp_ = value;
+    return get_concrete();
 }
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::user_data(void* value) {
     user_data_ = value;
-    return static_cast<C&>(*this);
+    return get_concrete();
 }
 
 template <typename T, typename C>
@@ -220,6 +265,11 @@ T& BasicMessageBuilder<T, C>::payload() {
 }
 
 template <typename T, typename C>
+std::chrono::milliseconds BasicMessageBuilder<T, C>::timestamp() const {
+    return timestamp_;
+}
+
+template <typename T, typename C>
 void* BasicMessageBuilder<T, C>::user_data() const {
     return user_data_;
 }
@@ -227,6 +277,11 @@ void* BasicMessageBuilder<T, C>::user_data() const {
 template <typename T, typename C>
 void BasicMessageBuilder<T, C>::construct_buffer(T& lhs, const T& rhs) {
     lhs = rhs;
+}
+
+template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::get_concrete() {
+    return static_cast<C&>(*this);
 }
 
 /**
@@ -249,6 +304,11 @@ public:
 
     void construct_buffer(Buffer& lhs, const Buffer& rhs) {
         lhs = Buffer(rhs.get_data(), rhs.get_size());
+    }
+
+    template <typename T>
+    void construct_buffer(Buffer& lhs, const T& rhs) {
+        lhs = Buffer(rhs);
     }
 };
 
