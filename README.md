@@ -37,12 +37,9 @@ int main() {
     // Create the producer
     Producer producer(config);
 
-    // Get the topic we'll write into
-    Topic topic = producer.get_topic("my_topic");
-
     // Produce a message!
     string message = "hey there!";
-    producer.produce(MessageBuilder(topic).partition(0).payload(message));
+    producer.produce(MessageBuilder("my_topic").partition(0).payload(message));
 }
 ```
 
