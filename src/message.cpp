@@ -31,6 +31,8 @@
 
 using std::string;
 
+using std::chrono::milliseconds;
+
 using boost::optional;
 using boost::none_t;
 
@@ -104,7 +106,8 @@ optional<MessageTimestamp> Message::get_timestamp() const {
     if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
         return {};
     }
-    return MessageTimestamp(timestamp, static_cast<MessageTimestamp::TimestampType>(type));
+    return MessageTimestamp(milliseconds(timestamp),
+                            static_cast<MessageTimestamp::TimestampType>(type));
 }
 
 Message::operator bool() const {
@@ -117,12 +120,12 @@ rd_kafka_message_t* Message::get_handle() const {
 
 // MessageTimestamp
 
-MessageTimestamp::MessageTimestamp(int64_t timestamp, TimestampType type)
+MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
 : timestamp_(timestamp), type_(type) {
 
 }
 
-int64_t MessageTimestamp::get_timestamp() const {
+milliseconds MessageTimestamp::get_timestamp() const {
     return timestamp_;
 }
 

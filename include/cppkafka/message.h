@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <cstdint>
+#include <chrono>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
 #include "buffer.h"
@@ -163,19 +164,19 @@ public:
     /**
      * Constructs a timestamp object
      */
-    MessageTimestamp(int64_t timestamp, TimestampType type);
+    MessageTimestamp(std::chrono::milliseconds timestamp, TimestampType type);
 
     /**
      * Gets the timestamp value
      */
-    int64_t get_timestamp() const;
+    std::chrono::milliseconds get_timestamp() const;
 
     /**
      * Gets the timestamp type
      */
     TimestampType get_type() const;
 private:
-    int64_t timestamp_;
+    std::chrono::milliseconds timestamp_;
     TimestampType type_;
 };
 
