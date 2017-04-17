@@ -29,6 +29,7 @@
 
 #include "kafka_handle_base.h"
 #include "metadata.h"
+#include "group_information.h"
 #include "exceptions.h"
 #include "topic.h"
 #include "topic_partition_list.h"
@@ -114,9 +115,21 @@ TopicMetadata KafkaHandleBase::get_metadata(const Topic& topic) const {
     Metadata md = get_metadata(false, topic.get_handle());
     auto topics = md.get_topics();
     if (topics.empty()) {
-        throw Exception("Failed to find metadata for topic");
+        throw ElementNotFound("topic metadata", topic.get_name());
     }
     return topics.front();
+}
+
+GroupInformation KafkaHandleBase::get_consumer_group(const string& name) {
+    auto result = fetch_consumer_groups(name.c_str());
+    if (result.empty()) {
+        throw ElementNotFound("consumer group information", name);
+    }
+    return move(result[0]);
+}
+
+vector<GroupInformation> KafkaHandleBase::get_consumer_groups() {
+    return fetch_consumer_groups(nullptr);
 }
 
 TopicPartitionList
@@ -168,6 +181,23 @@ Metadata KafkaHandleBase::get_metadata(bool all_topics, rd_kafka_topic_t* topic_
                                                   topic_ptr, &metadata, timeout_ms_.count());
     check_error(error);
     return Metadata(metadata);
+}
+
+vector<GroupInformation> KafkaHandleBase::fetch_consumer_groups(const char* name) {
+    const rd_kafka_group_list* list = nullptr;
+    auto result = rd_kafka_list_groups(get_handle(), name, &list, timeout_ms_.count());
+    check_error(result);
+
+    // Wrap this in a unique_ptr so it gets auto deleted
+    using GroupHandle = std::unique_ptr<const rd_kafka_group_list,
+                                        decltype(&rd_kafka_group_list_destroy)>;
+    GroupHandle group_handle(list, &rd_kafka_group_list_destroy);
+
+    vector<GroupInformation> groups;
+    for (int i = 0; i < list->group_cnt; ++i) {
+        groups.emplace_back(list->groups[i]);
+    }
+    return groups;
 }
 
 void KafkaHandleBase::save_topic_config(const string& topic_name, TopicConfiguration config) {

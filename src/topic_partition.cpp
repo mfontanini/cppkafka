@@ -83,6 +83,14 @@ bool TopicPartition::operator<(const TopicPartition& rhs) const {
     return tie(topic_, partition_) < tie(rhs.topic_, rhs.partition_);
 }
 
+bool TopicPartition::operator==(const TopicPartition& rhs) const {
+    return tie(topic_, partition_) == tie(rhs.topic_, rhs.partition_);
+}
+
+bool TopicPartition::operator!=(const TopicPartition& rhs) const {
+    return !(*this == rhs);
+}
+
 ostream& operator<<(ostream& output, const TopicPartition& rhs) {
     return output << rhs.get_topic() << "[" << rhs.get_partition() << "]";
 }

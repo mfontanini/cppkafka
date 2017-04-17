@@ -30,6 +30,7 @@
 #include "exceptions.h"
 
 using std::string;
+using std::to_string;
 
 namespace cppkafka {
 
@@ -63,6 +64,26 @@ ConfigOptionNotFound::ConfigOptionNotFound(const string& config_name)
 InvalidConfigOptionType::InvalidConfigOptionType(const string& config_name, const string& type) 
 : Exception(config_name + " could not be converted to " + type) {
 
+}
+
+// ElementNotFound
+
+ElementNotFound::ElementNotFound(const string& element_type, const string& name)
+: Exception("Could not find " + element_type + " for " + name) {
+
+}
+
+// ParseException
+
+ParseException::ParseException(const string& message)
+: Exception(message) {
+
+}
+
+// UnexpectedVersion
+
+UnexpectedVersion::UnexpectedVersion(uint32_t version)
+: Exception("Unexpected version " + to_string(version)) {
 }
 
 // HandleException

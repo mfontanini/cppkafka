@@ -118,6 +118,16 @@ public:
     bool operator<(const TopicPartition& rhs) const;
 
     /**
+     * Compare the (topic, partition) for equality
+     */
+    bool operator==(const TopicPartition& rhs) const;
+
+    /**
+     * Compare the (topic, partition) for in-equality
+     */
+    bool operator!=(const TopicPartition& rhs) const;
+
+    /**
      * Print to a stream
      */
     friend std::ostream& operator<<(std::ostream& output, const TopicPartition& rhs);

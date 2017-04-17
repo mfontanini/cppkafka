@@ -1,8 +1,11 @@
 #include <set>
 #include <unordered_set>
 #include <gtest/gtest.h>
+#include "cppkafka/consumer.h"
 #include "cppkafka/producer.h"
 #include "cppkafka/metadata.h"
+#include "cppkafka/group_information.h"
+#include "test_utils.h"
 
 using std::vector;
 using std::set;
@@ -96,4 +99,43 @@ TEST_F(KafkaHandleBaseTest, TopicsMetadata) {
     // Now get the whole metadata only for this topic
     Topic topic = producer.get_topic(KAFKA_TOPIC);
     EXPECT_EQ(KAFKA_TOPIC, producer.get_metadata(topic).get_name());
+}
+
+TEST_F(KafkaHandleBaseTest, ConsumerGroups) {
+    string consumer_group = "kafka_handle_test";
+    string client_id = "my_client_id";
+
+    Configuration config = make_config();
+    config.set("group.id", consumer_group);
+    config.set("client.id", client_id);
+    config.set("enable.auto.commit", false);
+
+    // Build consumer
+    Consumer consumer(config);
+    consumer.subscribe({ KAFKA_TOPIC });
+    ConsumerRunner runner(consumer, 0, 3);
+    runner.try_join();
+
+    GroupInformation information = consumer.get_consumer_group(consumer_group);
+    EXPECT_EQ(consumer_group, information.get_name());
+    EXPECT_EQ("consumer", information.get_protocol_type());
+    ASSERT_EQ(1, information.get_members().size());
+
+    auto member = information.get_members()[0];
+    EXPECT_EQ(client_id, member.get_client_id());
+
+    MemberAssignmentInformation assignment = member.get_member_assignment();
+    EXPECT_EQ(0, assignment.get_version());
+    vector<TopicPartition> expected_topic_partitions = {
+        { KAFKA_TOPIC, 0 },
+        { KAFKA_TOPIC, 1 },
+        { KAFKA_TOPIC, 2 }
+    };
+    vector<TopicPartition> topic_partitions = assignment.get_topic_partitions();
+    sort(topic_partitions.begin(), topic_partitions.end());
+    EXPECT_EQ(expected_topic_partitions, topic_partitions);
+    /*for (const auto c : ) {
+        printf("%0d,", (int)c & 0xff);
+    }
+    std::cout << std::endl;*/
 }

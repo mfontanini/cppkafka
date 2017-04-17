@@ -50,6 +50,7 @@ namespace cppkafka {
 class Topic;
 class Metadata;
 class TopicMetadata;
+class GroupInformation;
 
 /**
  * Base class for kafka consumer/producer
@@ -156,6 +157,18 @@ public:
     TopicMetadata get_metadata(const Topic& topic) const;
 
     /**
+     * Gets the consumer group information
+     *
+     * \param name The name of the consumer group to look up
+     */
+    GroupInformation get_consumer_group(const std::string& name);
+
+    /**
+     * Gets all consumer groups
+     */
+    std::vector<GroupInformation> get_consumer_groups();
+
+    /**
      * \brief Gets topic/partition offsets based on timestamps
      *
      * This translates into a call to rd_kafka_offsets_for_times
@@ -201,6 +214,7 @@ private:
 
     Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
     Metadata get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const;
+    std::vector<GroupInformation> fetch_consumer_groups(const char* name);
     void save_topic_config(const std::string& topic_name, TopicConfiguration config);
 
     HandlePtr handle_;

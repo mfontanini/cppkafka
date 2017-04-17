@@ -74,6 +74,30 @@ public:
     InvalidConfigOptionType(const std::string& config_name, const std::string& type);
 };
 
+/** 
+ * Indicates something that was being looked up failed to be found
+ */
+class CPPKAFKA_API ElementNotFound : public Exception {
+public:
+    ElementNotFound(const std::string& element_type, const std::string& name);
+};
+
+/** 
+ * Indicates something that was incorrectly parsed
+ */
+class CPPKAFKA_API ParseException : public Exception {
+public:
+    ParseException(const std::string& message);
+};
+
+/** 
+ * Indicates something had an unexpected versiom
+ */
+class CPPKAFKA_API UnexpectedVersion : public Exception {
+public:
+    UnexpectedVersion(uint32_t version);
+};
+
 /**
  * A generic rdkafka handle error
  */

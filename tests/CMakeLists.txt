@@ -14,7 +14,12 @@ macro(create_test test_name)
     add_test(${test_name} ${test_name}_test)
     add_dependencies(tests ${test_name}_test)
     add_dependencies(${test_name}_test cppkafka)
+    target_link_libraries(${test_name}_test cppkafka-test)
 endmacro()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_library(cppkafka-test EXCLUDE_FROM_ALL test_utils.cpp)
+add_dependencies(cppkafka-test cppkafka)
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 create_test(consumer)

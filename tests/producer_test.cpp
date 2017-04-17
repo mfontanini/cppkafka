@@ -7,6 +7,7 @@
 #include "cppkafka/producer.h"
 #include "cppkafka/consumer.h"
 #include "cppkafka/utils/buffered_producer.h"
+#include "test_utils.h"
 
 using std::string;
 using std::to_string;
@@ -24,64 +25,6 @@ using std::chrono::seconds;
 using std::chrono::milliseconds;
 
 using namespace cppkafka;
-
-class ConsumerRunner {
-public:
-    ConsumerRunner(Consumer& consumer, size_t expected, size_t partitions) 
-    : consumer_(consumer) {
-        bool booted = false;
-        mutex mtx;
-        condition_variable cond;
-        thread_ = thread([&, expected, partitions]() {
-            consumer_.set_timeout(milliseconds(500));
-            size_t number_eofs = 0;
-            auto start = system_clock::now();
-            while (system_clock::now() - start < seconds(10) && messages_.size() < expected) {
-                Message msg = consumer_.poll();
-                if (msg && number_eofs != partitions &&
-                    msg.get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-                    number_eofs++;
-                    if (number_eofs == partitions) {
-                        lock_guard<mutex> _(mtx);
-                        booted = true;
-                        cond.notify_one();
-                    }
-                }
-                else if (msg && !msg.get_error()) {
-                    messages_.push_back(move(msg));
-                }
-            }
-        });
-
-        unique_lock<mutex> lock(mtx);
-        while (!booted) {
-            cond.wait(lock);
-        }
-    }
-
-
-
-    ConsumerRunner(const ConsumerRunner&) = delete;
-    ConsumerRunner& operator=(const ConsumerRunner&) = delete;
-
-    ~ConsumerRunner() {
-        try_join();
-    }
-
-    const std::vector<Message>& get_messages() const {
-        return messages_;
-    }
-
-    void try_join() {
-        if (thread_.joinable()) {
-            thread_.join();
-        }
-    }
-private:
-    Consumer& consumer_;
-    thread thread_;
-    std::vector<Message> messages_;
-};
 
 class ProducerTest : public testing::Test {
 public:
