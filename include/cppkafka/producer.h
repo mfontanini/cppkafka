@@ -65,7 +65,7 @@ class TopicConfiguration;
  * Producer producer(config);
  *
  * // Create some key and payload
- * string key = "creative_key_name";
+ * string key = "some key";
  * string payload = "some payload";
  *
  * // Write a message into an unassigned partition
@@ -78,6 +78,9 @@ class TopicConfiguration;
  */
 class CPPKAFKA_API Producer : public KafkaHandleBase {
 public:
+    /**
+     * The policy to use for the payload. The default policy is COPY_PAYLOAD
+     */
     enum PayloadPolicy {
         COPY_PAYLOAD = RD_KAFKA_MSG_F_COPY, ///< Means RD_KAFKA_MSG_F_COPY
         FREE_PAYLOAD = RD_KAFKA_MSG_F_FREE  ///< Means RD_KAFKA_MSG_F_FREE

@@ -79,17 +79,17 @@ class TopicConfiguration;
  * consumer.subscribe({ "my_topic" });
  * while (true) {
  *     // Poll. This will optionally return a message. It's necessary to check if it's a valid
- *     // one before using it or bad things will happen
+ *     // one before using it
  *     Message msg = consumer.poll(); 
  *     if (msg) {
- *         // It's a valid message!
  *         if (!msg.get_error()) {
  *             // It's an actual message. Get the payload and print it to stdout
  *             cout << msg.get_payload().as_string() << endl;
  *         }
- *         else {
- *             // Is it an error notification
- *             // ...
+ *         else if (!msg.is_eof()) {
+ *             // Is it an error notification, handle it.
+ *             // This is explicitly skipping EOF notifications as they're not actually errors,
+ *             // but that's how rdkafka provides them
  *         }
  *     }
  * }
