@@ -225,7 +225,7 @@ TEST_F(ProducerTest, BufferedProducer) {
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
     consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
-    ConsumerRunner runner(consumer, 2, 1);
+    ConsumerRunner runner(consumer, 3, 1);
 
     // Now create a buffered producer and produce two messages
     BufferedProducer<string> producer(make_producer_config());
@@ -236,17 +236,21 @@ TEST_F(ProducerTest, BufferedProducer) {
                                                     .payload(payload));
     producer.add_message(producer.make_builder(KAFKA_TOPIC).partition(partition).payload(payload));
     producer.flush();
+    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.wait_for_acks();
     runner.try_join();
 
     const auto& messages = runner.get_messages();
-    ASSERT_EQ(2, messages.size());
+    ASSERT_EQ(3, messages.size());
     const auto& message = messages[0];
-    EXPECT_EQ(Buffer(payload), message.get_payload());
     EXPECT_EQ(Buffer(key), message.get_key());
     EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
     EXPECT_EQ(partition, message.get_partition());
     EXPECT_FALSE(message.get_error());
 
     EXPECT_FALSE(messages[1].get_key());
-    EXPECT_EQ(Buffer(payload), messages[1].get_payload());
+    EXPECT_FALSE(messages[2].get_key());
+    for (const auto& message : messages) {
+        EXPECT_EQ(Buffer(payload), message.get_payload());
+    }
 }

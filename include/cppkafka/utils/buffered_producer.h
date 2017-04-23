@@ -14,6 +14,18 @@
 
 namespace cppkafka {
 
+/**
+ * \brief Allows producing messages and waiting for them to be acknowledged by kafka brokers
+ *
+ * This class allows buffering messages and flushing them synchronously while also allowing
+ * to produce them just as you would using the Producer class.
+ *
+ * When calling either flush or wait_for_acks, the buffered producer will block until all
+ * produced messages (either in a buffer or non buffered way) are acknowledged by the kafka
+ * brokers.
+ *
+ * This class is not thread safe.
+ */
 template <typename BufferType>
 class BufferedProducer {
 public:
@@ -56,11 +68,27 @@ public:
     void add_message(Builder builder);
 
     /**
+     * \brief Produces a message without buffering it
+     *
+     * The message will still be tracked so that a call to flush or wait_for_acks will actually
+     * wait for it to be acknowledged.
+     *
+     * \param builder The builder that contains the message to be produced
+     */
+    void produce(const MessageBuilder& builder);
+
+    /**
      * \brief Flushes the buffered messages.
      *
-     * This will send all messages and keep waiting until all of them are acknowledged.
+     * This will send all messages and keep waiting until all of them are acknowledged (this is
+     * done by calling wait_for_acks).
      */
     void flush();
+
+    /**
+     * Waits for produced message's acknowledgements from the brokers
+     */
+    void wait_for_acks();
 
     /**
      * Gets the Producer object
@@ -121,12 +149,23 @@ void BufferedProducer<BufferType>::add_message(Builder builder) {
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
+    expected_acks_++;
+    produce_message(builder);
+}
+
+template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
     while (!messages_.empty()) {
         produce_message(messages_.front());
         messages_.pop();
     }
 
+    wait_for_acks();
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::wait_for_acks() {
     messages_acked_ = 0;
     while (messages_acked_ != expected_acks_) {
         try {
@@ -142,6 +181,7 @@ void BufferedProducer<BufferType>::flush() {
             }
         }
     }
+    expected_acks_ = 0;
 }
 
 template <typename BufferType>
