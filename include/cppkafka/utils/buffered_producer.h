@@ -169,7 +169,6 @@ void BufferedProducer<BufferType>::flush() {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::wait_for_acks() {
-    messages_acked_ = 0;
     while (messages_acked_ < expected_acks_) {
         try {
             producer_.flush();
@@ -185,6 +184,7 @@ void BufferedProducer<BufferType>::wait_for_acks() {
         }
     }
     expected_acks_ = 0;
+    messages_acked_ = 0;
 }
 
 template <typename BufferType>
