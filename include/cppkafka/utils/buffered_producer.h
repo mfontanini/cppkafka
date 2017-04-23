@@ -129,7 +129,18 @@ void BufferedProducer<BufferType>::flush() {
 
     messages_acked_ = 0;
     while (messages_acked_ != expected_acks_) {
-        producer_.flush();
+        try {
+            producer_.flush();
+        }
+        catch (const HandleException& ex) {
+            // If we just hit the timeout, keep going, otherwise re-throw
+            if (ex.get_error() == RD_KAFKA_RESP_ERR__TIMED_OUT) {
+                continue;
+            }
+            else {
+                throw;
+            }
+        }
     }
 }
 
