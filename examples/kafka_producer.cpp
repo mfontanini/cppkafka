@@ -48,7 +48,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Create a message builder for this topic
     MessageBuilder builder(topic_name);
+
     // Get the partition we want to write to. If no partition is provided, this will be
     // an unassigned one
     if (partition_value != -1) {
@@ -68,8 +70,10 @@ int main(int argc, char* argv[]) {
     // Now read lines and write them into kafka
     string line;
     while (getline(cin, line)) {
+        // Set the payload on this builder
         builder.payload(line);
-        // Write the string into the partition
+
+        // Actually produce the message we've built
         producer.produce(builder);
     }
 }

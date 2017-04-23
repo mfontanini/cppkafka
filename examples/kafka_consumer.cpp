@@ -26,13 +26,13 @@ int main(int argc, char* argv[]) {
 
     po::options_description options("Options");
     options.add_options()
-        ("help,h",   "produce this help message")
-        ("brokers",  po::value<string>(&brokers)->required(), 
-                     "the kafka broker list")
-        ("topic",    po::value<string>(&topic_name)->required(),
-                     "the topic in which to write to")
-        ("group-id", po::value<string>(&group_id)->required(),
-                     "the consumer group id")
+        ("help,h",     "produce this help message")
+        ("brokers,b",  po::value<string>(&brokers)->required(), 
+                       "the kafka broker list")
+        ("topic,t",    po::value<string>(&topic_name)->required(),
+                       "the topic in which to write to")
+        ("group-id,g", po::value<string>(&group_id)->required(),
+                       "the consumer group id")
         ;
 
     po::variables_map vm;
@@ -84,7 +84,8 @@ int main(int argc, char* argv[]) {
         if (msg) {
             // If we managed to get a message
             if (msg.get_error()) {
-                if (msg.get_error() != RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+                // Ignore EOF notifications from rdkafka
+                if (!msg.is_eof()) {
                     cout << "[+] Received error notification: " << msg.get_error() << endl;
                 }
             }
