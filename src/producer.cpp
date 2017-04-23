@@ -86,4 +86,13 @@ int Producer::poll(milliseconds timeout) {
     return rd_kafka_poll(get_handle(), timeout.count());
 }
 
+void Producer::flush() {
+    flush(get_timeout());
+}
+
+void Producer::flush(milliseconds timeout) {
+    auto result = rd_kafka_flush(get_handle(), timeout.count());
+    check_error(result);
+}
+
 } // cppkafka

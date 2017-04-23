@@ -128,6 +128,24 @@ public:
      * \param timeout The timeout used on this call
      */
     int poll(std::chrono::milliseconds timeout);
+
+    /**
+     * \brief Flush all outstanding produce requests
+     *
+     * This translates into a call to rd_kafka_flush.
+     *
+     * The timeout used on this call is the one configured via Producer::set_timeout.
+     */
+    void flush();
+
+    /**
+     * \brief Flush all outstanding produce requests
+     *
+     * This translates into a call to rd_kafka_flush
+     *
+     * \param timeout The timeout used on this call
+     */
+    void flush(std::chrono::milliseconds timeout);
 private:
     PayloadPolicy message_payload_policy_;
 };
