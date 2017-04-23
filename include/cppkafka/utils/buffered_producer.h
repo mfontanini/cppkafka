@@ -24,6 +24,9 @@ namespace cppkafka {
  * produced messages (either in a buffer or non buffered way) are acknowledged by the kafka
  * brokers.
  *
+ * When producing messages, this class will handle cases where the producer's queue is full so it\
+ * will poll until the production is successful.
+ *
  * This class is not thread safe.
  */
 template <typename BufferType>
@@ -167,7 +170,7 @@ void BufferedProducer<BufferType>::flush() {
 template <typename BufferType>
 void BufferedProducer<BufferType>::wait_for_acks() {
     messages_acked_ = 0;
-    while (messages_acked_ != expected_acks_) {
+    while (messages_acked_ < expected_acks_) {
         try {
             producer_.flush();
         }
