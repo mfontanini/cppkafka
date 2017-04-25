@@ -238,6 +238,9 @@ TEST_F(ProducerTest, BufferedProducer) {
     producer.flush();
     producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
     producer.wait_for_acks();
+    // Add another one but then clear it
+    producer.add_message(producer.make_builder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.clear();
     runner.try_join();
 
     const auto& messages = runner.get_messages();

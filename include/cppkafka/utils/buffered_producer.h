@@ -3,8 +3,8 @@
 
 #include <string>
 #include <queue>
-#include <type_traits>
 #include <cstdint>
+#include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
 #include <map>
@@ -94,6 +94,11 @@ public:
     void wait_for_acks();
 
     /**
+     * Clears any buffered messages
+     */
+    void clear();
+
+    /**
      * Gets the Producer object
      */
     Producer& get_producer();
@@ -119,8 +124,7 @@ public:
      */
     void set_produce_failure_callback(ProduceFailureCallback callback);
 private:
-    // Pick the most appropriate index type depending on the platform we're using
-    using IndexType = std::conditional<sizeof(void*) == 8, uint64_t, uint32_t>::type;
+    using QueueType = std::queue<Builder>;
 
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder);
@@ -129,7 +133,7 @@ private:
     void on_delivery_report(const Message& message);
 
     Producer producer_;
-    std::queue<Builder> messages_;
+    QueueType messages_;
     ProduceFailureCallback produce_failure_callback_;
     size_t expected_acks_{0};
     size_t messages_acked_{0};
@@ -185,6 +189,12 @@ void BufferedProducer<BufferType>::wait_for_acks() {
     }
     expected_acks_ = 0;
     messages_acked_ = 0;
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::clear() {
+    QueueType tmp;
+    std::swap(tmp, messages_);
 }
 
 template <typename BufferType>
