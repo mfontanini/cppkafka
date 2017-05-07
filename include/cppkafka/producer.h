@@ -81,7 +81,7 @@ public:
     /**
      * The policy to use for the payload. The default policy is COPY_PAYLOAD
      */
-    enum PayloadPolicy {
+    enum class PayloadPolicy {
         COPY_PAYLOAD = RD_KAFKA_MSG_F_COPY, ///< Means RD_KAFKA_MSG_F_COPY
         FREE_PAYLOAD = RD_KAFKA_MSG_F_FREE  ///< Means RD_KAFKA_MSG_F_FREE
     };

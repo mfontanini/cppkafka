@@ -39,7 +39,7 @@ using std::chrono::milliseconds;
 namespace cppkafka {
 
 Producer::Producer(Configuration config)
-: KafkaHandleBase(move(config)) {
+: KafkaHandleBase(move(config)), message_payload_policy_(PayloadPolicy::COPY_PAYLOAD) {
     char error_buffer[512];
     auto config_handle = get_configuration().get_handle();
     rd_kafka_conf_set_opaque(config_handle, this);
@@ -51,7 +51,6 @@ Producer::Producer(Configuration config)
     }
     rd_kafka_set_log_level(ptr, 7);
     set_handle(ptr);
-    set_payload_policy(Producer::COPY_PAYLOAD);
 }
 
 void Producer::set_payload_policy(PayloadPolicy policy) {

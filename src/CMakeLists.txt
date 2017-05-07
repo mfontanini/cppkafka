@@ -15,6 +15,8 @@ set(SOURCES
     kafka_handle_base.cpp
     producer.cpp
     consumer.cpp
+
+    utils/backoff_committer.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka)
