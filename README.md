@@ -16,12 +16,9 @@ offsets, etc.
 * _cppkafka_ tries to add minimal overhead over _librdkafka_. A very thin wrapper for _librdkafka_
 messages is used for consumption so there's virtually no overhead at all.
 
-**Note**: _cppkafka_ is under development so the API might change through time. Once there's an
-actual release, it should become more stable.
-
 # It's simple!
 
-_cppkafka_'s API is simple. For example, this code creates a producer that writes a message
+_cppkafka_'s API is simple to use. For example, this code creates a producer that writes a message
 into some partition:
 
 ```c++
@@ -49,7 +46,7 @@ int main() {
 
 In order to compile _cppkafka_ you need:
 
-* _rdkafka >= 0.9.4_
+* _librdkafka >= 0.9.4_
 * _CMake_
 * A compiler with good C++11 support (e.g. gcc >= 4.8). This was tested successfully on
 _g++ 4.8.3_. 
@@ -65,6 +62,17 @@ cmake ..
 make
 ```
 
+If you have installed _librdkafka_ on a non standard directory, you can use the
+`RDKAFKA_ROOT_DIR` cmake parameter when configuring the project:
+
+```Shell
+cmake .. -DRDKAFKA_ROOT_DIR=/some/other/dir
+```
+
+Note that finding _librdkafka_ will succeed iff there's an _include_ and _lib_
+directories inside the specified path, including both the _rdkafka.h_ header
+and the _librdkafka_ library file.
+
 # Using
 
 If you want to use _cppkafka_, you'll need to link your application with:
@@ -77,3 +85,7 @@ If you want to use _cppkafka_, you'll need to link your application with:
 You can generate the documentation by running `make docs` inside the build directory. This requires
 _Doxygen_ to be installed. The documentation will be written in html format at
 `<build-dir>/docs/html/`.
+
+Make sure to check the [wiki](https://github.com/mfontanini/cppkafka/wiki) which includes
+some documentation about the project and some of its features.
+
