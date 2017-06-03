@@ -82,7 +82,7 @@ int Producer::poll() {
 }
 
 int Producer::poll(milliseconds timeout) {
-    return rd_kafka_poll(get_handle(), timeout.count());
+    return rd_kafka_poll(get_handle(), static_cast<int>(timeout.count()));
 }
 
 void Producer::flush() {
@@ -90,7 +90,7 @@ void Producer::flush() {
 }
 
 void Producer::flush(milliseconds timeout) {
-    auto result = rd_kafka_flush(get_handle(), timeout.count());
+    auto result = rd_kafka_flush(get_handle(), static_cast<int>(timeout.count()));
     check_error(result);
 }
 

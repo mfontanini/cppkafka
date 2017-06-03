@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "topic_partition.h"
 #include "exceptions.h"
+#include "utils/portable_endian.h"
 
 using std::string;
 using std::vector;

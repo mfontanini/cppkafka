@@ -62,7 +62,7 @@ string Topic::get_name() const {
 }
 
 bool Topic::is_partition_available(int partition) const {
-    return rd_kafka_topic_partition_available(handle_.get(), partition);
+    return rd_kafka_topic_partition_available(handle_.get(), partition) == 1;
 }
 
 rd_kafka_topic_t* Topic::get_handle() const {

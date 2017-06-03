@@ -100,9 +100,10 @@ KafkaHandleBase::query_offsets(const TopicPartition& topic_partition) const {
     int64_t high;
     const string& topic = topic_partition.get_topic();
     const int partition = topic_partition.get_partition();
+    const int timeout = static_cast<int>(timeout_ms_.count());
     rd_kafka_resp_err_t result = rd_kafka_query_watermark_offsets(handle_.get(), topic.data(),
                                                                   partition, &low, &high,
-                                                                  timeout_ms_.count());
+                                                                  timeout);
     check_error(result);
     return make_tuple(low, high);
 }
@@ -141,8 +142,9 @@ KafkaHandleBase::get_offsets_for_times(const TopicPartitionsTimestampsMap& queri
                                       query.second.count());
     }
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+    const int timeout = static_cast<int>(timeout_ms_.count());
     rd_kafka_resp_err_t result = rd_kafka_offsets_for_times(handle_.get(), topic_list_handle.get(),
-                                                            timeout_ms_.count());
+                                                            timeout);
     check_error(result);
     return convert(topic_list_handle);
 }
@@ -177,15 +179,17 @@ Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf
 
 Metadata KafkaHandleBase::get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const {
     const rd_kafka_metadata_t* metadata;
-    rd_kafka_resp_err_t error = rd_kafka_metadata(get_handle(), !!all_topics, 
-                                                  topic_ptr, &metadata, timeout_ms_.count());
+    const int timeout = static_cast<int>(timeout_ms_.count());
+    rd_kafka_resp_err_t error = rd_kafka_metadata(get_handle(), !!all_topics,
+                                                  topic_ptr, &metadata, timeout);
     check_error(error);
     return Metadata(metadata);
 }
 
 vector<GroupInformation> KafkaHandleBase::fetch_consumer_groups(const char* name) {
     const rd_kafka_group_list* list = nullptr;
-    auto result = rd_kafka_list_groups(get_handle(), name, &list, timeout_ms_.count());
+    const int timeout = static_cast<int>(timeout_ms_.count());
+    auto result = rd_kafka_list_groups(get_handle(), name, &list, timeout);
     check_error(result);
 
     // Wrap this in a unique_ptr so it gets auto deleted

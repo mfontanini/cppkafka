@@ -111,7 +111,7 @@ public:
      */ 
     Consumer(Configuration config);
     Consumer(const Consumer&) = delete;
-    Consumer(Consumer&) = delete;
+    Consumer(Consumer&&) = delete;
     Consumer& operator=(const Consumer&) = delete;
     Consumer& operator=(Consumer&&) = delete;
 

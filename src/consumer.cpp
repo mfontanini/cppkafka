@@ -136,7 +136,7 @@ TopicPartitionList
 Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), topic_list_handle.get(),
-                                                   get_timeout().count());
+                                                   static_cast<int>(get_timeout().count()));
     check_error(error);
     return convert(topic_list_handle);
 }
@@ -192,7 +192,8 @@ Message Consumer::poll() {
 }
 
 Message Consumer::poll(milliseconds timeout) {
-    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(), timeout.count());
+    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(),
+                                                         static_cast<int>(timeout.count()));
     return message ? Message(message) : Message();
 }
 
