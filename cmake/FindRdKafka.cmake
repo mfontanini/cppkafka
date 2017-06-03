@@ -7,10 +7,10 @@ find_path(RDKAFKA_INCLUDE_DIR
     HINTS ${RDKAFKA_ROOT_DIR}/include
 )
 
-set (HINT_DIR ${RDKAFKA_ROOT_DIR}/lib)
+set(HINT_DIR ${RDKAFKA_ROOT_DIR}/lib)
 
 find_library(RDKAFKA_LIBRARY
-    NAMES rdkafka
+    NAMES rdkafka librdkafka
     HINTS ${HINT_DIR}
 )
 
@@ -20,11 +20,13 @@ find_package_handle_standard_args(RDKAFKA DEFAULT_MSG
     RDKAFKA_INCLUDE_DIR
 )
 
-include(CheckFunctionExists)
+set(CONTENTS "#include <librdkafka/rdkafka.h>\n #if RD_KAFKA_VERSION >= 0x00090400\n int main() { }\n #endif")
+set(FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/rdkafka_version_test.c)
+file(WRITE ${FILE_NAME} ${CONTENTS})
 
-set(CMAKE_REQUIRED_LIBRARIES ${RDKAFKA_LIBRARY})
-check_function_exists(rd_kafka_offsets_for_times HAVE_VALID_KAFKA_VERSION)
-set(CMAKE_REQUIRED_LIBRARIES)
+try_compile(HAVE_VALID_KAFKA_VERSION ${CMAKE_CURRENT_BINARY_DIR}
+            SOURCES ${FILE_NAME}
+            CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${RDKAFKA_INCLUDE_DIR}")
 
 if (HAVE_VALID_KAFKA_VERSION)
     message(STATUS "Found valid rdkafka version")
