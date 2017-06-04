@@ -14,7 +14,6 @@ using std::endl;
 using cppkafka::Producer;
 using cppkafka::Configuration;
 using cppkafka::Topic;
-using cppkafka::Partition;
 using cppkafka::MessageBuilder;
 
 namespace po = boost::program_options;

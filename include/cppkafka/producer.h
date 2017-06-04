@@ -42,7 +42,6 @@ namespace cppkafka {
 
 class Topic;
 class Buffer;
-class Partition;
 class TopicConfiguration;
 
 /**
