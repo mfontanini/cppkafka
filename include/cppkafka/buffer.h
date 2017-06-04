@@ -78,6 +78,21 @@ public:
     }
 
     /**
+     * Constructs a buffer from a vector
+     *
+     * \param data The vector to be used as input
+     */
+    template <typename T>
+    Buffer(const std::vector<T>& data)
+    : data_(data.data()), size_(data.size()) {
+        static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
+    }
+
+    // Don't allow construction from temporary vectors
+    template <typename T>
+    Buffer(std::vector<T>&& data) = delete;
+
+    /**
      * \brief Construct a buffer from a const string ref
      *
      * Note that you *can't use temporaries* here as they would be destructed after
@@ -85,7 +100,7 @@ public:
      */
     Buffer(const std::string& data); 
 
-    // Don't allow construction from temporaries
+    // Don't allow construction from temporary strings
     Buffer(std::string&&) = delete;
 
     Buffer(const Buffer&) = delete;

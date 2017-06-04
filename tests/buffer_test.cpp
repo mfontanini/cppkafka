@@ -43,6 +43,13 @@ TEST_F(BufferTest, VectorConversion) {
     EXPECT_EQ(data, string(buffer_as_vector.begin(), buffer_as_vector.end()));
 }
 
+TEST_F(BufferTest, VectorConstruction) {
+    const string str_data = "Hello world!";
+    const vector<uint8_t> data(str_data.begin(), str_data.end());
+    Buffer buffer(data);
+    EXPECT_EQ(str_data, buffer);
+}
+
 TEST_F(BufferTest, Equality) {
     string data = "Hello world!";
     Buffer buffer1(data);
