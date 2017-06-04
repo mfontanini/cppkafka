@@ -2,7 +2,7 @@
 #include <iostream>
 #include <csignal>
 #include <boost/program_options.hpp>
-#include "cppkafka/consumer.h"
+#include "cppkafka/producer.h"
 #include "cppkafka/configuration.h"
 #include "cppkafka/metadata.h"
 #include "cppkafka/topic.h"
@@ -12,7 +12,7 @@ using std::exception;
 using std::cout;
 using std::endl;
 
-using cppkafka::Consumer;
+using cppkafka::Producer;
 using cppkafka::Exception;
 using cppkafka::Configuration;
 using cppkafka::Topic;
@@ -33,8 +33,6 @@ int main(int argc, char* argv[]) {
         ("help,h",     "produce this help message")
         ("brokers,b",  po::value<string>(&brokers)->required(), 
                        "the kafka broker list")
-        ("group-id,g", po::value<string>(&group_id)->required(),
-                       "the consumer group id")
         ;
 
     po::variables_map vm;
@@ -56,17 +54,16 @@ int main(int argc, char* argv[]) {
     // Construct the configuration
     Configuration config = {
         { "metadata.broker.list", brokers },
-        { "group.id", group_id },
         // Disable auto commit
         { "enable.auto.commit", false }
     };
 
     try {
-        // Construct a consumer
-        Consumer consumer(config);
+        // Construct a producer
+        Producer producer(config);
 
         // Fetch the metadata
-        Metadata metadata = consumer.get_metadata();
+        Metadata metadata = producer.get_metadata();
 
         // Iterate over brokers
         cout << "Found the following brokers: " << endl;
