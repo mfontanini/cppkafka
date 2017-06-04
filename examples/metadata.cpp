@@ -1,6 +1,5 @@
 #include <stdexcept>
 #include <iostream>
-#include <csignal>
 #include <boost/program_options.hpp>
 #include "cppkafka/producer.h"
 #include "cppkafka/configuration.h"
@@ -22,11 +21,8 @@ using cppkafka::BrokerMetadata;
 
 namespace po = boost::program_options;
 
-bool running = true;
-
 int main(int argc, char* argv[]) {
     string brokers;
-    string group_id;
 
     po::options_description options("Options");
     options.add_options()
@@ -48,14 +44,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Stop processing on SIGINT
-    signal(SIGINT, [](int) { running = false; });
-
     // Construct the configuration
     Configuration config = {
         { "metadata.broker.list", brokers },
-        // Disable auto commit
-        { "enable.auto.commit", false }
     };
 
     try {
