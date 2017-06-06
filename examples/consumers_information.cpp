@@ -18,20 +18,24 @@ using cppkafka::Configuration;
 using cppkafka::Topic;
 using cppkafka::GroupInformation;
 using cppkafka::GroupMemberInformation;
+using cppkafka::MemberAssignmentInformation;
 
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
     string brokers;
     string group_id;
+    bool show_assignment = false;
 
     po::options_description options("Options");
     options.add_options()
-        ("help,h",     "produce this help message")
-        ("brokers,b",  po::value<string>(&brokers)->required(), 
-                       "the kafka broker list")
-        ("group-id,g", po::value<string>(&group_id),
-                       "only fetch consumer group information for the specified one")
+        ("help,h",       "produce this help message")
+        ("brokers,b",    po::value<string>(&brokers)->required(), 
+                         "the kafka broker list")
+        ("group-id,g",   po::value<string>(&group_id),
+                         "only fetch consumer group information for the specified one")
+        ("assignment,a", po::value<bool>(&show_assignment)->implicit_value(true),
+                         "show topic/partition assignment for each consumer group")
         ;
 
     po::variables_map vm;
@@ -74,9 +78,15 @@ int main(int argc, char* argv[]) {
         }
         cout << "Found the following consumers: " << endl;
         for (const GroupInformation& group : groups) {
-            cout << "* \"" << group.get_name() << "\" having the following members: " << endl;
+            cout << "* \"" << group.get_name() << "\" having the following (" <<
+                    group.get_members().size() << ") members: " << endl;
             for (const GroupMemberInformation& info : group.get_members()) {
-                cout << "    - " << info.get_member_id() << " @ " << info.get_client_host() << endl;
+                cout << "    - " << info.get_member_id() << " @ " << info.get_client_host();
+                if (show_assignment) {
+                    MemberAssignmentInformation assignment(info.get_member_assignment());
+                    cout << " has assigned: " << assignment.get_topic_partitions();
+                }
+                cout << endl;
             }
             cout << endl;
         }
