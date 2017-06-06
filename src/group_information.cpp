@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "topic_partition.h"
 #include "exceptions.h"
-#include "utils/endianness.h"
+#include "detail/endianness.h"
 
 using std::string;
 using std::vector;
