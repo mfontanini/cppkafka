@@ -25,13 +25,13 @@ int main(int argc, char* argv[]) {
 
     po::options_description options("Options");
     options.add_options()
-        ("help,h",    "produce this help message")
-        ("brokers",   po::value<string>(&brokers)->required(), 
-                      "the kafka broker list")
-        ("topic",     po::value<string>(&topic_name)->required(),
-                      "the topic in which to write to")
-        ("partition", po::value<int>(&partition_value),
-                      "the partition to write into (unassigned if not provided)")
+        ("help,h",      "produce this help message")
+        ("brokers,b",   po::value<string>(&brokers)->required(), 
+                        "the kafka broker list")
+        ("topic,t",     po::value<string>(&topic_name)->required(),
+                        "the topic in which to write to")
+        ("partition,p", po::value<int>(&partition_value),
+                        "the partition to write into (unassigned if not provided)")
         ;
 
     po::variables_map vm;
