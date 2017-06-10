@@ -17,6 +17,7 @@ set(SOURCES
     consumer.cpp
 
     utils/backoff_committer.cpp
+    utils/consumer_dispatcher.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka)

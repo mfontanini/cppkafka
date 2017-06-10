@@ -97,4 +97,15 @@ Error HandleException::get_error() const {
     return error_;
 }
 
+// ConsumerException
+
+ConsumerException::ConsumerException(Error error) 
+: Exception(error.to_string()), error_(error) {
+
+}
+
+Error ConsumerException::get_error() const {
+    return error_;
+}
+
 } // cppkafka

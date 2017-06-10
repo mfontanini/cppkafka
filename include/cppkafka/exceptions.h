@@ -110,6 +110,18 @@ private:
     Error error_;
 };
 
+/**
+ * Consumer exception
+ */
+class CPPKAFKA_API ConsumerException : public Exception {
+public:
+    ConsumerException(Error error);
+
+    Error get_error() const;
+private:
+    Error error_;
+};
+
 } // cppkafka
 
 #endif // CPPKAFKA_EXCEPTIONS_H
