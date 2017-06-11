@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, signal_handler);
 
     // Now run the dispatcher, providing a callback to handle messages, one to handle
-    // errors and another one to handle EOF on a partitioin
+    // errors and another one to handle EOF on a partition
     dispatcher.run(
         // Callback executed whenever a new message is consumed
         [&](Message msg) {
