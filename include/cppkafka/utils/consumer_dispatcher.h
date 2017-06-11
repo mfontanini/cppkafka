@@ -175,21 +175,21 @@ private:
 
         template <typename Head, typename... Functors>
         static typename std::enable_if<!std::is_same<Head, Functor>::value, const Functor&>::type
-        find(const Head&, Functors&&... functors) {
-            return find(std::forward<Functors>(functors)...);
+        find(const Head&, const Functors&... functors) {
+            return find(functors...);
         }
     };
 
     template <typename Functor, typename... Args>
-    const Functor& find_functor(Args&&... args) {
-        return find_functor_helper<Functor>::find(std::forward<Args>(args)...);
+    const Functor& find_functor(const Args&... args) {
+        return find_functor_helper<Functor>::find(args...);
     }
 
     // Finds the first functor that accepts the parameters in a tuple and returns it. If no
     // such functor is found, a static asertion will occur
     template <typename Tuple, typename... Functors>
     const typename find_type<Tuple, Functors...>::type&
-    find_callable_functor(const Functors&... functors) {
+    find_matching_functor(const Functors&... functors) {
         using type = typename find_type<Tuple, Functors...>::type;
         static_assert(!std::is_same<type_not_found, type>::value, "Valid functor not found");
         return find_functor<type>(functors...);
@@ -236,12 +236,12 @@ void ConsumerDispatcher::run(const Args&... args) {
     check_callbacks_match(args...);
 
     // This one is required
-    const auto& on_message = find_callable_functor<OnMessageArgs>(args...);
+    const auto& on_message = find_matching_functor<OnMessageArgs>(args...);
 
     // For the rest, append our own implementation at the end as a fallback
-    const auto& on_error = find_callable_functor<OnErrorArgs>(args..., self::handle_error);
-    const auto& on_eof = find_callable_functor<OnEofArgs>(args..., self::handle_eof);
-    const auto& on_timeout = find_callable_functor<OnTimeoutArgs>(args..., self::handle_timeout);
+    const auto& on_error = find_matching_functor<OnErrorArgs>(args..., &self::handle_error);
+    const auto& on_eof = find_matching_functor<OnEofArgs>(args..., &self::handle_eof);
+    const auto& on_timeout = find_matching_functor<OnTimeoutArgs>(args..., &self::handle_timeout);
     running_ = true;
     while (running_) {
         Message msg = consumer_.poll();
