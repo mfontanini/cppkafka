@@ -61,12 +61,22 @@ namespace cppkafka {
  * The signature for each callback should be as following (or compatible)
  *
  * * Message callback: void(Message)
- * * Timeout: void()
+ * * Timeout: void(ConsumerDispatcher::Timeout)
  * * Error: void(Error)
- * * EOF: void(TopicPartition)
+ * * EOF: void(ConsumerDispatcher::EndOfFile, TopicPartition)
  */
 class ConsumerDispatcher {
 public:
+    /**
+     * Tag to indicate a timeout occurred
+     */
+    struct Timeout {};
+
+    /**
+     * Tag to indicate end of file was reached on a partition being consumed
+     */
+    struct EndOfFile {};
+
     /**
      * Constructs a consumer dispatcher over the given consumer
      *
@@ -93,8 +103,8 @@ public:
     void stop();
 private:
     static void handle_error(Error error);
-    static void handle_eof(const TopicPartition& topic_partition);
-    static void ignore();
+    static void handle_eof(EndOfFile, const TopicPartition& topic_partition);
+    static void handle_timeout(Timeout);
 
     // Traits and template helpers
 
@@ -185,26 +195,31 @@ private:
 
 template <typename... Args>
 void ConsumerDispatcher::run(const Args&... args) {
+    // Define the types we need for each type of callback
+    using OnMessageArgs = std::tuple<Message>;
+    using OnErrorArgs = std::tuple<Error>;
+    using OnEofArgs = std::tuple<EndOfFile, TopicPartition>;
+    using OnTimeoutArgs = std::tuple<Timeout>;
+
     using self = ConsumerDispatcher;
+
     // This one is required
-    const auto& on_message = find_callable_functor<std::tuple<Message>>(args...);
+    const auto& on_message = find_callable_functor<OnMessageArgs>(args...);
 
     // For the rest, append our own implementation at the end as a fallback
-    const auto& on_error = find_callable_functor<std::tuple<Error>>(args...,
-                                                                    self::handle_error);
-    const auto& on_eof = find_callable_functor<std::tuple<TopicPartition>>(args...,
-                                                                           self::handle_eof);
-    const auto& on_timeout = find_callable_functor<std::tuple<>>(args..., self::ignore);
+    const auto& on_error = find_callable_functor<OnErrorArgs>(args..., self::handle_error);
+    const auto& on_eof = find_callable_functor<OnEofArgs>(args..., self::handle_eof);
+    const auto& on_timeout = find_callable_functor<OnTimeoutArgs>(args..., self::handle_timeout);
     running_ = true;
     while (running_) {
         Message msg = consumer_.poll();
         if (!msg) {
-            on_timeout();
+            on_timeout(Timeout{});
             continue;
         }
         if (msg.get_error()) {
             if (msg.is_eof()) {
-                on_eof({ msg.get_topic(), msg.get_partition(), msg.get_offset() });
+                on_eof(EndOfFile{}, { msg.get_topic(), msg.get_partition(), msg.get_offset() });
             }
             else {
                 on_error(msg.get_error());

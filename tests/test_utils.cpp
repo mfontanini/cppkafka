@@ -39,7 +39,7 @@ ConsumerRunner::ConsumerRunner(Consumer& consumer, size_t expected, size_t parti
                 }
             },
             // EOF callback
-            [&](const TopicPartition& topic_partition) {
+            [&](ConsumerDispatcher::EndOfFile, const TopicPartition& topic_partition) {
                 if (number_eofs != partitions) {
                     number_eofs++;
                     if (number_eofs == partitions) {
@@ -50,7 +50,7 @@ ConsumerRunner::ConsumerRunner(Consumer& consumer, size_t expected, size_t parti
                 }
             },
             // Timeout callback
-            [&]() {
+            [&](ConsumerDispatcher::Timeout) {
                 if (expected > 0 && messages_.size() == expected) {
                     dispatcher.stop();
                 }
