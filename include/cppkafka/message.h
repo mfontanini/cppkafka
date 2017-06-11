@@ -82,37 +82,51 @@ public:
     /**
      * Gets the error attribute
      */
-    Error get_error() const;  
+    Error get_error() const {
+        return handle_->err;
+    }
 
     /**
      * Utility function to check for get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF
      */
-    bool is_eof() const;
+    bool is_eof() const {
+        return get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF;
+    }
 
     /**
      * Gets the topic that this message belongs to
      */
-    std::string get_topic() const;
+    std::string get_topic() const {
+        return rd_kafka_topic_name(handle_->rkt);
+    }
 
     /**
      * Gets the partition that this message belongs to
      */
-    int get_partition() const;
+    int get_partition() const {
+        return handle_->partition;
+    }
 
     /**
      * Gets the message's payload
      */
-    const Buffer& get_payload() const;
+    const Buffer& get_payload() const {
+        return payload_;
+    }
 
     /**
      * Gets the message's key
      */
-    const Buffer& get_key() const;
+    const Buffer& get_key() const {
+        return key_;
+    }
 
     /**
      * Gets the message offset
      */
-    int64_t get_offset() const;
+    int64_t get_offset() const {
+        return handle_->offset;
+    }
 
     /**
      * \brief Gets the private data.
@@ -120,24 +134,30 @@ public:
      * This should only be used on messages produced by a Producer that were set a private data
      * attribute 
      */
-    void* get_private_data() const;
+    void* get_private_data() const {
+        return handle_->_private;
+    }
 
     /**
      * \brief Gets this Message's timestamp
      *
      * If calling rd_kafka_message_timestamp returns -1, then boost::none_t will be returned.
      */
-    boost::optional<MessageTimestamp> get_timestamp() const;
+    inline boost::optional<MessageTimestamp> get_timestamp() const;
 
     /**
      * Indicates whether this message is valid (not null)
      */
-    explicit operator bool() const;
+    explicit operator bool() const {
+        return handle_ != nullptr;
+    }
 
     /**
      * Gets the rdkafka message handle
      */
-    rd_kafka_message_t* get_handle() const;
+    rd_kafka_message_t* get_handle() const {
+        return handle_.get();
+    }
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_message_t, decltype(&rd_kafka_message_destroy)>;
 
@@ -182,6 +202,16 @@ private:
     std::chrono::milliseconds timestamp_;
     TimestampType type_;
 };
+
+boost::optional<MessageTimestamp> Message::get_timestamp() const {
+    rd_kafka_timestamp_type_t type = RD_KAFKA_TIMESTAMP_NOT_AVAILABLE;
+    int64_t timestamp = rd_kafka_message_timestamp(handle_.get(), &type);
+    if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
+        return {};
+    }
+    return MessageTimestamp(std::chrono::milliseconds(timestamp),
+                            static_cast<MessageTimestamp::TimestampType>(type));
+}
 
 } // cppkafka
 

@@ -29,12 +29,7 @@
 
 #include "message.h"
 
-using std::string;
-
 using std::chrono::milliseconds;
-
-using boost::optional;
-using boost::none_t;
 
 namespace cppkafka {
 
@@ -66,56 +61,6 @@ Message::Message(HandlePtr handle)
   payload_((const Buffer::DataType*)handle_->payload, handle_->len),
   key_((const Buffer::DataType*)handle_->key, handle_->key_len) {
 
-}
-
-Error Message::get_error() const {
-    return handle_->err;
-}
-
-bool Message::is_eof() const {
-    return get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF;
-}
-
-int Message::get_partition() const {
-    return handle_->partition;
-}
-
-string Message::get_topic() const {
-    return rd_kafka_topic_name(handle_->rkt);
-}
-
-const Buffer& Message::get_payload() const {
-    return payload_;
-}
-
-const Buffer& Message::get_key() const {
-    return key_;
-}
-
-int64_t Message::get_offset() const {
-    return handle_->offset;
-}
-
-void* Message::get_private_data() const {
-    return handle_->_private;
-}
-
-optional<MessageTimestamp> Message::get_timestamp() const {
-    rd_kafka_timestamp_type_t type = RD_KAFKA_TIMESTAMP_NOT_AVAILABLE;
-    int64_t timestamp = rd_kafka_message_timestamp(handle_.get(), &type);
-    if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
-        return {};
-    }
-    return MessageTimestamp(milliseconds(timestamp),
-                            static_cast<MessageTimestamp::TimestampType>(type));
-}
-
-Message::operator bool() const {
-    return handle_ != nullptr;
-}
-
-rd_kafka_message_t* Message::get_handle() const {
-    return handle_.get();
 }
 
 // MessageTimestamp

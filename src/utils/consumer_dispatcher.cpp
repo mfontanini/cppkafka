@@ -44,12 +44,4 @@ void ConsumerDispatcher::handle_error(Error error) {
     throw ConsumerException(error);
 }
 
-void ConsumerDispatcher::handle_eof(EndOfFile, const TopicPartition& /*topic_partition*/) {
-
-}
-
-void ConsumerDispatcher::handle_timeout(Timeout) {
-
-}
-
 } // cppkafka

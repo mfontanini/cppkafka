@@ -109,8 +109,8 @@ private:
     using OnTimeoutArgs = std::tuple<Timeout>;
 
     static void handle_error(Error error);
-    static void handle_eof(EndOfFile, const TopicPartition& topic_partition);
-    static void handle_timeout(Timeout);
+    static void handle_eof(EndOfFile, const TopicPartition& /*topic_partition*/) { }
+    static void handle_timeout(Timeout) { }
 
     // Traits and template helpers
 
