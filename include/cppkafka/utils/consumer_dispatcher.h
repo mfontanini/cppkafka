@@ -102,6 +102,12 @@ public:
      */
     void stop();
 private:
+    // Define the types we need for each type of callback
+    using OnMessageArgs = std::tuple<Message>;
+    using OnErrorArgs = std::tuple<Error>;
+    using OnEofArgs = std::tuple<EndOfFile, TopicPartition>;
+    using OnTimeoutArgs = std::tuple<Timeout>;
+
     static void handle_error(Error error);
     static void handle_eof(EndOfFile, const TopicPartition& topic_partition);
     static void handle_timeout(Timeout);
@@ -189,19 +195,45 @@ private:
         return find_functor<type>(functors...);
     }
 
+    // Check that a given functor matches at least one of the expected signatures
+    template <typename Functor>
+    void check_callback_matches(const Functor& functor) {
+        static_assert(
+            !std::is_same<type_not_found,
+                          typename find_type<OnMessageArgs, Functor>::type>::value ||
+            !std::is_same<type_not_found,
+                          typename find_type<OnEofArgs, Functor>::type>::value ||
+            !std::is_same<type_not_found,
+                          typename find_type<OnTimeoutArgs, Functor>::type>::value ||
+            !std::is_same<type_not_found,
+                          typename find_type<OnErrorArgs, Functor>::type>::value,
+            "Callback doesn't match any of the expected signatures"
+        );
+    }
+
+    // Base case for recursion
+    void check_callbacks_match() {
+
+    }
+
+    // Check that all given functors match at least one of the expected signatures
+    template <typename Functor, typename... Functors>
+    void check_callbacks_match(const Functor& functor, const Functors&... functors) {
+        check_callback_matches(functor);
+        check_callbacks_match(functors...);
+    }
+
     Consumer& consumer_;
     bool running_;
 };
 
 template <typename... Args>
 void ConsumerDispatcher::run(const Args&... args) {
-    // Define the types we need for each type of callback
-    using OnMessageArgs = std::tuple<Message>;
-    using OnErrorArgs = std::tuple<Error>;
-    using OnEofArgs = std::tuple<EndOfFile, TopicPartition>;
-    using OnTimeoutArgs = std::tuple<Timeout>;
-
     using self = ConsumerDispatcher;
+    
+    // Make sure all callbacks match one of the signatures. Otherwise users could provide
+    // bogus callbacks that would never be executed
+    check_callbacks_match(args...);
 
     // This one is required
     const auto& on_message = find_callable_functor<OnMessageArgs>(args...);
