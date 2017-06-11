@@ -14,6 +14,7 @@ if (Boost_PROGRAM_OPTIONS_FOUND)
 
     create_example(kafka_producer)
     create_example(kafka_consumer)
+    create_example(kafka_consumer_dispatcher)
     create_example(metadata)
     create_example(consumers_information)
 else()
