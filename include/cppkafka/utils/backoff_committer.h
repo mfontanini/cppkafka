@@ -34,6 +34,7 @@
 #include <functional>
 #include <thread>
 #include "../consumer.h"
+#include "backoff_performer.h"
 
 namespace cppkafka {
 
@@ -68,13 +69,8 @@ namespace cppkafka {
  * committer.commit(some_message);
  * \endcode
  */
-class BackoffCommitter {
+class BackoffCommitter : public BackoffPerformer {
 public:
-    using TimeUnit = std::chrono::milliseconds;
-    static constexpr TimeUnit DEFAULT_INITIAL_BACKOFF{100};
-    static constexpr TimeUnit DEFAULT_BACKOFF_STEP{50};
-    static constexpr TimeUnit DEFAULT_MAXIMUM_BACKOFF{1000};
-
     /**
      * \brief The error callback.
      * 
@@ -83,14 +79,6 @@ public:
      * committed again until it either succeeds or the function returns false.
      */
     using ErrorCallback = std::function<bool(Error)>;
-
-    /**
-     * The backoff policy to use
-     */
-    enum class BackoffPolicy {
-        LINEAR,
-        EXPONENTIAL
-    };
 
     /**
      * \brief Constructs an instance using default values
@@ -102,48 +90,13 @@ public:
     BackoffCommitter(Consumer& consumer);
 
     /**
-     * \brief Sets the backoff policy
-     *
-     * \param policy The backoff policy to be used
-     */
-    void set_backoff_policy(BackoffPolicy policy);
-
-    /**
-     * \brief Sets the initial backoff
-     *
-     * The first time a commit fails, this will be the delay between the request is sent
-     * and we re-try doing so 
-     *
-     * \param value The value to be used
-     */
-    void set_initial_backoff(TimeUnit value);
-
-    /**
-     * \brief Sets the backoff step
-     *
-     * When using the linear backoff policy, this will be the delay between sending a request
-     * that fails and re-trying it
-     *
-     * \param value The value to be used
-     */
-    void set_backoff_step(TimeUnit value);
-
-    /**
-     * \brief Sets the maximum backoff
-     *
-     * The backoff used will never be larger than this number
-     *
-     * \param value The value to be used
-     */
-    void set_maximum_backoff(TimeUnit value);
-
-    /**
      * \brief Sets the error callback
      *
      * \sa ErrorCallback
      * \param callback The callback to be set
      */
     void set_error_callback(ErrorCallback callback);
+
 
     /**
      * \brief Commits the given message synchronously
@@ -165,42 +118,25 @@ public:
      */
     void commit(const TopicPartitionList& topic_partitions);
 private:
-    TimeUnit increase_backoff(TimeUnit backoff);
-
     template <typename T>
-    void do_commit(const T& object) {
-        TimeUnit backoff = initial_backoff_;
-        while (true) {
-            auto start = std::chrono::steady_clock::now();
-            try {
-                consumer_.commit(object);
-                // If the commit succeeds, we're done
-                return;
-            }
-            catch (const HandleException& ex) {
-                // If there's a callback and it returns false for this message, abort
-                if (callback_ && !callback_(ex.get_error())) {
-                    return;
-                }
-            }
-
-            auto end = std::chrono::steady_clock::now();
-            auto time_elapsed = end - start;
-            // If we still have time left, then sleep
-            if (time_elapsed < backoff) {
-                std::this_thread::sleep_for(backoff - time_elapsed);
-            }
-            // Increase out backoff depending on the policy being used
-            backoff = increase_backoff(backoff);
+    bool do_commit(const T& object) {
+        try {
+            consumer_.commit(object);
+            // If the commit succeeds, we're done
+            return true;
         }
+        catch (const HandleException& ex) {
+            // If there's a callback and it returns false for this message, abort
+            if (callback_ && !callback_(ex.get_error())) {
+                return true;
+            }
+        }
+        // In any other case, we failed. Keep committing
+        return false;
     }
 
     Consumer& consumer_;
-    TimeUnit initial_backoff_;
-    TimeUnit backoff_step_;
-    TimeUnit maximum_backoff_;
     ErrorCallback callback_;
-    BackoffPolicy policy_;
 };
 
 } // cppkafka

@@ -16,6 +16,7 @@ set(SOURCES
     producer.cpp
     consumer.cpp
 
+    utils/backoff_performer.cpp
     utils/backoff_committer.cpp
     utils/consumer_dispatcher.cpp
 )

@@ -28,31 +28,43 @@
  */
 
 #include <algorithm>
-#include "utils/backoff_committer.h"
+#include "utils/backoff_performer.h"
 
 using std::min;
 
 namespace cppkafka {
 
-BackoffCommitter::BackoffCommitter(Consumer& consumer)
-: consumer_(consumer) {
+BackoffPerformer::BackoffPerformer()
+: initial_backoff_(DEFAULT_INITIAL_BACKOFF),
+  backoff_step_(DEFAULT_BACKOFF_STEP), maximum_backoff_(DEFAULT_MAXIMUM_BACKOFF),
+  policy_(BackoffPolicy::LINEAR) {
 
 }
 
-void BackoffCommitter::set_error_callback(ErrorCallback callback) {
-    callback_ = move(callback);
+void BackoffPerformer::set_backoff_policy(BackoffPolicy policy) {
+    policy_ = policy;
 }
 
-void BackoffCommitter::commit(const Message& msg) {
-    perform([&] { 
-        return do_commit(msg);
-    });
+void BackoffPerformer::set_initial_backoff(TimeUnit value) {
+    initial_backoff_ = value;
 }
 
-void BackoffCommitter::commit(const TopicPartitionList& topic_partitions) {
-    perform([&] { 
-        return do_commit(topic_partitions);
-    });
+void BackoffPerformer::set_backoff_step(TimeUnit value) {
+    backoff_step_ = value;
+}
+
+void BackoffPerformer::set_maximum_backoff(TimeUnit value) {
+    maximum_backoff_ = value;
+}
+
+BackoffPerformer::TimeUnit BackoffPerformer::increase_backoff(TimeUnit backoff) {
+    if (policy_ == BackoffPolicy::LINEAR) {
+        backoff = backoff + backoff_step_;
+    }
+    else {
+        backoff = backoff * 2;
+    }
+    return min(backoff, maximum_backoff_);
 }
 
 } // cppkafka
