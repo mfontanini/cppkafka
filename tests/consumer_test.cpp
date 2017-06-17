@@ -7,6 +7,8 @@
 #include <gtest/gtest.h>
 #include "cppkafka/consumer.h"
 #include "cppkafka/producer.h"
+#include "cppkafka/utils/consumer_dispatcher.h"
+#include "cppkafka/utils/buffered_producer.h"
 #include "test_utils.h"
 
 using std::vector;
@@ -167,4 +169,44 @@ TEST_F(ConsumerTest, OffsetCommit) {
         consumer.poll();
     }
     EXPECT_TRUE(offset_commit_called);
+}
+
+TEST_F(ConsumerTest, Throttle) {
+    int partition = 0;
+
+    // Create a consumer and subscribe to the topic
+    Configuration config = make_consumer_config("offset_commit");
+    Consumer consumer(config);
+    consumer.assign({ { KAFKA_TOPIC, 0 } });
+
+    {
+        ConsumerRunner runner(consumer, 0, 1);
+        runner.try_join();
+    }
+
+    // Produce a message just so we stop the consumer
+    BufferedProducer<string> producer(make_producer_config());
+    string payload = "Hello world!";
+    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.flush();
+
+    size_t callback_executed_count = 0;
+
+    ConsumerDispatcher dispatcher(consumer);
+    dispatcher.run(
+        [&](Message msg) {
+            callback_executed_count++;
+            if (callback_executed_count == 3) {
+                return Message();
+            }
+            return move(msg);
+        },
+        [&](ConsumerDispatcher::Timeout) {
+            if (callback_executed_count == 3) {
+                dispatcher.stop();
+            }
+        }
+    );
+
+    EXPECT_EQ(3, callback_executed_count);
 }
