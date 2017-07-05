@@ -59,7 +59,7 @@ namespace cppkafka {
  * This class is not thread safe.
  */
 template <typename BufferType>
-class BufferedProducer {
+class CPPKAFKA_API BufferedProducer {
 public:
     /**
      * Concrete builder

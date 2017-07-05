@@ -40,7 +40,7 @@ namespace cppkafka {
 /**
  * 
  */
-class BackoffPerformer {
+class CPPKAFKA_API BackoffPerformer {
 public:
     using TimeUnit = std::chrono::milliseconds;
     static constexpr TimeUnit DEFAULT_INITIAL_BACKOFF{100};
