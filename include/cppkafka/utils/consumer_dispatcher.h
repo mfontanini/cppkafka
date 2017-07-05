@@ -88,6 +88,11 @@ public:
     struct Throttle {};
 
     /**
+     * Tag to indicate there was some event processed (message, timeout, error, etc)
+     */
+    struct Event {};
+
+    /**
      * Constructs a consumer dispatcher over the given consumer
      *
      * \param consumer The consumer to be used
@@ -117,10 +122,12 @@ private:
     using OnErrorArgs = std::tuple<Error>;
     using OnEofArgs = std::tuple<EndOfFile, TopicPartition>;
     using OnTimeoutArgs = std::tuple<Timeout>;
+    using OnEventArgs = std::tuple<Event>;
 
     static void handle_error(Error error);
     static void handle_eof(EndOfFile, const TopicPartition& /*topic_partition*/) { }
     static void handle_timeout(Timeout) { }
+    static void handle_event(Event) { }
 
     template <typename Functor>
     void handle_throttle(Throttle, const Functor& callback, Message msg) {
@@ -250,7 +257,9 @@ private:
             !std::is_same<type_not_found,
                           typename find_type<OnTimeoutArgs, Functor>::type>::value ||
             !std::is_same<type_not_found,
-                          typename find_type<OnErrorArgs, Functor>::type>::value,
+                          typename find_type<OnErrorArgs, Functor>::type>::value ||
+            !std::is_same<type_not_found,
+                          typename find_type<OnEventArgs, Functor>::type>::value,                          
             "Callback doesn't match any of the expected signatures"
         );
     }
@@ -335,24 +344,26 @@ void BasicConsumerDispatcher<ConsumerType>::run(const Args&... args) {
     const auto on_error = find_matching_functor<OnErrorArgs>(args..., &self::handle_error);
     const auto on_eof = find_matching_functor<OnEofArgs>(args..., &self::handle_eof);
     const auto on_timeout = find_matching_functor<OnTimeoutArgs>(args..., &self::handle_timeout);
+    const auto on_event = find_matching_functor<OnEventArgs>(args..., &self::handle_event);
 
     running_ = true;
     while (running_) {
         Message msg = consumer_.poll();
         if (!msg) {
             on_timeout(Timeout{});
-            continue;
         }
-        if (msg.get_error()) {
+        else if (msg.get_error()) {
             if (msg.is_eof()) {
                 on_eof(EndOfFile{}, { msg.get_topic(), msg.get_partition(), msg.get_offset() });
             }
             else {
                 on_error(msg.get_error());
             }
-            continue;
         }
-        process_message(on_message, std::move(msg), args...);
+        else {
+            process_message(on_message, std::move(msg), args...);
+        }
+        on_event(Event{});
     }
 }
 

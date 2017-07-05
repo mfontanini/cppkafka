@@ -49,8 +49,8 @@ ConsumerRunner::ConsumerRunner(Consumer& consumer, size_t expected, size_t parti
                     }
                 }
             },
-            // Timeout callback
-            [&](ConsumerDispatcher::Timeout) {
+            // Every time there's any event callback
+            [&](ConsumerDispatcher::Event) {
                 if (expected > 0 && messages_.size() == expected) {
                     dispatcher.stop();
                 }
