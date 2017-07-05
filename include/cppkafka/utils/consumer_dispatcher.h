@@ -50,7 +50,7 @@ namespace cppkafka {
  * so the usual loop is simplified away and you can process messages without
  * having to check for all those cases.
  *
- * When calling ConsumerDispatcher::run, a list of callbacks has to be provided.
+ * When calling BasicConsumerDispatcher::run, a list of callbacks has to be provided.
  * These will handle each case (message, timeout, error, eof), allowing you to
  * only provide what you need. The only callback that is required is the message one.
  * For the rest, the following actions will be performed as defaults:
@@ -65,11 +65,12 @@ namespace cppkafka {
  *  - void(Message)
  *  - Message(Message). In this case if the message is returned, it will be buffered
  *  while calling the throttle callback until the message is actually processed.
- * * Timeout: void(ConsumerDispatcher::Timeout)
+ * * Timeout: void(BasicConsumerDispatcher::Timeout)
  * * Error: void(Error)
- * * EOF: void(ConsumerDispatcher::EndOfFile, TopicPartition)
+ * * EOF: void(BasicConsumerDispatcher::EndOfFile, TopicPartition)
  */
-class ConsumerDispatcher {
+template <typename ConsumerType>
+class BasicConsumerDispatcher {
 public:
     /**
      * Tag to indicate a timeout occurred
@@ -91,12 +92,12 @@ public:
      *
      * \param consumer The consumer to be used
      */
-    ConsumerDispatcher(Consumer& consumer);
+    BasicConsumerDispatcher(ConsumerType& consumer);
 
     /**
      * \brief Consumes messages dispatching events to the appropriate callack
      *
-     * This will loop until ConsumerDispatcher::stop is called
+     * This will loop until BasicConsumerDispatcher::stop is called
      *
      * \param args The list of callbacks to be executed
      */
@@ -277,7 +278,7 @@ private:
     auto process_message(const Functor& callback, Message msg, const Functors&... functors)
     -> typename std::enable_if<std::is_same<Message, decltype(callback(std::move(msg)))>::value,
                                void>::type { 
-        const auto throttle_ptr = &ConsumerDispatcher::handle_throttle<Functor>;
+        const auto throttle_ptr = &BasicConsumerDispatcher::handle_throttle<Functor>;
         const auto default_throttler = std::bind(throttle_ptr, this, std::placeholders::_1,
                                                  std::placeholders::_2, std::placeholders::_3);
 
@@ -296,13 +297,32 @@ private:
         }
     }
 
-    Consumer& consumer_;
+    ConsumerType& consumer_;
     bool running_;
 };
 
+using ConsumerDispatcher = BasicConsumerDispatcher<Consumer>;
+
+template <typename ConsumerType>
+BasicConsumerDispatcher<ConsumerType>::BasicConsumerDispatcher(ConsumerType& consumer)
+: consumer_(consumer) {
+
+}
+
+template <typename ConsumerType>
+void BasicConsumerDispatcher<ConsumerType>::stop() {
+    running_ = false;
+}
+
+template <typename ConsumerType>
+void BasicConsumerDispatcher<ConsumerType>::handle_error(Error error) {
+    throw ConsumerException(error);
+}
+
+template <typename ConsumerType>
 template <typename... Args>
-void ConsumerDispatcher::run(const Args&... args) {
-    using self = ConsumerDispatcher;
+void BasicConsumerDispatcher<ConsumerType>::run(const Args&... args) {
+    using self = BasicConsumerDispatcher<ConsumerType>;
     
     // Make sure all callbacks match one of the signatures. Otherwise users could provide
     // bogus callbacks that would never be executed
