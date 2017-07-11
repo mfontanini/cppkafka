@@ -224,6 +224,8 @@ template <typename BufferType>
 void BufferedProducer<BufferType>::clear() {
     QueueType tmp;
     std::swap(tmp, messages_);
+    expected_acks_ = 0;
+    messages_acked_ = 0;
 }
 
 template <typename BufferType>
