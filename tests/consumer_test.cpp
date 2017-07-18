@@ -210,3 +210,30 @@ TEST_F(ConsumerTest, Throttle) {
 
     EXPECT_EQ(3, callback_executed_count);
 }
+
+TEST_F(ConsumerTest, ConsumeBatch) {
+    int partition = 0;
+
+    // Create a consumer and subscribe to the topic
+    Configuration config = make_consumer_config("test");
+    Consumer consumer(config);
+    consumer.assign({ { KAFKA_TOPIC, 0 } });
+
+    {
+        ConsumerRunner runner(consumer, 0, 1);
+        runner.try_join();
+    }
+
+    // Produce a message just so we stop the consumer
+    BufferedProducer<string> producer(make_producer_config());
+    string payload = "Hello world!";
+    // Produce it twice
+    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.flush();
+
+    vector<Message> messages = consumer.poll_batch(2);
+    ASSERT_EQ(2, messages.size());
+    EXPECT_EQ(payload, messages[0].get_payload());
+    EXPECT_EQ(payload, messages[1].get_payload());
+}

@@ -324,6 +324,25 @@ public:
      * \param timeout The timeout to be used on this call
      */
     Message poll(std::chrono::milliseconds timeout);
+
+    /**
+     * \brief Polls for a batch of messages
+     *
+     * This can return one or more messages
+     *
+     * \param max_batch_size The maximum amount of messages expected
+     */
+    std::vector<Message> poll_batch(size_t max_batch_size);
+
+    /**
+     * \brief Polls for a batch of messages
+     *
+     * This can return one or more messages
+     *
+     * \param max_batch_size The maximum amount of messages expected
+     * \param timeout The timeout for this operation
+     */
+    std::vector<Message> poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout);
 private:
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);

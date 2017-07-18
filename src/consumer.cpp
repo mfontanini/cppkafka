@@ -197,6 +197,25 @@ Message Consumer::poll(milliseconds timeout) {
     return message ? Message(message) : Message();
 }
 
+vector<Message> Consumer::poll_batch(size_t max_batch_size) {
+    return poll_batch(max_batch_size, get_timeout());
+}
+
+vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
+    vector<rd_kafka_message_t*> raw_messages(max_batch_size);
+    rd_kafka_queue_t* queue = rd_kafka_queue_get_consumer(get_handle());
+    ssize_t result = rd_kafka_consume_batch_queue(queue, timeout.count(), raw_messages.data(),
+                                                  raw_messages.size());
+    if (result == -1) {
+        check_error(rd_kafka_last_error());
+    }
+    vector<Message> output;
+    for (const auto& ptr : raw_messages) {
+        output.emplace_back(ptr);
+    }
+    return output;
+}
+
 void Consumer::close() {
     rd_kafka_resp_err_t error = rd_kafka_consumer_close(get_handle());
     check_error(error);
