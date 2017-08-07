@@ -74,6 +74,14 @@ public:
      * Gets the value
      */
     const std::string& get_value() const;
+    
+    /**
+     * Compare for equality with other ConfigurationOption
+     */
+    bool operator==(const ConfigurationOption& rhs) const {
+        return key_ == rhs.key_ && value_ == rhs.value_;
+    }
+
 private:
     std::string key_;
     std::string value_;
