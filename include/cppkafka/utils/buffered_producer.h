@@ -186,8 +186,8 @@ void BufferedProducer<BufferType>::add_message(Builder builder) {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
-    expected_acks_++;
     produce_message(builder);
+    expected_acks_++;
 }
 
 template <typename BufferType>
