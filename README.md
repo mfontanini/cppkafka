@@ -1,5 +1,5 @@
 # cppkafka
----
+
 High level C++ wrapper for _rdkafka_
 ---
 
