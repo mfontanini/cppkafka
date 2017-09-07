@@ -210,8 +210,10 @@ vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout
         check_error(rd_kafka_last_error());
     }
     vector<Message> output;
-    for (const auto& ptr : raw_messages) {
-        output.emplace_back(ptr);
+    for (const auto ptr : raw_messages) {
+        if (ptr) {
+            output.emplace_back(ptr);
+        }
     }
     return output;
 }
