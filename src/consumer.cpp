@@ -65,7 +65,13 @@ Consumer::Consumer(Configuration config)
 }
 
 Consumer::~Consumer() {
-    close();
+    try {
+        close();
+    }
+    catch (const Exception&) {
+        // If close throws just silently ignore until there's some
+        // logging facility (if any)
+    }
 }
 
 void Consumer::set_assignment_callback(AssignmentCallback callback) {
