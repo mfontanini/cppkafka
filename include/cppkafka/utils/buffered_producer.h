@@ -297,7 +297,8 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         const auto& payload = message.get_payload();
         builder.partition(message.get_partition())
                .key(Buffer(key.get_data(), key.get_size()))
-               .payload(Buffer(payload.get_data(), payload.get_size()));
+               .payload(Buffer(payload.get_data(), payload.get_size()))
+               .user_data(message.get_user_data());
         if (message.get_timestamp()) {
             builder.timestamp(message.get_timestamp()->get_timestamp());
         }

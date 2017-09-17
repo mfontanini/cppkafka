@@ -134,7 +134,7 @@ public:
      * This should only be used on messages produced by a Producer that were set a private data
      * attribute 
      */
-    void* get_private_data() const {
+    void* get_user_data() const {
         return handle_->_private;
     }
 
