@@ -43,9 +43,9 @@ namespace cppkafka {
 class CPPKAFKA_API BackoffPerformer {
 public:
     using TimeUnit = std::chrono::milliseconds;
-    static constexpr TimeUnit DEFAULT_INITIAL_BACKOFF{100};
-    static constexpr TimeUnit DEFAULT_BACKOFF_STEP{50};
-    static constexpr TimeUnit DEFAULT_MAXIMUM_BACKOFF{1000};
+    static const TimeUnit DEFAULT_INITIAL_BACKOFF;
+    static const TimeUnit DEFAULT_BACKOFF_STEP;
+    static const TimeUnit DEFAULT_MAXIMUM_BACKOFF;
 
     /**
      * The backoff policy to use

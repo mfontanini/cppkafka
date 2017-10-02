@@ -34,6 +34,10 @@ using std::min;
 
 namespace cppkafka {
 
+const BackoffPerformer::TimeUnit BackoffPerformer::DEFAULT_INITIAL_BACKOFF{100};
+const BackoffPerformer::TimeUnit BackoffPerformer::DEFAULT_BACKOFF_STEP{50};
+const BackoffPerformer::TimeUnit BackoffPerformer::DEFAULT_MAXIMUM_BACKOFF{1000};
+
 BackoffPerformer::BackoffPerformer()
 : initial_backoff_(DEFAULT_INITIAL_BACKOFF),
   backoff_step_(DEFAULT_BACKOFF_STEP), maximum_backoff_(DEFAULT_MAXIMUM_BACKOFF),
