@@ -84,6 +84,13 @@ public:
     T* get() const {
         return handle_.get();
     }
+
+    /**
+     * Resets the internal pointer
+     */
+    void reset(T* ptr) {
+        handle_.reset(ptr);
+    }
 private:
     std::unique_ptr<T, Deleter> handle_;
     Cloner cloner_;

@@ -40,6 +40,7 @@ find_package(Boost REQUIRED)
 find_package(RdKafka REQUIRED)
 
 add_subdirectory(src)
+add_subdirectory(mocking)
 add_subdirectory(include)
 
 add_subdirectory(examples)
