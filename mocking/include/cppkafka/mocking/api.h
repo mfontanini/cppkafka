@@ -66,9 +66,20 @@ CPPKAFKA_API rd_kafka_conf_res_t rd_kafka_topic_conf_set(rd_kafka_topic_conf_t* 
                                                          const char* name, const char* value,
                                                          char* errstr, size_t errstr_size);
 CPPKAFKA_API rd_kafka_conf_res_t rd_kafka_topic_conf_get(const rd_kafka_topic_conf_t *conf,
-                                                         const char *name, char *dest,
-                                                         size_t *dest_size);
+                                                         const char* name, char* dest,
+                                                         size_t* dest_size);
 CPPKAFKA_API
 const char** rd_kafka_topic_conf_dump(rd_kafka_topic_conf_t* conf, size_t* cntp);
+
+// rd_kafka_topic_*
+
+CPPKAFKA_API void rd_kafka_topic_partition_destroy(rd_kafka_topic_partition_t* toppar);
+CPPKAFKA_API rd_kafka_topic_partition_list_t* rd_kafka_topic_partition_list_new(int size);
+CPPKAFKA_API
+void rd_kafka_topic_partition_list_destroy(rd_kafka_topic_partition_list_t* toppar_list);
+CPPKAFKA_API
+rd_kafka_topic_partition_t*
+rd_kafka_topic_partition_list_add(rd_kafka_topic_partition_list_t* toppar_list,
+                                  const char* topic, int32_t partition);
 
 #endif // CPPKAFKA_MOCKING_API_H

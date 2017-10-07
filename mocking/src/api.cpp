@@ -1,9 +1,11 @@
 #include <string>
 #include <algorithm>
+#include <cstring>
 #include <cppkafka/mocking/api.h>
 
 using std::string;
 using std::copy;
+using std::strlen;
 
 using namespace cppkafka::mocking;
 
@@ -157,4 +159,43 @@ rd_kafka_conf_res_t rd_kafka_topic_conf_get(const rd_kafka_topic_conf_t *conf,
 
 const char** rd_kafka_topic_conf_dump(rd_kafka_topic_conf_t* conf, size_t* cntp) {
     return rd_kafka_conf_dump(conf, cntp);
+}
+
+// rd_kafka_topic_*
+
+void rd_kafka_topic_partition_destroy (rd_kafka_topic_partition_t* toppar) {
+    delete toppar->topic;
+    delete toppar;
+}
+
+rd_kafka_topic_partition_list_t* rd_kafka_topic_partition_list_new(int size) {
+    rd_kafka_topic_partition_list_t* output = new rd_kafka_topic_partition_list_t{};
+    output->size = size;
+    output->elems = new rd_kafka_topic_partition_t[size];
+    for (int i = 0; i < size; ++i) {
+        output->elems[i] = {};
+    }
+    return output;
+}
+
+void rd_kafka_topic_partition_list_destroy(rd_kafka_topic_partition_list_t* toppar_list) {
+    for (int i = 0; i < toppar_list->cnt; ++i) {
+        delete toppar_list->elems[i].topic;
+    }
+    delete[] toppar_list->elems;
+    delete toppar_list;
+}
+
+rd_kafka_topic_partition_t*
+rd_kafka_topic_partition_list_add(rd_kafka_topic_partition_list_t* toppar_list,
+                                  const char* topic, int32_t partition) {
+    if (toppar_list->cnt >= toppar_list->size) {
+        return nullptr;
+    }
+    rd_kafka_topic_partition_t* output = &toppar_list->elems[toppar_list->cnt++];
+    const size_t length = strlen(topic);
+    output->topic = new char[length + 1];
+    copy(topic, topic + length, output->topic);
+    output->partition = partition;
+    return output;
 }
