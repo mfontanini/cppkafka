@@ -2,8 +2,8 @@
 #define CPPKAFKA_MOCKING_KAFKA_CLUSTER_H
 
 #include <unordered_map>
-#include <cppkafka/mocking/kafka_topic.h>
-#include <cppkafka/mocking/kafka_message.h>
+#include <cppkafka/mocking/topic_mock.h>
+#include <cppkafka/mocking/message_mock.h>
 
 namespace cppkafka {
 namespace mocking {
@@ -18,10 +18,10 @@ public:
     const std::string& get_url() const;
 
     void add_topic(const std::string& name, unsigned partitions);
-    void produce(const std::string& topic, unsigned partition, KafkaMessage message);
+    void produce(const std::string& topic, unsigned partition, MessageMock message);
 private:
     const std::string url_;
-    std::unordered_map<std::string, KafkaTopic> topics_;
+    std::unordered_map<std::string, TopicMock> topics_;
 };
 
 } // mocking

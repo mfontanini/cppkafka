@@ -1,5 +1,5 @@
-#ifndef CPPKAFKA_MOCKING_KAFKA_MESSAGE_H
-#define CPPKAFKA_MOCKING_KAFKA_MESSAGE_H
+#ifndef CPPKAFKA_MOCKING_MESSAGE_MOCK_H
+#define CPPKAFKA_MOCKING_MESSAGE_MOCK_H
 
 #include <vector>
 #include <cstdint>
@@ -8,12 +8,12 @@
 namespace cppkafka {
 namespace mocking {
 
-class KafkaMessage {
+class MessageMock {
 public:
     using Buffer = std::vector<uint8_t>;
 
-    KafkaMessage(Buffer key, Buffer payload, rd_kafka_timestamp_type_t timestamp_type,
-                 int64_t timestamp);
+    MessageMock(Buffer key, Buffer payload, rd_kafka_timestamp_type_t timestamp_type,
+                int64_t timestamp);
 
     const Buffer& get_key() const;
     const Buffer& get_payload() const;
@@ -29,4 +29,4 @@ private:
 } // mocking
 } // cppkafka
 
-#endif // CPPKAFKA_MOCKING_KAFKA_MESSAGE_H
+#endif // CPPKAFKA_MOCKING_MESSAGE_MOCK_H

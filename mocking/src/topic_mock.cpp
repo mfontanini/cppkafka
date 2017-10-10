@@ -1,5 +1,6 @@
 #include <stdexcept>
-#include <cppkafka/mocking/kafka_topic.h>
+#include <cppkafka/mocking/topic_mock.h>
+#include <cppkafka/mocking/message_mock.h>
 
 using std::string;
 using std::out_of_range;
@@ -8,12 +9,12 @@ using std::move;
 namespace cppkafka {
 namespace mocking {
 
-KafkaTopic::KafkaTopic(string name, unsigned partition_count)
+TopicMock::TopicMock(string name, unsigned partition_count)
 : name_(move(name)), partitions_(partition_count) {
 
 }
 
-void KafkaTopic::add_message(unsigned partition, KafkaMessage message) {
+void TopicMock::add_message(unsigned partition, MessageMock message) {
     if (partitions_.size() >= partition) {
         throw out_of_range("invalid partition index");
     }

@@ -1,8 +1,8 @@
 set(SOURCES
     configuration_mock.cpp
-    kafka_topic.cpp
-    kafka_partition.cpp
-    kafka_message.cpp
+    topic_mock.cpp
+    partition_mock.cpp
+    message_mock.cpp
     kafka_cluster.cpp
     kafka_cluster_registry.cpp
     api.cpp
