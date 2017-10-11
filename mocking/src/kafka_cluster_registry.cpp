@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <cppkafka/mocking/kafka_cluster_registry.h>
 
+using std::string;
 using std::lock_guard;
 using std::mutex;
 using std::runtime_error;
@@ -14,18 +15,19 @@ KafkaClusterRegistry& KafkaClusterRegistry::instance() {
     return registry;
 }
 
-void KafkaClusterRegistry::add_cluster(KafkaCluster* cluster) {
+void KafkaClusterRegistry::add_cluster(ClusterPtr cluster) {
+    const string& url = cluster->get_url();
     lock_guard<mutex> _(clusters_mutex_);
-    auto iter = clusters_.find(cluster->get_url());
+    auto iter = clusters_.find(url);
     if (iter != clusters_.end()) {
         throw runtime_error("cluster already registered");
     }
-    clusters_.emplace(cluster->get_url(), cluster);
+    clusters_.emplace(url, move(cluster));
 }
 
-void KafkaClusterRegistry::remove_cluster(KafkaCluster* cluster) {
+void KafkaClusterRegistry::remove_cluster(const KafkaCluster& cluster) {
     lock_guard<mutex> _(clusters_mutex_);
-    clusters_.erase(cluster->get_url());
+    clusters_.erase(cluster.get_url());
 }
 
 } // detail

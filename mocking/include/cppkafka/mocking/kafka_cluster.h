@@ -2,6 +2,7 @@
 #define CPPKAFKA_MOCKING_KAFKA_CLUSTER_H
 
 #include <unordered_map>
+#include <memory>
 #include <cppkafka/mocking/topic_mock.h>
 #include <cppkafka/mocking/message_mock.h>
 
@@ -10,7 +11,8 @@ namespace mocking {
 
 class KafkaCluster {
 public:
-    KafkaCluster(std::string url);
+    static std::shared_ptr<KafkaCluster> make_cluster(std::string url);
+
     KafkaCluster(const KafkaCluster&) = delete;
     KafkaCluster& operator=(const KafkaCluster&) = delete;
     ~KafkaCluster();
@@ -20,6 +22,8 @@ public:
     void add_topic(const std::string& name, unsigned partitions);
     void produce(const std::string& topic, unsigned partition, MessageMock message);
 private:
+    KafkaCluster(std::string url);
+
     const std::string url_;
     std::unordered_map<std::string, TopicMock> topics_;
 };

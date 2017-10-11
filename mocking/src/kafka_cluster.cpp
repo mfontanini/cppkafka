@@ -2,6 +2,8 @@
 #include <cppkafka/mocking/kafka_cluster.h>
 #include <cppkafka/mocking/kafka_cluster_registry.h>
 
+using std::shared_ptr;
+using std::make_shared;
 using std::string;
 using std::invalid_argument;
 using std::piecewise_construct;
@@ -11,13 +13,19 @@ using std::move;
 namespace cppkafka {
 namespace mocking {
 
+shared_ptr<KafkaCluster> KafkaCluster::make_cluster(string url) {
+    shared_ptr<KafkaCluster> output{ new KafkaCluster(move(url)) };
+    detail::KafkaClusterRegistry::instance().add_cluster(output);
+    return output;
+}
+
 KafkaCluster::KafkaCluster(string url)
 : url_(move(url)) {
-    detail::KafkaClusterRegistry::instance().add_cluster(this);
+
 }
 
 KafkaCluster::~KafkaCluster() {
-    detail::KafkaClusterRegistry::instance().remove_cluster(this);    
+    detail::KafkaClusterRegistry::instance().remove_cluster(*this);    
 }
 
 const string& KafkaCluster::get_url() const {
