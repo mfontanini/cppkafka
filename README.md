@@ -1,5 +1,7 @@
 # cppkafka: high level C++ wrapper for _rdkafka_
 
+[![Build status](https://travis-ci.org/mfontanini/cppkafka.svg?branch=master)](https://travis-ci.org/mfontanini/cppkafka) 
+
 _cppkafka_ allows C++ applications to consume and produce messages using the Apache Kafka
 protocol. The library is built on top of [_librdkafka_](https://github.com/edenhill/librdkafka), 
 and provides a high level API that uses modern C++ features to make it easier to write code
