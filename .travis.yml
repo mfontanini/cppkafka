@@ -26,7 +26,7 @@ before_script:
   - tar xvzf kafka_2.11-0.11.0.1.tgz
   - ./kafka_2.11-0.11.0.1/bin/kafka-server-start.sh ./kafka_2.11-0.11.0.1/config/server.properties > /dev/null 2> /dev/null &
   - git clone https://github.com/edenhill/librdkafka.git
-  - sleep 3
+  - while ! echo "asd" | nc localhost 9092; do sleep 1; done
   - ./kafka_2.11-0.11.0.1/bin/kafka-topics.sh --create --zookeeper localhost:2181 --topic cppkafka_test1 --partitions 3 --replication-factor 1
   - ./kafka_2.11-0.11.0.1/bin/kafka-topics.sh --create --zookeeper localhost:2181 --topic cppkafka_test2 --partitions 3 --replication-factor 1
 
