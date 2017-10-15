@@ -1,5 +1,5 @@
 #include <stdexcept>
-#include <cppkafka/mocking/partition_mock.h>
+#include <cppkafka/mocking/kafka_partition_mock.h>
 
 using std::lock_guard;
 using std::mutex;
@@ -9,12 +9,12 @@ using std::move;
 namespace cppkafka {
 namespace mocking {
 
-void PartitionMock::add_message(MessageMock message) {
+void KafkaPartitionMock::add_message(KafkaMessageMock message) {
     lock_guard<mutex> _(messages_mutex_);
     messages_.emplace_back(move(message));
 }
 
-const MessageMock& PartitionMock::get_message(uint64_t offset) const {
+const KafkaMessageMock& KafkaPartitionMock::get_message(uint64_t offset) const {
     const uint64_t index = offset - base_offset_;
     lock_guard<mutex> _(messages_mutex_);
     if (messages_.size() >= index) {
@@ -23,7 +23,7 @@ const MessageMock& PartitionMock::get_message(uint64_t offset) const {
     return messages_[index];
 }
 
-size_t PartitionMock::get_message_count() const {
+size_t KafkaPartitionMock::get_message_count() const {
     lock_guard<mutex> _(messages_mutex_);
     return messages_.size();
 }

@@ -3,8 +3,8 @@
 
 #include <unordered_map>
 #include <memory>
-#include <cppkafka/mocking/topic_mock.h>
-#include <cppkafka/mocking/message_mock.h>
+#include <cppkafka/mocking/kafka_topic_mock.h>
+#include <cppkafka/mocking/kafka_message_mock.h>
 
 namespace cppkafka {
 namespace mocking {
@@ -20,12 +20,12 @@ public:
     const std::string& get_url() const;
 
     void add_topic(const std::string& name, unsigned partitions);
-    void produce(const std::string& topic, unsigned partition, MessageMock message);
+    void produce(const std::string& topic, unsigned partition, KafkaMessageMock message);
 private:
     KafkaCluster(std::string url);
 
     const std::string url_;
-    std::unordered_map<std::string, TopicMock> topics_;
+    std::unordered_map<std::string, KafkaTopicMock> topics_;
 };
 
 } // mocking

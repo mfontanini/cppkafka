@@ -37,7 +37,7 @@ void KafkaCluster::add_topic(const string& name, unsigned partitions) {
                     forward_as_tuple(name, partitions));
 }
 
-void KafkaCluster::produce(const string& topic, unsigned partition, MessageMock message) {
+void KafkaCluster::produce(const string& topic, unsigned partition, KafkaMessageMock message) {
     auto iter = topics_.find(topic);
     if (iter == topics_.end()) {
         throw invalid_argument("topic does not exist");
