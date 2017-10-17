@@ -6,6 +6,12 @@ using std::move;
 namespace cppkafka {
 namespace mocking {
 
+ProducerMock::ProducerMock(ConfigurationMock config, EventProcessorPtr processor,
+                           ClusterPtr cluster)
+: HandleMock(move(processor), move(cluster)), config_(move(config)) {
+
+}
+
 void ProducerMock::produce_message(MessageHandle message_handle) {
     generate_event<ProduceMessageEvent>(move(message_handle));
 }

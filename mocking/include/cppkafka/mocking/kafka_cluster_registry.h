@@ -17,6 +17,7 @@ public:
 
     void add_cluster(ClusterPtr cluster);
     void remove_cluster(const KafkaCluster& cluster);
+    ClusterPtr get_cluster(const std::string& name) const;
 private:
     std::unordered_map<std::string, ClusterPtr> clusters_;
     mutable std::mutex clusters_mutex_;

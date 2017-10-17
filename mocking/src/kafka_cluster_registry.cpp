@@ -30,6 +30,12 @@ void KafkaClusterRegistry::remove_cluster(const KafkaCluster& cluster) {
     clusters_.erase(cluster.get_url());
 }
 
+KafkaClusterRegistry::ClusterPtr KafkaClusterRegistry::get_cluster(const string& name) const {
+    lock_guard<mutex> _(clusters_mutex_);
+    auto iter = clusters_.find(name);
+    return iter != clusters_.end() ? iter->second : ClusterPtr{};
+}
+
 } // detail
 } // mocking
 } // cppkafka

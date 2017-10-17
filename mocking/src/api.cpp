@@ -2,12 +2,16 @@
 #include <algorithm>
 #include <cstring>
 #include <cppkafka/mocking/api.h>
+#include <cppkafka/mocking/producer_mock.h>
+#include <cppkafka/mocking/kafka_cluster_registry.h>
 
 using std::string;
 using std::copy;
 using std::strlen;
+using std::make_shared;
 
 using namespace cppkafka::mocking;
+using namespace cppkafka::mocking::detail;
 
 // rd_kafka_conf_t
 
@@ -198,4 +202,21 @@ rd_kafka_topic_partition_list_add(rd_kafka_topic_partition_list_t* toppar_list,
     copy(topic, topic + length, output->topic);
     output->partition = partition;
     return output;
+}
+
+// rd_kafka_t
+
+rd_kafka_t* rd_kafka_new(rd_kafka_type_t type, rd_kafka_conf_t *conf_ptr,
+                         char *errstr, size_t errstr_size) {
+    static const string BROKERS_OPTION = "metadata.broker.list";
+    const auto& conf = conf_ptr->get_handle();
+    HandleMock::ClusterPtr cluster;
+    if (conf.has_key(BROKERS_OPTION)) {
+        cluster = KafkaClusterRegistry::instance().get_cluster(conf.get(BROKERS_OPTION));
+    }
+    if (type == RD_KAFKA_PRODUCER) {
+        return new rd_kafka_t(new ProducerMock(conf, make_shared<EventProcessor>(),
+                                               move(cluster)));
+    }
+    return nullptr;
 }
