@@ -5,6 +5,7 @@
 #include <memory>
 #include <cppkafka/mocking/kafka_topic_mock.h>
 #include <cppkafka/mocking/kafka_message_mock.h>
+#include <cppkafka/mocking/offset_manager.h>
 
 namespace cppkafka {
 namespace mocking {
@@ -25,6 +26,7 @@ private:
     KafkaCluster(std::string url);
 
     const std::string url_;
+    std::shared_ptr<OffsetManager> offset_manager_;
     std::unordered_map<std::string, KafkaTopicMock> topics_;
 };
 

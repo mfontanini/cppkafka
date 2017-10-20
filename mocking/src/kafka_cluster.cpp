@@ -20,7 +20,7 @@ shared_ptr<KafkaCluster> KafkaCluster::make_cluster(string url) {
 }
 
 KafkaCluster::KafkaCluster(string url)
-: url_(move(url)) {
+: url_(move(url)), offset_manager_(make_shared<OffsetManager>()) {
 
 }
 
@@ -34,7 +34,7 @@ const string& KafkaCluster::get_url() const {
 
 void KafkaCluster::add_topic(const string& name, unsigned partitions) {
     topics_.emplace(piecewise_construct, forward_as_tuple(name),
-                    forward_as_tuple(name, partitions));
+                    forward_as_tuple(name, partitions, offset_manager_));
 }
 
 void KafkaCluster::produce(const string& topic, unsigned partition, KafkaMessageMock message) {

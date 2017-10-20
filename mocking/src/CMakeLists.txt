@@ -8,6 +8,8 @@ set(SOURCES
     handle_mock.cpp
     message_handle.cpp
     producer_mock.cpp
+    topic_partition_mock.cpp
+    offset_manager.cpp
     
     events/event_base.cpp
     events/produce_message_event.cpp
