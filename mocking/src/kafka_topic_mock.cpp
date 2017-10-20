@@ -29,7 +29,8 @@ void KafkaTopicMock::add_message(unsigned partition, KafkaMessageMock message) {
 
 void KafkaTopicMock::subscribe(const string& group_id, uint64_t consumer_id,
                                AssignmentCallback assignment_callback,
-                               RevocationCallback revocation_callback) {
+                               RevocationCallback revocation_callback,
+                               MessageCallback message_callback) {
     lock_guard<mutex> _(subscribers_mutex_);
     auto& members_data = subscribers_[group_id];
     // If we're already subscribed, there's nothing to do
@@ -37,7 +38,9 @@ void KafkaTopicMock::subscribe(const string& group_id, uint64_t consumer_id,
         return;
     }
     members_data.emplace(consumer_id,
-                         MemberMetadata{move(assignment_callback), move(revocation_callback)});
+                         MemberMetadata{move(assignment_callback),
+                                        move(revocation_callback),
+                                        move(message_callback)});
     generate_assignments(group_id, members_data);
 }
 
@@ -59,9 +62,17 @@ void KafkaTopicMock::generate_assignments(const string& group_id,
     size_t member_index = 0;
     for (auto& member_data_pair  : members_metadata) {
         MemberMetadata& member = member_data_pair.second;
+        // Execute revocation callback and unsubscribe from the partition object
         if (!member.partitions_assigned.empty()) {
             member.revocation_callback(member.partitions_assigned);
+            for (const auto& partition_subscription : member.partition_subscriptions) {
+                auto& partition_mock = partitions_[partition_subscription.first];
+                partition_mock.unsubscribe(partition_subscription.second);
+            }
         }
+        member.partition_subscriptions.clear();
+
+        // Generate partition assignment
         const size_t chunk_start = chunk_size * member_index;
         // For the last one, add any remainders
         if (member_index == members_metadata.size() - 1) {
@@ -71,9 +82,18 @@ void KafkaTopicMock::generate_assignments(const string& group_id,
         for (size_t i = 0; i < chunk_size; ++i) {
             topic_partitions.emplace_back(name_, chunk_start + i);
         }
+        // Try to load the offsets and execute assignment callback
         topic_partitions = offset_manager_->get_offsets(group_id, move(topic_partitions));
         member.assignment_callback(topic_partitions);
         member.partitions_assigned = move(topic_partitions);
+
+        // Subscribe to every assigned partition
+        for (const TopicPartitionMock& topic_partition : member.partitions_assigned) {
+            auto& partition_mock = partitions_[topic_partition.get_partition()];
+            const auto subscriber_id = partition_mock.subscribe(member.message_callback);
+            member.partition_subscriptions.emplace(topic_partition.get_partition(),
+                                                   subscriber_id);
+        }
         member_index++;
     }
 }
