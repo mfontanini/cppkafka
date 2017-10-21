@@ -9,6 +9,8 @@ using std::invalid_argument;
 using std::piecewise_construct;
 using std::forward_as_tuple;
 using std::move;
+using std::lock_guard;
+using std::mutex;
 
 namespace cppkafka {
 namespace mocking {
@@ -33,8 +35,14 @@ const string& KafkaCluster::get_url() const {
 }
 
 void KafkaCluster::add_topic(const string& name, unsigned partitions) {
+    lock_guard<mutex> _(topics_mutex_);
     topics_.emplace(piecewise_construct, forward_as_tuple(name),
                     forward_as_tuple(name, partitions, offset_manager_));
+}
+
+bool KafkaCluster::topic_exists(const string& name) const {
+    lock_guard<mutex> _(topics_mutex_);
+    return topics_.count(name) > 0;
 }
 
 void KafkaCluster::produce(const string& topic, unsigned partition, KafkaMessageMock message) {
