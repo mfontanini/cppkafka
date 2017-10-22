@@ -37,31 +37,19 @@ ConsumerMock::ConsumerMock(ConfigurationMock config, EventProcessorPtr processor
 }
 
 ConsumerMock::~ConsumerMock() {
-    auto& cluster = get_cluster();
-    for (const string& topic_name : subscribed_topics_) {
-        cluster.acquire_topic(topic_name, [&](KafkaTopicMock& topic) {
-            topic.unsubscribe(group_id_, consumer_id_);
-        });
-    }
+    get_cluster().unsubscribe(group_id_, consumer_id_);
 }
 
 void ConsumerMock::subscribe(const vector<string>& topics) {
     using namespace std::placeholders;
-    auto& cluster = get_cluster();
-    for (const string& topic_name : topics) {
-        if (subscribed_topics_.count(topic_name) > 0) {
-            continue;
-        }
-        cluster.acquire_topic(topic_name, [&](KafkaTopicMock& topic) {
-            topic.subscribe(
-                group_id_,
-                consumer_id_,
-                bind(&ConsumerMock::on_assignment, this, _1),
-                bind(&ConsumerMock::on_revocation, this, _1),
-                bind(&ConsumerMock::on_message, this, _1, _2, _3, _4)
-            );
-        });
-    }
+    get_cluster().subscribe(
+        group_id_,
+        consumer_id_,
+        topics,
+        bind(&ConsumerMock::on_assignment, this, _1),
+        bind(&ConsumerMock::on_revocation, this, _1),
+        bind(&ConsumerMock::on_message, this, _1, _2, _3, _4)
+    );
 }
 
 void ConsumerMock::set_opaque(void* opaque) {

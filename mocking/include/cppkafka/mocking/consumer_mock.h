@@ -62,7 +62,6 @@ private:
 
     ConfigurationMock config_;
     const std::string group_id_;
-    std::unordered_set<std::string> subscribed_topics_;
     std::map<TopicPartitionId, TopicPartitionInfo> assigned_partitions_;
     mutable std::mutex assigned_partitions_mutex_;
     std::queue<MessageAggregate> new_message_queue_;

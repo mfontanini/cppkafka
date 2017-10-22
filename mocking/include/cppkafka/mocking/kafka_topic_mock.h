@@ -10,8 +10,6 @@
 #include <functional>
 #include <memory>
 #include <cppkafka/mocking/kafka_partition_mock.h>
-#include <cppkafka/mocking/topic_partition_mock.h>
-#include <cppkafka/mocking/offset_manager.h>
 
 namespace cppkafka {
 namespace mocking {
@@ -20,39 +18,17 @@ class KafkaMessageMock;
 
 class KafkaTopicMock {
 public:
-    using AssignmentCallback = std::function<void(std::vector<TopicPartitionMock>&)>;
-    using RevocationCallback = std::function<void(const std::vector<TopicPartitionMock>&)>;
-    using MessageCallback = std::function<void(std::string topic, unsigned partition,
-                                               uint64_t offset, const KafkaMessageMock*)>;
-    using OffsetManagerPtr = std::shared_ptr<OffsetManager>;
-
-    KafkaTopicMock(std::string name, unsigned partition_count, OffsetManagerPtr offset_manager);
+    KafkaTopicMock(std::string name, unsigned partition_count);
     const std::string& get_name() const;
 
     void add_message(unsigned partition, KafkaMessageMock message);
-    void subscribe(const std::string& group_id, uint64_t consumer_id,
-                   AssignmentCallback assignment_callback,
-                   RevocationCallback revocation_callback,
-                   MessageCallback message_callback);
-    void unsubscribe(const std::string& group_id, uint64_t consumer_id);
     KafkaPartitionMock& get_partition(unsigned partition);
     const KafkaPartitionMock& get_partition(unsigned partition) const;
+    size_t get_partition_count() const;
 private:
-    struct MemberMetadata {
-        const AssignmentCallback assignment_callback;
-        const RevocationCallback revocation_callback;
-        const MessageCallback message_callback;
-        std::vector<TopicPartitionMock> partitions_assigned;
-        std::unordered_map<int, KafkaPartitionMock::SubscriberId> partition_subscriptions;
-    };
-    using MembersMetadataMap = std::unordered_map<uint64_t, MemberMetadata>;
-
-    void generate_assignments(const std::string& group_id, MembersMetadataMap& members_metadata);
 
     const std::string name_;
     std::vector<KafkaPartitionMock> partitions_;
-    OffsetManagerPtr offset_manager_;
-    std::unordered_map<std::string, MembersMetadataMap> subscribers_;
     mutable std::mutex subscribers_mutex_;
 };
 
