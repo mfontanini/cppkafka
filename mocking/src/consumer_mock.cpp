@@ -13,6 +13,7 @@ using std::bind;
 using std::runtime_error;
 using std::make_tuple;
 using std::tie;
+using std::get;
 using std::lock_guard;
 using std::unique_lock;
 using std::mutex;
@@ -47,9 +48,20 @@ void ConsumerMock::subscribe(const vector<string>& topics) {
         consumer_id_,
         topics,
         bind(&ConsumerMock::on_assignment, this, _1),
-        bind(&ConsumerMock::on_revocation, this, _1),
+        bind(&ConsumerMock::on_revocation, this),
         bind(&ConsumerMock::on_message, this, _1, _2, _3, _4)
     );
+}
+
+void ConsumerMock::assign(const vector<TopicPartitionMock>& topic_partitions) {
+    for (const TopicPartitionMock& topic_partition : topic_partitions) {
+        handle_assign(topic_partition);
+    }
+}
+
+void ConsumerMock::unassign() {
+    lock_guard<mutex> _(assigned_partitions_mutex_);
+    assigned_partitions_.clear();
 }
 
 void ConsumerMock::set_opaque(void* opaque) {
@@ -60,18 +72,23 @@ ConsumerMock::TopicPartitionId ConsumerMock::make_id(const TopicPartitionMock& t
     return make_tuple(topic_partition.get_topic(), topic_partition.get_partition());
 }
 
-void ConsumerMock::on_assignment(vector<TopicPartitionMock>& topic_partitions) {
+void ConsumerMock::on_assignment(const vector<TopicPartitionMock>& topic_partitions) {
     handle_rebalance(RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS, topic_partitions);
-    for (const TopicPartitionMock& topic_partition : topic_partitions) {
-        handle_assign(topic_partition);
-    }
 }
 
-void ConsumerMock::on_revocation(const vector<TopicPartitionMock>& topic_partitions) {
+void ConsumerMock::on_revocation() {
+    // Fetch and reset all assigned topic partitions
+    vector<TopicPartitionMock> topic_partitions = [&]() {
+        lock_guard<mutex> _(assigned_partitions_mutex_);
+        vector<TopicPartitionMock> output;
+        for (const auto& topic_partition_pair : assigned_partitions_) {
+            const TopicPartitionId& id = topic_partition_pair.first;
+            output.emplace_back(get<0>(id), get<1>(id));
+        }
+        assigned_partitions_.clear();
+        return output;
+    }();
     handle_rebalance(RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS, topic_partitions);
-    for (const TopicPartitionMock& topic_partition : topic_partitions) {
-        handle_unassign(topic_partition);
-    }
 }
 
 void ConsumerMock::on_message(const string& topic_name, unsigned partition, uint64_t offset,
@@ -91,8 +108,8 @@ void ConsumerMock::on_message(const string& topic_name, unsigned partition, uint
     message_queue_condition_.notify_one();
 }
 
-template <typename List>
-void ConsumerMock::handle_rebalance(rd_kafka_resp_err_t type, List& topic_partitions) {
+void ConsumerMock::handle_rebalance(rd_kafka_resp_err_t type,
+                                    const vector<TopicPartitionMock>& topic_partitions) {
     auto rebalance_callback = config_.get_rebalance_callback();
     if (rebalance_callback) {
         auto handle = to_rdkafka_handle(topic_partitions);
@@ -115,14 +132,8 @@ void ConsumerMock::handle_assign(const TopicPartitionMock& topic_partition) {
 
     // Fetch any existing messages and push them to the available message queue
     auto& cluster = get_cluster();
-    cluster.acquire_topic(topic_partition.get_topic(), [&](KafkaTopicMock& topic) {
-        fetch_existing_messages(topic_partition.get_partition(), next_offset, topic);
-    });
-}
-
-void ConsumerMock::handle_unassign(const TopicPartitionMock& topic_partition) {
-    lock_guard<mutex> _(assigned_partitions_mutex_);
-    assigned_partitions_.erase(make_id(topic_partition));
+    KafkaTopicMock& topic = cluster.get_topic(topic_partition.get_topic());
+    fetch_existing_messages(topic_partition.get_partition(), next_offset, topic);
 }
 
 void ConsumerMock::fetch_existing_messages(unsigned partition_index, uint64_t next_offset,

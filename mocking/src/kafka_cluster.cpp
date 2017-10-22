@@ -163,7 +163,7 @@ void KafkaCluster::generate_revocations(const TopicConsumersMap& topic_consumers
             ConsumerMetadata& consumer = consumer_data_[consumer_id];
             // Execute revocation callback and unsubscribe from the partition object
             if (!consumer.partitions_assigned.empty()) {
-                consumer.revocation_callback(consumer.partitions_assigned);
+                consumer.revocation_callback();
                 for (const auto& topic_subscription : consumer.subscriptions) {
                     KafkaTopicMock& topic = *topic_subscription.first;
                     for (const auto& partition_subscription : topic_subscription.second) {

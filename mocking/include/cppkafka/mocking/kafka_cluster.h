@@ -16,8 +16,8 @@ namespace mocking {
 
 class KafkaCluster {
 public:
-    using AssignmentCallback = std::function<void(std::vector<TopicPartitionMock>&)>;
-    using RevocationCallback = std::function<void(const std::vector<TopicPartitionMock>&)>;
+    using AssignmentCallback = std::function<void(const std::vector<TopicPartitionMock>&)>;
+    using RevocationCallback = std::function<void()>;
     using MessageCallback = std::function<void(std::string topic, unsigned partition,
                                                uint64_t offset, const KafkaMessageMock*)>;
 
@@ -32,8 +32,6 @@ public:
     void create_topic(const std::string& name, unsigned partitions);
     bool topic_exists(const std::string& name) const;
     void produce(const std::string& topic, unsigned partition, KafkaMessageMock message);
-    template <typename Functor>
-    void acquire_topic(const std::string& topic, const Functor& functor);
     KafkaTopicMock& get_topic(const std::string& name);
     const KafkaTopicMock& get_topic(const std::string& name) const;
     void subscribe(const std::string& group_id, uint64_t consumer_id,
@@ -71,19 +69,6 @@ private:
     std::unordered_map<std::string, TopicConsumersMap> group_topics_data_;
     mutable std::mutex consumer_data_mutex_;
 };
-
-template <typename Functor>
-void KafkaCluster::acquire_topic(const std::string& topic, const Functor& functor) {
-    std::unique_lock<std::mutex> lock(topics_mutex_);
-    auto iter = topics_.find(topic);
-    if (iter == topics_.end()) {
-        throw std::runtime_error("Topic " + topic + " doesn't exist");
-    }
-    // Unlock and execute callback. We won't remove topics so this is thread safe on a
-    // cluster level
-    lock.unlock();
-    functor(iter->second);
-}
 
 } // mocking
 } // cppkafka

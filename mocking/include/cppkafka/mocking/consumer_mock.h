@@ -28,6 +28,8 @@ public:
     ~ConsumerMock();
 
     void subscribe(const std::vector<std::string>& topics);
+    void assign(const std::vector<TopicPartitionMock>& topic_partitions);
+    void unassign();
     void set_opaque(void* opaque);
 private:
     static uint64_t make_consumer_id();
@@ -49,14 +51,14 @@ private:
     using TopicPartitionId = std::tuple<std::string, int>;
 
     static TopicPartitionId make_id(const TopicPartitionMock& topic_partition);
-    void on_assignment(std::vector<TopicPartitionMock>& topic_partitions);
-    void on_revocation(const std::vector<TopicPartitionMock>& topic_partitions);
+    void on_assignment(const std::vector<TopicPartitionMock>& topic_partitions);
+    void on_revocation();
     void on_message(const std::string& topic_name, unsigned partition, uint64_t offset,
                     const KafkaMessageMock* message);
-    template <typename List>
-    void handle_rebalance(rd_kafka_resp_err_t type, List& topic_partitions);
+    void handle_rebalance(rd_kafka_resp_err_t type,
+                          const std::vector<TopicPartitionMock>& topic_partitions);
     void handle_assign(const TopicPartitionMock& topic_partition);
-    void handle_unassign(const TopicPartitionMock& topic_partition);
+    void handle_unassign();
     void fetch_existing_messages(unsigned partition, uint64_t next_offset,
                                  KafkaTopicMock& topic);
 
