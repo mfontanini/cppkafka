@@ -3,6 +3,8 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
+#include <vector>
 #include <librdkafka/rdkafka.h>
 
 namespace cppkafka {
@@ -18,10 +20,17 @@ public:
 
     void set_offset(int64_t offset);
 private:
-    std::string topic_;
-    int partition_;
+    const std::string topic_;
+    const int partition_;
     int64_t offset_;
 };
+
+using TopicPartitionMockListPtr = std::unique_ptr<rd_kafka_topic_partition_list_t,
+                                                 decltype(&rd_kafka_topic_partition_list_destroy)>;
+TopicPartitionMockListPtr
+to_rdkafka_handle(const std::vector<TopicPartitionMock>& topic_partitions);
+std::vector<TopicPartitionMock>
+from_rdkafka_handle(const rd_kafka_topic_partition_list_t& topic_partitions);
 
 } // mocking
 } // cppkafka

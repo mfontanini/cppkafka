@@ -201,6 +201,7 @@ rd_kafka_topic_partition_list_add(rd_kafka_topic_partition_list_t* toppar_list,
     output->topic = new char[length + 1];
     copy(topic, topic + length, output->topic);
     output->partition = partition;
+    output->offset = RD_KAFKA_OFFSET_INVALID;
     return output;
 }
 
