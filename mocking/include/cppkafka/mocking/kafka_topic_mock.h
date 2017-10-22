@@ -22,16 +22,21 @@ class KafkaTopicMock {
 public:
     using AssignmentCallback = std::function<void(std::vector<TopicPartitionMock>&)>;
     using RevocationCallback = std::function<void(const std::vector<TopicPartitionMock>&)>;
-    using MessageCallback = KafkaPartitionMock::MessageCallback;
+    using MessageCallback = std::function<void(std::string topic, unsigned partition,
+                                               uint64_t offset, const KafkaMessageMock*)>;
     using OffsetManagerPtr = std::shared_ptr<OffsetManager>;
 
     KafkaTopicMock(std::string name, unsigned partition_count, OffsetManagerPtr offset_manager);
+    const std::string& get_name() const;
+
     void add_message(unsigned partition, KafkaMessageMock message);
     void subscribe(const std::string& group_id, uint64_t consumer_id,
                    AssignmentCallback assignment_callback,
                    RevocationCallback revocation_callback,
                    MessageCallback message_callback);
     void unsubscribe(const std::string& group_id, uint64_t consumer_id);
+    KafkaPartitionMock& get_partition(unsigned partition);
+    const KafkaPartitionMock& get_partition(unsigned partition) const;
 private:
     struct MemberMetadata {
         const AssignmentCallback assignment_callback;

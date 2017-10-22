@@ -4,12 +4,14 @@
 #include <cppkafka/mocking/kafka_message_mock.h>
 
 using std::string;
-using std::out_of_range;
 using std::move;
 using std::lock_guard;
 using std::mutex;
 using std::vector;
 using std::iota;
+using std::bind;
+using std::out_of_range;
+using std::runtime_error;
 
 namespace cppkafka {
 namespace mocking {
@@ -18,6 +20,10 @@ KafkaTopicMock::KafkaTopicMock(string name, unsigned partition_count,
                                OffsetManagerPtr offset_manager)
 : name_(move(name)), partitions_(partition_count), offset_manager_(move(offset_manager)) {
 
+}
+
+const string& KafkaTopicMock::get_name() const {
+    return name_;
 }
 
 void KafkaTopicMock::add_message(unsigned partition, KafkaMessageMock message) {
@@ -53,6 +59,17 @@ void KafkaTopicMock::unsubscribe(const std::string& group_id, uint64_t consumer_
     }
 }
 
+KafkaPartitionMock& KafkaTopicMock::get_partition(unsigned partition) {
+    if (partition >= partitions_.size()) {
+        throw runtime_error("Partition doesn't exist");
+    }
+    return partitions_[partition];
+}
+
+const KafkaPartitionMock& KafkaTopicMock::get_partition(unsigned partition) const {
+    return const_cast<KafkaTopicMock&>(*this).get_partition(partition);
+}
+
 void KafkaTopicMock::generate_assignments(const string& group_id,
                                           MembersMetadataMap& members_metadata) {
     vector<int> all_partitions(partitions_.size());
@@ -82,18 +99,22 @@ void KafkaTopicMock::generate_assignments(const string& group_id,
         for (size_t i = 0; i < chunk_size; ++i) {
             topic_partitions.emplace_back(name_, chunk_start + i);
         }
-        // Try to load the offsets and execute assignment callback
+        // Try to load the offsets and store the topic partitions
         topic_partitions = offset_manager_->get_offsets(group_id, move(topic_partitions));
-        member.assignment_callback(topic_partitions);
         member.partitions_assigned = move(topic_partitions);
 
         // Subscribe to every assigned partition
+        using namespace std::placeholders;
         for (const TopicPartitionMock& topic_partition : member.partitions_assigned) {
             auto& partition_mock = partitions_[topic_partition.get_partition()];
-            const auto subscriber_id = partition_mock.subscribe(member.message_callback);
+            auto callback = bind(member.message_callback, topic_partition.get_topic(),
+                                 topic_partition.get_partition(), _1, _2);
+            const auto subscriber_id = partition_mock.subscribe(move(callback));
             member.partition_subscriptions.emplace(topic_partition.get_partition(),
                                                    subscriber_id);
         }
+        // Now trigger the assignment callback
+        member.assignment_callback(member.partitions_assigned);
         member_index++;
     }
 }

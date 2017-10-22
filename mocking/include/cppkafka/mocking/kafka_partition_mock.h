@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <tuple>
 #include <cppkafka/mocking/kafka_message_mock.h>
 
 namespace cppkafka {
@@ -13,7 +14,7 @@ namespace mocking {
 
 class KafkaPartitionMock {
 public:
-    using MessageCallback = std::function<void(uint64_t offset)>;
+    using MessageCallback = std::function<void(uint64_t offset, const KafkaMessageMock*)>;
     using SubscriberId = uint64_t;
 
     void add_message(KafkaMessageMock message);
@@ -21,6 +22,8 @@ public:
     size_t get_message_count() const;
     SubscriberId subscribe(MessageCallback callback);
     void unsubscribe(SubscriberId id);
+    // Returns interval [lowest offset, largest offset)
+    std::tuple<uint64_t, uint64_t> get_offset_bounds() const;
 private:
     std::vector<MessageCallback> get_subscriber_callbacks() const;
 

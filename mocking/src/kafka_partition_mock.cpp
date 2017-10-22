@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <tuple>
 #include <cppkafka/mocking/kafka_partition_mock.h>
 
 using std::vector;
@@ -6,20 +7,25 @@ using std::lock_guard;
 using std::mutex;
 using std::out_of_range;
 using std::move;
+using std::tuple;
+using std::tie;
+using std::make_tuple;
 
 namespace cppkafka {
 namespace mocking {
 
 void KafkaPartitionMock::add_message(KafkaMessageMock message) {
-    const uint64_t offset = [&] {
+    KafkaMessageMock* message_ptr;
+    uint64_t offset;
+    tie(message_ptr, offset) = [&] {
         lock_guard<mutex> _(messages_mutex_);
         messages_.emplace_back(move(message));
-        return messages_.size() - 1;
+        return make_tuple(&messages_.back(), messages_.size() - 1);
     }();
 
     const vector<MessageCallback> callbacks = get_subscriber_callbacks();
     for (const MessageCallback& callback : callbacks) {
-        callback(offset);
+        callback(offset, message_ptr);
     }
 }
 
@@ -47,6 +53,11 @@ KafkaPartitionMock::SubscriberId KafkaPartitionMock::subscribe(MessageCallback c
 void KafkaPartitionMock::unsubscribe(SubscriberId id) {
     lock_guard<mutex> _(subscribers_mutex_);
     subscribers_.erase(id);
+}
+
+tuple<uint64_t, uint64_t> KafkaPartitionMock::get_offset_bounds() const {
+    lock_guard<mutex> _(messages_mutex_);
+    return make_tuple(base_offset_, base_offset_ + messages_.size());
 }
 
 vector<KafkaPartitionMock::MessageCallback> KafkaPartitionMock::get_subscriber_callbacks() const {
