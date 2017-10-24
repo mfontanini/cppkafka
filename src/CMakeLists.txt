@@ -27,6 +27,7 @@ add_library(cppkafka ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(cppkafka PROPERTIES VERSION ${CPPKAFKA_VERSION}
                                           SOVERSION ${CPPKAFKA_VERSION})
 target_link_libraries(cppkafka ${RDKAFKA_LIBRARY})
+target_include_directories(cppkafka PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 install( 
     TARGETS cppkafka
