@@ -67,7 +67,7 @@ class TopicConfiguration;
  * consumer.set_assignment_callback([&](vector<TopicPartition>& topic_partitions) {
  *     // Here you could fetch offsets and do something, altering the offsets on the
  *     // topic_partitions vector if needed
- *     cout << "Got assigned " << topic_partitions.count() << " partitions!" << endl;
+ *     cout << "Got assigned " << topic_partitions.size() << " partitions!" << endl;
  * });
  *
  * // Set the revocation callback
