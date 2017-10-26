@@ -14,7 +14,7 @@ namespace mocking {
 
 class KafkaPartitionMock {
 public:
-    using MessageCallback = std::function<void(uint64_t offset, const KafkaMessageMock*)>;
+    using MessageCallback = std::function<void(uint64_t offset, const KafkaMessageMock&)>;
     using SubscriberId = uint64_t;
 
     void add_message(KafkaMessageMock message);
@@ -24,6 +24,10 @@ public:
     void unsubscribe(SubscriberId id);
     // Returns interval [lowest offset, largest offset)
     std::tuple<uint64_t, uint64_t> get_offset_bounds() const;
+
+    // Acquire this partition so that no messages can be produced while the callback is executed.
+    template <typename Functor>
+    void acquire(const Functor& functor);
 private:
     std::vector<MessageCallback> get_subscriber_callbacks() const;
 
@@ -31,9 +35,14 @@ private:
     SubscriberId current_subscriber_id_{0};
     std::deque<KafkaMessageMock> messages_;
     std::unordered_map<SubscriberId, MessageCallback> subscribers_;
-    mutable std::mutex messages_mutex_;
-    mutable std::mutex subscribers_mutex_;
+    mutable std::recursive_mutex mutex_;
 };
+
+template <typename Functor>
+void KafkaPartitionMock::acquire(const Functor& functor) {
+    std::lock_guard<std::recursive_mutex> _(mutex_);
+    functor();
+}
 
 } // mocking
 } // cppkafka

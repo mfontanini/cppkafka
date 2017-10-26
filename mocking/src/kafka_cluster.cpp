@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <algorithm>
+#include <tuple>
 #include <cppkafka/mocking/kafka_cluster.h>
 #include <cppkafka/mocking/kafka_cluster_registry.h>
 #include <cppkafka/mocking/topic_partition_mock.h>
@@ -7,12 +8,14 @@
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
+using std::to_string;
 using std::vector;
 using std::invalid_argument;
 using std::runtime_error;
 using std::piecewise_construct;
 using std::forward_as_tuple;
 using std::move;
+using std::tie;
 using std::lock_guard;
 using std::mutex;
 using std::iota;
@@ -51,6 +54,7 @@ bool KafkaCluster::topic_exists(const string& name) const {
 }
 
 void KafkaCluster::produce(const string& topic, unsigned partition, KafkaMessageMock message) {
+    lock_guard<mutex> _(topics_mutex_);
     auto iter = topics_.find(topic);
     if (iter == topics_.end()) {
         throw invalid_argument("topic does not exist");
@@ -74,8 +78,7 @@ const KafkaTopicMock& KafkaCluster::get_topic(const string& name) const {
 void KafkaCluster::subscribe(const string& group_id, uint64_t consumer_id,
                              const vector<string>& topics,
                              AssignmentCallback assignment_callback,
-                             RevocationCallback revocation_callback,
-                             MessageCallback message_callback) {
+                             RevocationCallback revocation_callback) {
     lock_guard<mutex> _(consumer_data_mutex_);
     auto iter = consumer_data_.find(consumer_id);
     // If it's already subscribed to something, unsubscribe from it
@@ -85,7 +88,6 @@ void KafkaCluster::subscribe(const string& group_id, uint64_t consumer_id,
     ConsumerMetadata data = {
         move(assignment_callback),
         move(revocation_callback),
-        move(message_callback),
     };
     iter = consumer_data_.emplace(consumer_id, move(data)).first;
 
@@ -102,6 +104,60 @@ void KafkaCluster::subscribe(const string& group_id, uint64_t consumer_id,
 void KafkaCluster::unsubscribe(const string& group_id, uint64_t consumer_id) {
     lock_guard<mutex> _(consumer_data_mutex_);
     do_unsubscribe(group_id, consumer_id);
+}
+
+void KafkaCluster::assign(uint64_t consumer_id, const vector<TopicPartitionMock>& topic_partitions,
+                          const MessageCallback& message_callback) {
+    lock_guard<mutex> _(consumer_data_mutex_);
+    auto iter = consumer_data_.find(consumer_id);
+    if (iter == consumer_data_.end()) {
+        iter = consumer_data_.emplace(consumer_id, ConsumerMetadata{}).first;
+    }
+    ConsumerMetadata& consumer = iter->second;
+    using namespace std::placeholders;
+    for (const TopicPartitionMock& topic_partition : topic_partitions) {
+        KafkaTopicMock& topic = get_topic(topic_partition.get_topic());
+        auto& partition = topic.get_partition(topic_partition.get_partition());
+        auto callback = bind(message_callback, topic_partition.get_topic(),
+                             topic_partition.get_partition(), _1, _2);
+        partition.acquire([&]() {
+            uint64_t start_offset;
+            uint64_t end_offset;
+            tie(start_offset, end_offset) = partition.get_offset_bounds();
+            const uint64_t next_offset = topic_partition.get_offset();
+            if (start_offset < next_offset) {
+                throw runtime_error("stored offset is too high");
+            }
+            // Nothing to fetch
+            if (next_offset == end_offset) {
+                return;
+            }
+            for (uint64_t i = next_offset; i != end_offset; ++i) {
+                const KafkaMessageMock& message = partition.get_message(i);
+                callback(i, message);
+            }
+            const auto subscriber_id = partition.subscribe(move(callback));
+            consumer.subscriptions[&topic].emplace(topic_partition.get_partition(),
+                                                   subscriber_id);
+        });
+    }
+}
+
+void KafkaCluster::unassign(uint64_t consumer_id) {
+    lock_guard<mutex> _(consumer_data_mutex_);
+    auto iter = consumer_data_.find(consumer_id);
+    if (iter == consumer_data_.end()) {
+        throw runtime_error("called unassign with unknown consumer id " + to_string(consumer_id));
+    }
+    ConsumerMetadata& consumer = iter->second;
+    for (const auto& topic_subscription : consumer.subscriptions) {
+        KafkaTopicMock& topic = *topic_subscription.first;
+        for (const auto& partition_subscription : topic_subscription.second) {
+            auto& partition_mock = topic.get_partition(partition_subscription.first);
+            partition_mock.unsubscribe(partition_subscription.second);
+        }
+    }
+    consumer.subscriptions.clear();
 }
 
 void KafkaCluster::generate_assignments(const string& group_id,
@@ -127,18 +183,6 @@ void KafkaCluster::generate_assignments(const string& group_id,
             for (size_t i = 0; i < chunk_size; ++i) {
                 consumer.partitions_assigned.emplace_back(topic_name, chunk_start + i);
             }
-
-            // Subscribe to every assigned partition
-            using namespace std::placeholders;
-            for (const TopicPartitionMock& topic_partition : consumer.partitions_assigned) {
-                auto& partition_mock = topic.get_partition(topic_partition.get_partition());
-                auto callback = bind(consumer.message_callback, topic_partition.get_topic(),
-                                     topic_partition.get_partition(), _1, _2);
-                const auto subscriber_id = partition_mock.subscribe(move(callback));
-                consumer.subscriptions[&topic].emplace(topic_partition.get_partition(),
-                                                       subscriber_id);
-            }
-            // Now trigger the assignment callback
             consumer_index++;
         }
     }
@@ -164,13 +208,6 @@ void KafkaCluster::generate_revocations(const TopicConsumersMap& topic_consumers
             // Execute revocation callback and unsubscribe from the partition object
             if (!consumer.partitions_assigned.empty()) {
                 consumer.revocation_callback();
-                for (const auto& topic_subscription : consumer.subscriptions) {
-                    KafkaTopicMock& topic = *topic_subscription.first;
-                    for (const auto& partition_subscription : topic_subscription.second) {
-                        auto& partition_mock = topic.get_partition(partition_subscription.first);
-                        partition_mock.unsubscribe(partition_subscription.second);
-                    }
-                }
                 consumer.partitions_assigned.clear();
             }
             consumer.subscriptions.clear();

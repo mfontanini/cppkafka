@@ -19,7 +19,7 @@ public:
     using AssignmentCallback = std::function<void(const std::vector<TopicPartitionMock>&)>;
     using RevocationCallback = std::function<void()>;
     using MessageCallback = std::function<void(std::string topic, unsigned partition,
-                                               uint64_t offset, const KafkaMessageMock*)>;
+                                               uint64_t offset, const KafkaMessageMock&)>;
 
     static std::shared_ptr<KafkaCluster> make_cluster(std::string url);
 
@@ -37,16 +37,17 @@ public:
     void subscribe(const std::string& group_id, uint64_t consumer_id,
                    const std::vector<std::string>& topics,
                    AssignmentCallback assignment_callback,
-                   RevocationCallback revocation_callback,
-                   MessageCallback message_callback);
+                   RevocationCallback revocation_callback);
     void unsubscribe(const std::string& group_id, uint64_t consumer_id);
+    void assign(uint64_t consumer_id, const std::vector<TopicPartitionMock>& topic_partitions,
+                const MessageCallback& message_callback);
+    void unassign(uint64_t consumer_id);
 private:
     struct ConsumerMetadata {
         using PartitionSubscriptionMap = std::unordered_map<int, KafkaPartitionMock::SubscriberId>;
 
         const AssignmentCallback assignment_callback;
         const RevocationCallback revocation_callback;
-        const MessageCallback message_callback;
         std::vector<TopicPartitionMock> partitions_assigned;
         std::unordered_map<KafkaTopicMock*, PartitionSubscriptionMap> subscriptions;
     };
