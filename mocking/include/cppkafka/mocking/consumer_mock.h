@@ -12,7 +12,6 @@
 #include <condition_variable>
 #include <queue>
 #include <chrono>
-#include <boost/optional.hpp>
 #include <cppkafka/mocking/handle_mock.h>
 #include <cppkafka/mocking/configuration_mock.h>
 #include <cppkafka/mocking/topic_partition_mock.h>
@@ -32,12 +31,13 @@ public:
     ~ConsumerMock();
 
     void subscribe(const std::vector<std::string>& topics);
+    void unsubscribe();
     void assign(const std::vector<TopicPartitionMock>& topic_partitions);
     void unassign();
-    void set_opaque(void* opaque);
     void pause_partitions(const std::vector<TopicPartitionMock>& topic_partitions);
     void resume_partitions(const std::vector<TopicPartitionMock>& topic_partitions);
-    boost::optional<MessageHandle> poll(std::chrono::milliseconds timeout);
+    std::unique_ptr<MessageHandle> poll(std::chrono::milliseconds timeout);
+    std::vector<TopicPartitionMock> get_assignment() const;
 private:
     static uint64_t make_consumer_id();
 

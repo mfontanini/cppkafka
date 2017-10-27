@@ -10,6 +10,7 @@ namespace cppkafka {
 namespace mocking {
 
 class KafkaMessageMock;
+class MessageHandle;
 
 class MessageHandlePrivateData {
 public:
@@ -18,9 +19,14 @@ public:
 
     rd_kafka_timestamp_type_t get_timestamp_type() const;
     int64_t get_timestamp() const;
+    MessageHandle* get_owner() const; 
+    void set_owner(MessageHandle* handle);
+    void set_opaque(void* opaque);
 private:
     rd_kafka_timestamp_type_t timestamp_type_;
     int64_t timestamp_;
+    MessageHandle* owner_{nullptr};
+    void* opaque_;
 };
 
 class MessageHandle {
@@ -38,6 +44,7 @@ public:
     ~MessageHandle();
 
     const TopicHandle& get_topic() const;
+    rd_kafka_message_t& get_message();
     const rd_kafka_message_t& get_message() const;
     KafkaMessageMock make_message_mock() const;
 private:

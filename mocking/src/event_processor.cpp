@@ -5,6 +5,8 @@ using std::unique_lock;
 using std::mutex;
 using std::move;
 
+using std::chrono::milliseconds;
+
 namespace cppkafka {
 namespace mocking {
 
@@ -17,7 +19,8 @@ EventProcessor::~EventProcessor() {
     {
         lock_guard<mutex> _(events_mutex_);
         running_ = false;
-        events_condition_.notify_one();
+        new_events_condition_.notify_all();
+        no_events_condition_.notify_all();
     }
     processing_thread_.join();
 }
@@ -25,14 +28,27 @@ EventProcessor::~EventProcessor() {
 void EventProcessor::add_event(EventPtr event) {
     lock_guard<mutex> _(events_mutex_);
     events_.push(move(event));
-    events_condition_.notify_one();
+    new_events_condition_.notify_one();
+}
+
+size_t EventProcessor::get_event_count() const {
+    lock_guard<mutex> _(events_mutex_);
+    return events_.size();
+}
+
+bool EventProcessor::wait_until_empty(milliseconds timeout) {
+    unique_lock<mutex> lock(events_mutex_);
+    if (running_ && !events_.empty()) {
+        no_events_condition_.wait_for(lock, timeout);
+    }
+    return events_.empty();
 }
 
 void EventProcessor::process_events() {
     while (true) {
         unique_lock<mutex> lock(events_mutex_);
         while (running_ && events_.empty()) {
-            events_condition_.wait(lock);
+            new_events_condition_.wait(lock);
         }
 
         if (!running_) {

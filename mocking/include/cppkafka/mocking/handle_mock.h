@@ -19,7 +19,10 @@ public:
     HandleMock(EventProcessorPtr processor, ClusterPtr cluster);
     virtual ~HandleMock() = default;
 
+    void* get_opaque() const;
+    size_t get_event_count() const;
     void set_cluster(ClusterPtr cluster);
+    void set_opaque(void* opaque);
 protected:
     using EventPtr = EventProcessor::EventPtr;
 
@@ -30,9 +33,11 @@ protected:
     void generate_event(Args&&... args) {
         generate_event(EventPtr(new T(cluster_, std::forward<Args>(args)...)));
     }
+    EventProcessor& get_event_processor();
 private:
     EventProcessorPtr processor_;
     ClusterPtr cluster_;
+    void* opaque_;
 };
 
 } // mocking

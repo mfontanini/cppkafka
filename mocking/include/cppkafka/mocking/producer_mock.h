@@ -14,7 +14,9 @@ public:
 
     ProducerMock(ConfigurationMock config, EventProcessorPtr processor, ClusterPtr cluster);
 
-    void produce_message(MessageHandle message_handle);
+    void produce(MessageHandle message_handle);
+    bool flush(std::chrono::milliseconds timeout);
+    size_t poll(std::chrono::milliseconds timeout);
 private:
     ConfigurationMock config_;
 };

@@ -24,8 +24,6 @@ using std::mutex;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
-using boost::optional;
-
 namespace cppkafka {
 namespace mocking {
 
@@ -58,6 +56,10 @@ void ConsumerMock::subscribe(const vector<string>& topics) {
         bind(&ConsumerMock::on_assignment, this, _1),
         bind(&ConsumerMock::on_revocation, this)
     );
+}
+
+void ConsumerMock::unsubscribe() {
+    get_cluster().unsubscribe(group_id_, consumer_id_);
 }
 
 void ConsumerMock::assign(const vector<TopicPartitionMock>& topic_partitions) {
@@ -97,10 +99,6 @@ void ConsumerMock::unassign() {
     assigned_partitions_.clear();
 }
 
-void ConsumerMock::set_opaque(void* opaque) {
-    opaque_ = opaque;
-}
-
 void ConsumerMock::pause_partitions(const vector<TopicPartitionMock>& topic_partitions) {
     lock_guard<mutex> _(mutex_);
     for (const TopicPartitionMock& topic_partition : topic_partitions) {
@@ -122,17 +120,14 @@ void ConsumerMock::resume_partitions(const vector<TopicPartitionMock>& topic_par
     }
 }
 
-optional<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
+unique_ptr<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
     auto wait_until = steady_clock::now() + timeout;
     unique_lock<mutex> lock(mutex_);
     while(consumable_topic_partitions_.empty() && steady_clock::now() > wait_until) {
         messages_condition_.wait_until(lock, wait_until);
     }
-    /*MessageHandle(std::unique_ptr<TopicHandle> topic, int partition, int64_t offset, void* key,
-                  size_t key_size, void* payload, size_t payload_size, int error_code,
-                  MessageHandlePrivateData private_data, PointerOwnership ownership);*/
     if (consumable_topic_partitions_.empty()) {
-        return boost::none;
+        return nullptr;
     }
     const auto id = *consumable_topic_partitions_.begin();
     auto iter = assigned_partitions_.find(id);
@@ -142,7 +137,7 @@ optional<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
     if (emit_eofs_ && queue.empty()) {
         // We emit the EOF so it's no longer consumable
         consumable_topic_partitions_.erase(id);
-        return MessageHandle(
+        return unique_ptr<MessageHandle>(new MessageHandle(
             unique_ptr<TopicHandle>(new TopicHandle(get<0>(id), nullptr)),
             get<1>(id),
             iter->second.next_offset,
@@ -151,7 +146,7 @@ optional<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
             RD_KAFKA_RESP_ERR_NO_ERROR,
             MessageHandlePrivateData{},
             MessageHandle::PointerOwnership::Unowned
-        );
+        ));
     }
     else {
         assert(!queue.empty());
@@ -165,7 +160,7 @@ optional<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
     }
 
     const auto& message = *aggregate.message;
-    return MessageHandle(
+    return unique_ptr<MessageHandle>(new MessageHandle(
         unique_ptr<TopicHandle>(new TopicHandle(get<0>(id), nullptr)),
         get<1>(id),
         iter->second.next_offset,
@@ -174,7 +169,16 @@ optional<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
         RD_KAFKA_RESP_ERR__PARTITION_EOF,
         MessageHandlePrivateData{message.get_timestamp_type(), message.get_timestamp()},
         MessageHandle::PointerOwnership::Unowned
-    );
+    ));
+}
+
+vector<TopicPartitionMock> ConsumerMock::get_assignment() const {
+    vector<TopicPartitionMock> output;
+    lock_guard<mutex> _(mutex_);
+    for (const auto& partition_pair : assigned_partitions_) {
+        output.emplace_back(get<0>(partition_pair.first), get<1>(partition_pair.first));
+    }
+    return output;
 }
 
 ConsumerMock::TopicPartitionId ConsumerMock::make_id(const TopicPartitionMock& topic_partition) {

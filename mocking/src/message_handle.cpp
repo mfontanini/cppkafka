@@ -23,6 +23,18 @@ int64_t MessageHandlePrivateData::get_timestamp() const {
     return timestamp_;
 }
 
+MessageHandle* MessageHandlePrivateData::get_owner() const {
+    return owner_;
+}
+
+void MessageHandlePrivateData::set_owner(MessageHandle* handle) {
+    owner_ = handle;
+}
+
+void MessageHandlePrivateData::set_opaque(void* opaque) {
+    opaque_ = opaque;
+}
+
 MessageHandle::MessageHandle(unique_ptr<TopicHandle> topic, int partition, int64_t offset,
                              void* key, size_t key_size, void* payload, size_t payload_size,
                              int error_code, MessageHandlePrivateData private_data,
@@ -47,6 +59,7 @@ MessageHandle& MessageHandle::operator=(MessageHandle&& other) {
     swap(topic_, other.topic_);
     swap(message_, other.message_);
     swap(ownership_, other.ownership_);
+    swap(private_data_, other.private_data_);
     set_private_data_pointer();
     other.set_private_data_pointer();
     return *this;
@@ -61,6 +74,10 @@ MessageHandle::~MessageHandle() {
 
 const TopicHandle& MessageHandle::get_topic() const {
     return *topic_;
+}
+
+rd_kafka_message_t& MessageHandle::get_message() {
+    return message_;
 }
 
 const rd_kafka_message_t& MessageHandle::get_message() const {
@@ -79,6 +96,7 @@ KafkaMessageMock MessageHandle::make_message_mock() const {
 }
 
 void MessageHandle::set_private_data_pointer() {
+    private_data_.set_owner(this);
     message_._private = reinterpret_cast<void*>(&private_data_);
 }
 
