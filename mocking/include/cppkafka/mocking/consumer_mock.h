@@ -30,6 +30,7 @@ public:
     ConsumerMock& operator=(const ConsumerMock&) = delete;
     ~ConsumerMock();
 
+    void close();
     void subscribe(const std::vector<std::string>& topics);
     void unsubscribe();
     void assign(const std::vector<TopicPartitionMock>& topic_partitions);

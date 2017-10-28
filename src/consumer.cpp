@@ -178,7 +178,10 @@ TopicPartitionList Consumer::get_assignment() const {
 }
 
 string Consumer::get_member_id() const {
-    return rd_kafka_memberid(get_handle());
+    char* id = rd_kafka_memberid(get_handle());
+    string output = id;
+    free(id);
+    return output;
 }
 
 const Consumer::AssignmentCallback& Consumer::get_assignment_callback() const {

@@ -23,11 +23,11 @@ public:
     size_t get_event_count() const;
     void set_cluster(ClusterPtr cluster);
     void set_opaque(void* opaque);
+    KafkaCluster& get_cluster();
+    const KafkaCluster& get_cluster() const;
 protected:
     using EventPtr = EventProcessor::EventPtr;
 
-    KafkaCluster& get_cluster();
-    const KafkaCluster& get_cluster() const;
     void generate_event(EventPtr event);
     template <typename T, typename... Args>
     void generate_event(Args&&... args) {

@@ -47,6 +47,10 @@ ConsumerMock::~ConsumerMock() {
     get_cluster().unsubscribe(group_id_, consumer_id_);
 }
 
+void ConsumerMock::close() {
+    unsubscribe();
+}
+
 void ConsumerMock::subscribe(const vector<string>& topics) {
     using namespace std::placeholders;
     get_cluster().subscribe(

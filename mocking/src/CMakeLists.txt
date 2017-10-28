@@ -26,4 +26,5 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${RDKAFKA_INCLUDE_DIR})
 add_library(cppkafka_mock EXCLUDE_FROM_ALL ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(cppkafka_mock PROPERTIES VERSION ${CPPKAFKA_VERSION}
                                                SOVERSION ${CPPKAFKA_VERSION})
+add_dependencies(cppkafka_mock cppkafka)
 target_link_libraries(cppkafka_mock ${RDKAFKA_LIBRARY})

@@ -1,5 +1,6 @@
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 #include <cstring>
 #include <cstdarg>
 #include <cppkafka/mocking/api.h>
@@ -14,6 +15,8 @@ using std::strlen;
 using std::move;
 using std::make_shared;
 using std::unique_ptr;
+using std::tie;
+using std::exception;
 
 using std::chrono::milliseconds;
 
@@ -104,7 +107,7 @@ void rd_kafka_conf_set_socket_cb(rd_kafka_conf_t* conf,
     conf->get_handle().set_socket_callback(cb);
 }
 
-void rd_kafka_topic_conf_set_partitioner_cb(rd_kafka_conf_t* conf,
+void rd_kafka_topic_conf_set_partitioner_cb(rd_kafka_topic_conf_t* conf,
                                             ConfigurationMock::PartitionerCallback* cb) {
     conf->get_handle().set_partitioner_callback(cb);
 }
@@ -115,6 +118,10 @@ void rd_kafka_conf_set_default_topic_conf(rd_kafka_conf_t* conf,
 }
 
 void rd_kafka_conf_set_opaque(rd_kafka_conf_t* conf, void* opaque) {
+    conf->get_handle().set_opaque(opaque);
+}
+
+void rd_kafka_topic_conf_set_opaque(rd_kafka_topic_conf_t* conf, void* opaque) {
     conf->get_handle().set_opaque(opaque);
 }
 
@@ -325,6 +332,12 @@ rd_kafka_resp_err_t rd_kafka_unsubscribe(rd_kafka_t* rk) {
     return RD_KAFKA_RESP_ERR_NO_ERROR;
 }
 
+rd_kafka_resp_err_t rd_kafka_subscription(rd_kafka_t* rk,
+                                          rd_kafka_topic_partition_list_t** topics) {
+    // TODO: implement
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
 rd_kafka_resp_err_t rd_kafka_assign(rd_kafka_t* rk,
                                     const rd_kafka_topic_partition_list_t* partitions) {
     const vector<TopicPartitionMock> topic_partitions = from_rdkafka_handle(*partitions);
@@ -352,6 +365,17 @@ rd_kafka_resp_err_t rd_kafka_flush(rd_kafka_t* rk, int timeout_ms) {
 
 int rd_kafka_poll(rd_kafka_t* rk, int timeout_ms) {
     return rk->get_handle<ProducerMock>().poll(milliseconds(timeout_ms));
+}
+
+rd_kafka_queue_t* rd_kafka_queue_get_consumer(rd_kafka_t* rk) {
+    // TODO: implement
+    return nullptr;
+}
+
+ssize_t rd_kafka_consume_batch_queue(rd_kafka_queue_t* rkqu, int timeout_ms,
+                                     rd_kafka_message_t** rkmessages, size_t rkmessages_size) {
+    // TODO: implement
+    return 0;
 }
 
 rd_kafka_resp_err_t rd_kafka_producev(rd_kafka_t* rk, ...) {
@@ -428,6 +452,107 @@ void rd_kafka_set_log_level(rd_kafka_t* /*rk*/, int /*level*/) {
 
 }
 
+rd_kafka_resp_err_t rd_kafka_query_watermark_offsets(rd_kafka_t* rk, const char* topic,
+                                                     int32_t partition, int64_t* low,
+                                                     int64_t* high, int /*timeout_ms*/) {
+    return rd_kafka_get_watermark_offsets(rk, topic, partition, low, high);
+}
+
+rd_kafka_resp_err_t rd_kafka_get_watermark_offsets(rd_kafka_t* rk, const char *topic,
+                                                   int32_t partition, int64_t *low,
+                                                   int64_t *high) {
+    const auto& cluster = rk->get_handle().get_cluster();
+    if (!cluster.topic_exists(topic)) {
+        return RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC;
+    }
+    try {
+        const auto& topic_object = cluster.get_topic(topic);
+        if (static_cast<unsigned>(partition) >= topic_object.get_partition_count()) {
+            return RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION;
+        }
+        const auto& partition_object = topic_object.get_partition(partition);
+        uint64_t lowest;
+        uint64_t largest;
+        tie(lowest, largest) = partition_object.get_offset_bounds();
+        *low = lowest;
+        *high = largest;
+        return RD_KAFKA_RESP_ERR_NO_ERROR;
+    }
+    catch (const exception&) {
+        return RD_KAFKA_RESP_ERR_UNKNOWN;
+    }
+}
+
+rd_kafka_resp_err_t rd_kafka_offsets_for_times(rd_kafka_t* rk,
+                                               rd_kafka_topic_partition_list_t* offsets,
+                                               int timeout_ms) {
+    // TODO: implement this one
+    return RD_KAFKA_RESP_ERR_UNKNOWN;
+}
+
+rd_kafka_resp_err_t rd_kafka_metadata(rd_kafka_t* rk, int all_topics,
+                                      rd_kafka_topic_t* only_rkt,
+                                      const struct rd_kafka_metadata** metadatap,
+                                      int timeout_ms) {
+    // TODO: implement this one
+    return RD_KAFKA_RESP_ERR_UNKNOWN;
+}
+
+void rd_kafka_metadata_destroy(const struct rd_kafka_metadata* /*metadata*/) {
+    // TODO: implement this one
+}
+
+rd_kafka_resp_err_t rd_kafka_list_groups(rd_kafka_t* rk, const char* group,
+                                         const struct rd_kafka_group_list** grplistp,
+                                         int timeout_ms) {
+    // TODO: implement this one
+    return RD_KAFKA_RESP_ERR_UNKNOWN;
+}
+
+void rd_kafka_group_list_destroy(const struct rd_kafka_group_list* /*grplist*/) {
+    // TODO: implement this one
+}
+
+rd_kafka_resp_err_t rd_kafka_poll_set_consumer(rd_kafka_t*) {
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+rd_kafka_resp_err_t rd_kafka_consumer_close(rd_kafka_t* rk) {
+    rk->get_handle<ConsumerMock>().close();
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+rd_kafka_resp_err_t rd_kafka_committed(rd_kafka_t* rk, rd_kafka_topic_partition_list_t *partitions,
+                                       int timeout_ms) {
+    // TODO: implement
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+rd_kafka_resp_err_t rd_kafka_commit(rd_kafka_t* rk, const rd_kafka_topic_partition_list_t* offsets,
+                                    int async) {
+    // TODO: implement
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+rd_kafka_resp_err_t rd_kafka_commit_message(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
+                                            int async) {
+    // TODO: implement
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+rd_kafka_resp_err_t rd_kafka_position(rd_kafka_t* rk,
+                                      rd_kafka_topic_partition_list_t* partitions) {
+    // TODO: implement
+    return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+char* rd_kafka_memberid(const rd_kafka_t* rk) {
+    // TODO: make this better
+    char* output = (char*)malloc(strlen("cppkafka_mock") + 1);
+    strcpy(output, "cppkafka_mock");
+    return output;
+}
+
 // misc
 
 const char* rd_kafka_err2str(rd_kafka_resp_err_t err) {
@@ -436,4 +561,20 @@ const char* rd_kafka_err2str(rd_kafka_resp_err_t err) {
 
 rd_kafka_resp_err_t rd_kafka_errno2err(int errnox) {
     return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
+int32_t rd_kafka_msg_partitioner_consistent_random(const rd_kafka_topic_t* rkt, const void *key,
+                                                   size_t keylen, int32_t partition_cnt,
+                                                   void *opaque, void *msg_opaque) {
+    unsigned hash = 0;
+    const char* key_ptr = reinterpret_cast<const char*>(key);
+    for (size_t i = 0; i < keylen; ++i) {
+        hash += key_ptr[i];
+    }
+    return hash % partition_cnt;
+}
+
+rd_kafka_resp_err_t rd_kafka_last_error (void) {
+    // TODO: fix this
+    return RD_KAFKA_RESP_ERR_UNKNOWN;
 }
