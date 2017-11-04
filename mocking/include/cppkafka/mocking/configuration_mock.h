@@ -75,7 +75,7 @@ private:
 
     struct Cloner {
         ConfigurationMock* operator()(const ConfigurationMock* ptr) const {
-            return new ConfigurationMock(*ptr);
+            return ptr ? new ConfigurationMock(*ptr) : nullptr;
         }
     };
 

@@ -16,6 +16,7 @@
 #include <cppkafka/mocking/configuration_mock.h>
 #include <cppkafka/mocking/topic_partition_mock.h>
 #include <cppkafka/mocking/message_handle.h>
+#include <cppkafka/mocking/kafka_cluster.h>
 
 namespace cppkafka {
 namespace mocking {
@@ -57,6 +58,8 @@ private:
     using TopicPartitionId = std::tuple<std::string, int>;
 
     static TopicPartitionId make_id(const TopicPartitionMock& topic_partition);
+    KafkaCluster::ResetOffsetPolicy get_offset_policy() const;
+    bool get_partition_eof_enabled() const;
     void on_assignment(const std::vector<TopicPartitionMock>& topic_partitions);
     void on_revocation();
     void on_message(const std::string& topic_name, unsigned partition, uint64_t offset,
@@ -65,15 +68,14 @@ private:
                           const std::vector<TopicPartitionMock>& topic_partitions);
 
     ConfigurationMock config_;
-    // TODO: initialize this and make it const
+    std::string group_id_;
+    const KafkaCluster::ResetOffsetPolicy offset_reset_policy_;
     bool emit_eofs_;
-    const std::string group_id_;
     std::map<TopicPartitionId, TopicPartitionInfo> assigned_partitions_;
     std::set<TopicPartitionId> consumable_topic_partitions_;
     std::set<TopicPartitionId> paused_topic_partitions_;
     mutable std::mutex mutex_;
     std::condition_variable messages_condition_;
-    void* opaque_;
     uint64_t consumer_id_;
 };
 

@@ -23,7 +23,7 @@ public:
     SubscriberId subscribe(MessageCallback callback);
     void unsubscribe(SubscriberId id);
     // Returns interval [lowest offset, largest offset)
-    std::tuple<uint64_t, uint64_t> get_offset_bounds() const;
+    std::tuple<int64_t, int64_t> get_offset_bounds() const;
 
     // Acquire this partition so that no messages can be produced while the callback is executed.
     template <typename Functor>

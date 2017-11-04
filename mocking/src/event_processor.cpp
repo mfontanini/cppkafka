@@ -1,5 +1,6 @@
 #include <cppkafka/mocking/event_processor.h>
 
+using std::thread;
 using std::lock_guard;
 using std::unique_lock;
 using std::mutex;
@@ -10,9 +11,8 @@ using std::chrono::milliseconds;
 namespace cppkafka {
 namespace mocking {
 
-EventProcessor::EventProcessor()
-: processing_thread_(&EventProcessor::process_events, this) {
-
+EventProcessor::EventProcessor() {
+    processing_thread_ = thread(&EventProcessor::process_events, this);
 }
 
 EventProcessor::~EventProcessor() {
@@ -50,9 +50,11 @@ void EventProcessor::process_events() {
         while (running_ && events_.empty()) {
             new_events_condition_.wait(lock);
         }
-
         if (!running_) {
             break;
+        }
+        if (events_.empty()) {
+            continue;
         }
         EventPtr event = move(events_.front());
         events_.pop();

@@ -18,6 +18,7 @@ using std::move;
 using std::tie;
 using std::lock_guard;
 using std::mutex;
+using std::recursive_mutex;
 using std::iota;
 
 namespace cppkafka {
@@ -35,7 +36,7 @@ KafkaCluster::KafkaCluster(string url)
 }
 
 KafkaCluster::~KafkaCluster() {
-    detail::KafkaClusterRegistry::instance().remove_cluster(*this);    
+    detail::KafkaClusterRegistry::instance().remove_cluster(url_);    
 }
 
 const string& KafkaCluster::get_url() const {
@@ -76,10 +77,9 @@ const KafkaTopicMock& KafkaCluster::get_topic(const string& name) const {
 }
 
 void KafkaCluster::subscribe(const string& group_id, uint64_t consumer_id,
-                             const vector<string>& topics,
-                             AssignmentCallback assignment_callback,
+                             const vector<string>& topics, AssignmentCallback assignment_callback,
                              RevocationCallback revocation_callback) {
-    lock_guard<mutex> _(consumer_data_mutex_);
+    lock_guard<recursive_mutex> _(consumer_data_mutex_);
     auto iter = consumer_data_.find(consumer_id);
     // If it's already subscribed to something, unsubscribe from it
     if (iter != consumer_data_.end()) {
@@ -87,7 +87,7 @@ void KafkaCluster::subscribe(const string& group_id, uint64_t consumer_id,
     }
     ConsumerMetadata data = {
         move(assignment_callback),
-        move(revocation_callback),
+        move(revocation_callback)
     };
     iter = consumer_data_.emplace(consumer_id, move(data)).first;
 
@@ -102,13 +102,13 @@ void KafkaCluster::subscribe(const string& group_id, uint64_t consumer_id,
 }
 
 void KafkaCluster::unsubscribe(const string& group_id, uint64_t consumer_id) {
-    lock_guard<mutex> _(consumer_data_mutex_);
+    lock_guard<recursive_mutex> _(consumer_data_mutex_);
     do_unsubscribe(group_id, consumer_id);
 }
 
 void KafkaCluster::assign(uint64_t consumer_id, const vector<TopicPartitionMock>& topic_partitions,
-                          const MessageCallback& message_callback) {
-    lock_guard<mutex> _(consumer_data_mutex_);
+                          ResetOffsetPolicy policy, const MessageCallback& message_callback) {
+    lock_guard<recursive_mutex> _(consumer_data_mutex_);
     auto iter = consumer_data_.find(consumer_id);
     if (iter == consumer_data_.end()) {
         iter = consumer_data_.emplace(consumer_id, ConsumerMetadata{}).first;
@@ -121,20 +121,25 @@ void KafkaCluster::assign(uint64_t consumer_id, const vector<TopicPartitionMock>
         auto callback = bind(message_callback, topic_partition.get_topic(),
                              topic_partition.get_partition(), _1, _2);
         partition.acquire([&]() {
-            uint64_t start_offset;
-            uint64_t end_offset;
+            int64_t start_offset;
+            int64_t end_offset;
             tie(start_offset, end_offset) = partition.get_offset_bounds();
-            const uint64_t next_offset = topic_partition.get_offset();
-            if (start_offset < next_offset) {
-                throw runtime_error("stored offset is too high");
+            int64_t next_offset = topic_partition.get_offset();
+            if (next_offset == RD_KAFKA_OFFSET_INVALID) {
+                switch (policy) {
+                    case ResetOffsetPolicy::Earliest:
+                        next_offset = start_offset;
+                        break;
+                    case ResetOffsetPolicy::Latest:
+                        next_offset = end_offset;
+                        break;
+                }
             }
-            // Nothing to fetch
-            if (next_offset == end_offset) {
-                return;
-            }
-            for (uint64_t i = next_offset; i != end_offset; ++i) {
-                const KafkaMessageMock& message = partition.get_message(i);
-                callback(i, message);
+            if (start_offset >= next_offset && next_offset != end_offset && end_offset > 0) {
+                for (auto i = next_offset; i != end_offset; ++i) {
+                    const KafkaMessageMock& message = partition.get_message(i);
+                    callback(i, message);
+                }
             }
             const auto subscriber_id = partition.subscribe(move(callback));
             consumer.subscriptions[&topic].emplace(topic_partition.get_partition(),
@@ -144,7 +149,7 @@ void KafkaCluster::assign(uint64_t consumer_id, const vector<TopicPartitionMock>
 }
 
 void KafkaCluster::unassign(uint64_t consumer_id) {
-    lock_guard<mutex> _(consumer_data_mutex_);
+    lock_guard<recursive_mutex> _(consumer_data_mutex_);
     auto iter = consumer_data_.find(consumer_id);
     if (iter == consumer_data_.end()) {
         throw runtime_error("called unassign with unknown consumer id " + to_string(consumer_id));
@@ -224,14 +229,17 @@ void KafkaCluster::do_unsubscribe(const string& group_id, uint64_t consumer_id) 
     // Revoke for all consumers
     generate_revocations(group_data);
 
-    for (const auto& topic_subscription : iter->second.subscriptions) {
-        const string& topic_name = topic_subscription.first->get_name();
-        auto& topic_data = group_data[topic_name];
-        topic_data.erase(consumer_id);
-        if (topic_data.empty()) {
-            group_data.erase(topic_name);
+    auto topic_iter = group_data.begin();
+    while (topic_iter != group_data.end()) {
+        topic_iter->second.erase(consumer_id);
+        if (topic_iter->second.empty()) {
+            topic_iter = group_data.erase(topic_iter);
+        }
+        else {
+            ++topic_iter;
         }
     }
+    consumer_data_.erase(consumer_id);
     if (group_data.empty()) {
         // If we ran out of consumers for this group, erase it
         group_topics_data_.erase(group_id);

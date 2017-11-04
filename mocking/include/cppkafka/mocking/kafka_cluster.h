@@ -21,6 +21,11 @@ public:
     using MessageCallback = std::function<void(std::string topic, unsigned partition,
                                                uint64_t offset, const KafkaMessageMock&)>;
 
+    enum class ResetOffsetPolicy {
+        Earliest = 1,
+        Latest = 2
+    };
+
     static std::shared_ptr<KafkaCluster> make_cluster(std::string url);
 
     KafkaCluster(const KafkaCluster&) = delete;
@@ -40,7 +45,7 @@ public:
                    RevocationCallback revocation_callback);
     void unsubscribe(const std::string& group_id, uint64_t consumer_id);
     void assign(uint64_t consumer_id, const std::vector<TopicPartitionMock>& topic_partitions,
-                const MessageCallback& message_callback);
+                ResetOffsetPolicy policy, const MessageCallback& message_callback);
     void unassign(uint64_t consumer_id);
 private:
     struct ConsumerMetadata {
@@ -68,7 +73,7 @@ private:
     mutable std::mutex topics_mutex_;
     std::unordered_map<uint64_t, ConsumerMetadata> consumer_data_;
     std::unordered_map<std::string, TopicConsumersMap> group_topics_data_;
-    mutable std::mutex consumer_data_mutex_;
+    mutable std::recursive_mutex consumer_data_mutex_;
 };
 
 } // mocking

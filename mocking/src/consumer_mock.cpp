@@ -9,6 +9,7 @@
 using std::atomic;
 using std::vector;
 using std::string;
+using std::unordered_map;
 using std::to_string;
 using std::move;
 using std::bind;
@@ -37,10 +38,12 @@ uint64_t ConsumerMock::make_consumer_id() {
 ConsumerMock::ConsumerMock(ConfigurationMock config, EventProcessorPtr processor,
                            ClusterPtr cluster)
 : HandleMock(move(processor), move(cluster)), config_(move(config)),
+  offset_reset_policy_(get_offset_policy()), emit_eofs_(get_partition_eof_enabled()),
   consumer_id_(make_consumer_id()) {
     if (!config_.has_key(CONFIG_GROUP_ID)) {
         throw runtime_error("Failed to find " + CONFIG_GROUP_ID + " in config");
     }
+    group_id_ = config_.get(CONFIG_GROUP_ID);
 }
 
 ConsumerMock::~ConsumerMock() {
@@ -73,7 +76,13 @@ void ConsumerMock::assign(const vector<TopicPartitionMock>& topic_partitions) {
         for (const TopicPartitionMock& topic_partition : topic_partitions) {
             const auto id = make_id(topic_partition);
             // We'll store the next offset from the one we've seen so far
-            const uint64_t next_offset = topic_partition.get_offset() + 1;
+            uint64_t next_offset;
+            if (topic_partition.get_offset() == RD_KAFKA_OFFSET_INVALID) {
+                next_offset = 0;
+            }
+            else {
+                next_offset = topic_partition.get_offset() + 1;
+            }
             
             auto iter = assigned_partitions_.find(id);
             if (iter == assigned_partitions_.end()) {
@@ -93,14 +102,15 @@ void ConsumerMock::assign(const vector<TopicPartitionMock>& topic_partitions) {
     using namespace std::placeholders;
     // Now assign these partitions. This will atomically fetch all message we should fetch and
     // then subscribe us to the topic/partitions
-    get_cluster().assign(consumer_id_, topic_partitions,
+    get_cluster().assign(consumer_id_, topic_partitions, offset_reset_policy_,
                          bind(&ConsumerMock::on_message, this, _1, _2, _3, _4));
 }
 
 void ConsumerMock::unassign() {
     lock_guard<mutex> _(mutex_);
-    get_cluster().unassign(consumer_id_);
     assigned_partitions_.clear();
+    consumable_topic_partitions_.clear();
+    get_cluster().unassign(consumer_id_);
 }
 
 void ConsumerMock::pause_partitions(const vector<TopicPartitionMock>& topic_partitions) {
@@ -124,11 +134,10 @@ void ConsumerMock::resume_partitions(const vector<TopicPartitionMock>& topic_par
     }
 }
 
-unique_ptr<MessageHandle> ConsumerMock::poll(std::chrono::milliseconds timeout) {
-    auto wait_until = steady_clock::now() + timeout;
+unique_ptr<MessageHandle> ConsumerMock::poll(milliseconds timeout) {
     unique_lock<mutex> lock(mutex_);
-    while(consumable_topic_partitions_.empty() && steady_clock::now() > wait_until) {
-        messages_condition_.wait_until(lock, wait_until);
+    if (consumable_topic_partitions_.empty()) {
+        messages_condition_.wait_for(lock, timeout);
     }
     if (consumable_topic_partitions_.empty()) {
         return nullptr;
@@ -189,12 +198,41 @@ ConsumerMock::TopicPartitionId ConsumerMock::make_id(const TopicPartitionMock& t
     return make_tuple(topic_partition.get_topic(), topic_partition.get_partition());
 }
 
+KafkaCluster::ResetOffsetPolicy ConsumerMock::get_offset_policy() const {
+    static const string KEY_NAME = "auto.offset.reset";
+    static unordered_map<string, KafkaCluster::ResetOffsetPolicy> MAPPINGS = {
+        { "smallest", KafkaCluster::ResetOffsetPolicy::Earliest },
+        { "earliest", KafkaCluster::ResetOffsetPolicy::Earliest },
+        { "beginning", KafkaCluster::ResetOffsetPolicy::Earliest },
+        { "latest", KafkaCluster::ResetOffsetPolicy::Latest },
+        { "largest", KafkaCluster::ResetOffsetPolicy::Latest },
+        { "end", KafkaCluster::ResetOffsetPolicy::Latest },
+    };
+
+    const ConfigurationMock* topic_config = config_.get_default_topic_configuration();
+    if (!topic_config || !topic_config->has_key(KEY_NAME)) {
+        return KafkaCluster::ResetOffsetPolicy::Earliest;
+    }
+    else {
+        auto iter = MAPPINGS.find(topic_config->get(KEY_NAME));
+        if (iter == MAPPINGS.end()) {
+            throw runtime_error("invalid auto.offset.reset value");
+        }
+        return iter->second;
+    }
+}
+
+bool ConsumerMock::get_partition_eof_enabled() const {
+    static const string KEY_NAME = "enable.partition.eof";
+    return !config_.has_key(KEY_NAME) || config_.get(KEY_NAME) == "true";
+}
+
 void ConsumerMock::on_assignment(const vector<TopicPartitionMock>& topic_partitions) {
     handle_rebalance(RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS, topic_partitions);
 }
 
 void ConsumerMock::on_revocation() {
-    // Fetch and reset all assigned topic partitions
+    // Fetch and all assigned topic partitions
     vector<TopicPartitionMock> topic_partitions = [&]() {
         lock_guard<mutex> _(mutex_);
         vector<TopicPartitionMock> output;
@@ -202,7 +240,6 @@ void ConsumerMock::on_revocation() {
             const TopicPartitionId& id = topic_partition_pair.first;
             output.emplace_back(get<0>(id), get<1>(id));
         }
-        assigned_partitions_.clear();
         return output;
     }();
     handle_rebalance(RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS, topic_partitions);
@@ -211,13 +248,13 @@ void ConsumerMock::on_revocation() {
 void ConsumerMock::on_message(const string& topic_name, unsigned partition, uint64_t offset,
                               const KafkaMessageMock& message) {
     auto id = make_tuple(topic_name, partition);
+    MessageAggregate aggregate = { topic_name, partition, offset, &message };
 
     // We should only process this if we don't have this topic/partition assigned (assignment
     // pending?) or the message offset comes after the next offset we have stored
     lock_guard<mutex> _(mutex_);
     auto iter = assigned_partitions_.find(id);
-    MessageAggregate aggregate = { topic_name, partition, offset, &message };
-    if (iter != assigned_partitions_.end()) {
+    if (iter == assigned_partitions_.end()) {
         throw runtime_error("got message for unexpected partition " + to_string(partition));
     }
     if (offset > iter->second.next_offset) {
@@ -240,7 +277,7 @@ void ConsumerMock::handle_rebalance(rd_kafka_resp_err_t type,
     auto rebalance_callback = config_.get_rebalance_callback();
     if (rebalance_callback) {
         auto handle = to_rdkafka_handle(topic_partitions);
-        rebalance_callback(nullptr, type, handle.get(), opaque_);
+        rebalance_callback(nullptr, type, handle.get(), config_.get_opaque());
     }
 }
 

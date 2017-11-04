@@ -33,7 +33,7 @@ void KafkaPartitionMock::add_message(KafkaMessageMock message) {
 const KafkaMessageMock& KafkaPartitionMock::get_message(uint64_t offset) const {
     const uint64_t index = offset - base_offset_;
     lock_guard<recursive_mutex> _(mutex_);
-    if (messages_.size() >= index) {
+    if (index >= messages_.size()) {
         throw out_of_range("invalid message index");
     }
     return messages_[index];
@@ -56,7 +56,7 @@ void KafkaPartitionMock::unsubscribe(SubscriberId id) {
     subscribers_.erase(id);
 }
 
-tuple<uint64_t, uint64_t> KafkaPartitionMock::get_offset_bounds() const {
+tuple<int64_t, int64_t> KafkaPartitionMock::get_offset_bounds() const {
     lock_guard<recursive_mutex> _(mutex_);
     return make_tuple(base_offset_, base_offset_ + messages_.size());
 }

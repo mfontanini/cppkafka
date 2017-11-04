@@ -115,6 +115,7 @@ void rd_kafka_topic_conf_set_partitioner_cb(rd_kafka_topic_conf_t* conf,
 void rd_kafka_conf_set_default_topic_conf(rd_kafka_conf_t* conf,
                                           rd_kafka_topic_conf_t* tconf) {
     conf->get_handle().set_default_topic_configuration(tconf->get_handle());
+    rd_kafka_topic_conf_destroy(tconf);
 }
 
 void rd_kafka_conf_set_opaque(rd_kafka_conf_t* conf, void* opaque) {
@@ -198,7 +199,7 @@ rd_kafka_topic_partition_list_t* rd_kafka_topic_partition_list_new(int size) {
 
 void rd_kafka_topic_partition_list_destroy(rd_kafka_topic_partition_list_t* toppar_list) {
     for (int i = 0; i < toppar_list->cnt; ++i) {
-        delete toppar_list->elems[i].topic;
+        delete[] toppar_list->elems[i].topic;
     }
     delete[] toppar_list->elems;
     delete toppar_list;
@@ -214,6 +215,7 @@ rd_kafka_topic_partition_list_add(rd_kafka_topic_partition_list_t* toppar_list,
     const size_t length = strlen(topic);
     output->topic = new char[length + 1];
     copy(topic, topic + length, output->topic);
+    output->topic[length] = 0;
     output->partition = partition;
     output->offset = RD_KAFKA_OFFSET_INVALID;
     return output;
@@ -240,16 +242,17 @@ int rd_kafka_topic_partition_available(const rd_kafka_topic_t* rkt, int32_t part
 
 // rd_kafka_t
 
-rd_kafka_t* rd_kafka_new(rd_kafka_type_t type, rd_kafka_conf_t *conf_ptr,
+rd_kafka_t* rd_kafka_new(rd_kafka_type_t type, rd_kafka_conf_t* conf_ptr,
                          char *errstr, size_t errstr_size) {
     static const string BROKERS_OPTION = "metadata.broker.list";
-    const auto& conf = conf_ptr->get_handle();
+    auto& conf = conf_ptr->get_handle();
     HandleMock::ClusterPtr cluster;
     if (conf.has_key(BROKERS_OPTION)) {
         cluster = KafkaClusterRegistry::instance().get_cluster(conf.get(BROKERS_OPTION));
     }
     if (type == RD_KAFKA_PRODUCER) {
-        return new rd_kafka_t(new ProducerMock(conf, make_shared<EventProcessor>(),
+        unique_ptr<rd_kafka_conf_t> _(conf_ptr);
+        return new rd_kafka_t(new ProducerMock(move(conf), make_shared<EventProcessor>(),
                                                move(cluster)));
     }
     else if (type == RD_KAFKA_CONSUMER) {
@@ -261,14 +264,15 @@ rd_kafka_t* rd_kafka_new(rd_kafka_type_t type, rd_kafka_conf_t *conf_ptr,
             }
             return nullptr;
         }
-        return new rd_kafka_t(new ConsumerMock(conf, make_shared<EventProcessor>(),
+        unique_ptr<rd_kafka_conf_t> _(conf_ptr);
+        return new rd_kafka_t(new ConsumerMock(move(conf), make_shared<EventProcessor>(),
                                                move(cluster)));   
     }
     return nullptr;
 }
 
 void rd_kafka_destroy(rd_kafka_t* rk) {
-    delete &rk->get_handle();
+    delete rk;
 }
 
 int rd_kafka_brokers_add(rd_kafka_t* rk, const char* brokerlist) {
@@ -340,9 +344,14 @@ rd_kafka_resp_err_t rd_kafka_subscription(rd_kafka_t* rk,
 
 rd_kafka_resp_err_t rd_kafka_assign(rd_kafka_t* rk,
                                     const rd_kafka_topic_partition_list_t* partitions) {
-    const vector<TopicPartitionMock> topic_partitions = from_rdkafka_handle(*partitions);
     auto& consumer = rk->get_handle<ConsumerMock>();
-    consumer.assign(topic_partitions);
+    if (partitions) {
+        const vector<TopicPartitionMock> topic_partitions = from_rdkafka_handle(*partitions);
+        consumer.assign(topic_partitions);
+    }
+    else {
+        consumer.unassign();
+    }
     return RD_KAFKA_RESP_ERR_NO_ERROR;
 }
 
@@ -471,8 +480,8 @@ rd_kafka_resp_err_t rd_kafka_get_watermark_offsets(rd_kafka_t* rk, const char *t
             return RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION;
         }
         const auto& partition_object = topic_object.get_partition(partition);
-        uint64_t lowest;
-        uint64_t largest;
+        int64_t lowest;
+        int64_t largest;
         tie(lowest, largest) = partition_object.get_offset_bounds();
         *low = lowest;
         *high = largest;

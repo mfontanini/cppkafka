@@ -11,15 +11,13 @@ namespace detail {
 
 class KafkaClusterRegistry {
 public:
-    using ClusterPtr = std::shared_ptr<KafkaCluster>;
-
     static KafkaClusterRegistry& instance();
 
-    void add_cluster(ClusterPtr cluster);
-    void remove_cluster(const KafkaCluster& cluster);
-    ClusterPtr get_cluster(const std::string& name) const;
+    void add_cluster(std::shared_ptr<KafkaCluster> cluster);
+    void remove_cluster(const std::string& url);
+    std::shared_ptr<KafkaCluster> get_cluster(const std::string& name) const;
 private:
-    std::unordered_map<std::string, ClusterPtr> clusters_;
+    std::unordered_map<std::string, std::weak_ptr<KafkaCluster>> clusters_;
     mutable std::mutex clusters_mutex_;
 };
 

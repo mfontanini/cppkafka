@@ -23,7 +23,7 @@ const string& KafkaTopicMock::get_name() const {
 }
 
 void KafkaTopicMock::add_message(unsigned partition, KafkaMessageMock message) {
-    if (partitions_.size() >= partition) {
+    if (partition >= partitions_.size()) {
         throw out_of_range("invalid partition index");
     }
     partitions_[partition].add_message(move(message));
