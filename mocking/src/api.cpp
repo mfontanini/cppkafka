@@ -539,7 +539,7 @@ rd_kafka_resp_err_t rd_kafka_committed(rd_kafka_t* rk, rd_kafka_topic_partition_
 
 rd_kafka_resp_err_t rd_kafka_commit(rd_kafka_t* rk, const rd_kafka_topic_partition_list_t* offsets,
                                     int async) {
-    // TODO: implement
+    rk->get_handle<ConsumerMock>().commit(from_rdkafka_handle(*offsets));
     return RD_KAFKA_RESP_ERR_NO_ERROR;
 }
 

@@ -62,6 +62,10 @@ void ConsumerMock::commit(const rd_kafka_message_t& message) {
     );
 }
 
+void ConsumerMock::commit(const vector<TopicPartitionMock>& topic_partitions) {
+    get_cluster().commit(group_id_,consumer_id_, topic_partitions);
+}
+
 void ConsumerMock::subscribe(const vector<string>& topics) {
     using namespace std::placeholders;
     get_cluster().subscribe(

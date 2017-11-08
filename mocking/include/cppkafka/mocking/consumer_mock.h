@@ -33,6 +33,7 @@ public:
 
     void close();
     void commit(const rd_kafka_message_t& message);
+    void commit(const std::vector<TopicPartitionMock>& topic_partitions);
     void subscribe(const std::vector<std::string>& topics);
     void unsubscribe();
     void assign(const std::vector<TopicPartitionMock>& topic_partitions);
