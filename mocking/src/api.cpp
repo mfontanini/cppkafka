@@ -543,9 +543,9 @@ rd_kafka_resp_err_t rd_kafka_commit(rd_kafka_t* rk, const rd_kafka_topic_partiti
     return RD_KAFKA_RESP_ERR_NO_ERROR;
 }
 
-rd_kafka_resp_err_t rd_kafka_commit_message(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
+rd_kafka_resp_err_t rd_kafka_commit_message(rd_kafka_t* rk, const rd_kafka_message_t* message,
                                             int async) {
-    // TODO: implement
+    rk->get_handle<ConsumerMock>().commit(*message);
     return RD_KAFKA_RESP_ERR_NO_ERROR;
 }
 

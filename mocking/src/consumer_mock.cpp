@@ -39,7 +39,7 @@ ConsumerMock::ConsumerMock(ConfigurationMock config, EventProcessorPtr processor
                            ClusterPtr cluster)
 : HandleMock(move(processor), move(cluster)), config_(move(config)),
   offset_reset_policy_(get_offset_policy()), emit_eofs_(get_partition_eof_enabled()),
-  consumer_id_(make_consumer_id()) {
+  auto_commit_(get_auto_commit()), consumer_id_(make_consumer_id()) {
     if (!config_.has_key(CONFIG_GROUP_ID)) {
         throw runtime_error("Failed to find " + CONFIG_GROUP_ID + " in config");
     }
@@ -52,6 +52,14 @@ ConsumerMock::~ConsumerMock() {
 
 void ConsumerMock::close() {
     unsubscribe();
+}
+
+void ConsumerMock::commit(const rd_kafka_message_t& message) {
+    get_cluster().commit(
+        group_id_,
+        consumer_id_,
+        { { rd_kafka_topic_name(message.rkt), message.partition, message.offset + 1 } }
+    );
 }
 
 void ConsumerMock::subscribe(const vector<string>& topics) {
@@ -75,13 +83,12 @@ void ConsumerMock::assign(const vector<TopicPartitionMock>& topic_partitions) {
         // Create entries for all topic partitions in our assigned partitions map
         for (const TopicPartitionMock& topic_partition : topic_partitions) {
             const auto id = make_id(topic_partition);
-            // We'll store the next offset from the one we've seen so far
             uint64_t next_offset;
             if (topic_partition.get_offset() == RD_KAFKA_OFFSET_INVALID) {
                 next_offset = 0;
             }
             else {
-                next_offset = topic_partition.get_offset() + 1;
+                next_offset = topic_partition.get_offset();
             }
             
             auto iter = assigned_partitions_.find(id);
@@ -173,16 +180,20 @@ unique_ptr<MessageHandle> ConsumerMock::poll(milliseconds timeout) {
     }
 
     const auto& message = *aggregate.message;
-    return unique_ptr<MessageHandle>(new MessageHandle(
+    unique_ptr<MessageHandle> output(new MessageHandle(
         unique_ptr<TopicHandle>(new TopicHandle(get<0>(id), nullptr)),
         get<1>(id),
-        iter->second.next_offset,
+        aggregate.offset,
         (void*)message.get_key().data(), message.get_key().size(),
         (void*)message.get_payload().data(), message.get_payload().size(),
         RD_KAFKA_RESP_ERR__PARTITION_EOF,
         MessageHandlePrivateData{message.get_timestamp_type(), message.get_timestamp()},
         MessageHandle::PointerOwnership::Unowned
     ));
+    if (auto_commit_) {
+        commit(output->get_message());
+    }
+    return output;
 }
 
 vector<TopicPartitionMock> ConsumerMock::get_assignment() const {
@@ -225,6 +236,20 @@ KafkaCluster::ResetOffsetPolicy ConsumerMock::get_offset_policy() const {
 bool ConsumerMock::get_partition_eof_enabled() const {
     static const string KEY_NAME = "enable.partition.eof";
     return !config_.has_key(KEY_NAME) || config_.get(KEY_NAME) == "true";
+}
+
+bool ConsumerMock::get_auto_commit() const {
+    static const vector<string> KEY_NAMES = {
+        "enable.auto.commit",
+        "auto.commit.enable"
+    };
+    for (const string& key : KEY_NAMES) {
+        if (config_.has_key(key)) {
+            return config_.get(key) == "true";
+        }
+    }
+    // By default, auto commit
+    return true;
 }
 
 void ConsumerMock::on_assignment(const vector<TopicPartitionMock>& topic_partitions) {

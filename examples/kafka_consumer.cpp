@@ -65,6 +65,7 @@ int main(int argc, char* argv[]) {
     // Print the assigned partitions on assignment
     consumer.set_assignment_callback([](const TopicPartitionList& partitions) {
         cout << "Got assigned: " << partitions << endl;
+        std::cout << "Offset: " << partitions[0].get_offset() << std::endl;
     });
 
     // Print the revoked partitions on revocation

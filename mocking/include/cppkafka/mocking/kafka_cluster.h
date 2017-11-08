@@ -47,6 +47,8 @@ public:
     void assign(uint64_t consumer_id, const std::vector<TopicPartitionMock>& topic_partitions,
                 ResetOffsetPolicy policy, const MessageCallback& message_callback);
     void unassign(uint64_t consumer_id);
+    void commit(const std::string& group_id, uint64_t consumer_id,
+                const std::vector<TopicPartitionMock>& topic_partitions);
 private:
     struct ConsumerMetadata {
         using PartitionSubscriptionMap = std::unordered_map<int, KafkaPartitionMock::SubscriberId>;

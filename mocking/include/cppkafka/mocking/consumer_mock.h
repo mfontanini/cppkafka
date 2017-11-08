@@ -32,6 +32,7 @@ public:
     ~ConsumerMock();
 
     void close();
+    void commit(const rd_kafka_message_t& message);
     void subscribe(const std::vector<std::string>& topics);
     void unsubscribe();
     void assign(const std::vector<TopicPartitionMock>& topic_partitions);
@@ -60,6 +61,7 @@ private:
     static TopicPartitionId make_id(const TopicPartitionMock& topic_partition);
     KafkaCluster::ResetOffsetPolicy get_offset_policy() const;
     bool get_partition_eof_enabled() const;
+    bool get_auto_commit() const;
     void on_assignment(const std::vector<TopicPartitionMock>& topic_partitions);
     void on_revocation();
     void on_message(const std::string& topic_name, unsigned partition, uint64_t offset,
@@ -70,7 +72,8 @@ private:
     ConfigurationMock config_;
     std::string group_id_;
     const KafkaCluster::ResetOffsetPolicy offset_reset_policy_;
-    bool emit_eofs_;
+    const bool emit_eofs_;
+    const bool auto_commit_;
     std::map<TopicPartitionId, TopicPartitionInfo> assigned_partitions_;
     std::set<TopicPartitionId> consumable_topic_partitions_;
     std::set<TopicPartitionId> paused_topic_partitions_;

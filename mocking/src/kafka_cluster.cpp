@@ -165,6 +165,11 @@ void KafkaCluster::unassign(uint64_t consumer_id) {
     consumer.subscriptions.clear();
 }
 
+void KafkaCluster::commit(const string& group_id, uint64_t consumer_id,
+                          const vector<TopicPartitionMock>& topic_partitions) {
+    offset_manager_->commit_offsets(group_id, topic_partitions);
+}
+
 void KafkaCluster::generate_assignments(const string& group_id,
                                         const TopicConsumersMap& topic_consumers) {
     for (const auto& topic_consumers_pair : topic_consumers) {
