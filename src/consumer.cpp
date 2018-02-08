@@ -66,6 +66,11 @@ Consumer::Consumer(Configuration config)
 
 Consumer::~Consumer() {
     try {
+        // make sure to destroy the function closures. in case they hold kafka
+        // objects, they will need to be destroyed before we destroy the handle
+        assignment_callback_ = nullptr;
+        revocation_callback_ = nullptr;
+        rebalance_error_callback_ = nullptr;
         close();
     }
     catch (const Exception&) {
