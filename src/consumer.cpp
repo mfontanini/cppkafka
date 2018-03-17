@@ -214,12 +214,14 @@ vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout
                                                   raw_messages.size());
     if (result == -1) {
         check_error(rd_kafka_last_error());
+        // on the off-chance that check_error() does not throw an error
+        result = 0;
     }
     vector<Message> output;
+    raw_messages.resize(result);
+    output.reserve(result);
     for (const auto ptr : raw_messages) {
-        if (ptr) {
-            output.emplace_back(ptr);
-        }
+        output.emplace_back(ptr);
     }
     return output;
 }
