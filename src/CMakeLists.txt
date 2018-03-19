@@ -26,7 +26,13 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${RDKAFKA_INCLUDE_DIR})
 add_library(cppkafka ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(cppkafka PROPERTIES VERSION ${CPPKAFKA_VERSION}
                                           SOVERSION ${CPPKAFKA_VERSION})
-target_link_libraries(cppkafka ${RDKAFKA_LIBRARY})
+
+set(DEPENDENCIES ${RDKAFKA_LIBRARY})
+if (WIN32)
+    # On windows ntohs and related are in ws2_32
+    set(DEPENDENCIES "${DEPENDENCIES} ws2_32.lib")
+endif()
+target_link_libraries(cppkafka ${DEPENDENCIES})
 target_include_directories(cppkafka PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 install( 
