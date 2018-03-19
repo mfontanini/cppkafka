@@ -30,7 +30,7 @@ set_target_properties(cppkafka PROPERTIES VERSION ${CPPKAFKA_VERSION}
 set(DEPENDENCIES ${RDKAFKA_LIBRARY})
 if (WIN32)
     # On windows ntohs and related are in ws2_32
-    set(DEPENDENCIES "${DEPENDENCIES} ws2_32.lib")
+    set(DEPENDENCIES ${DEPENDENCIES} ws2_32.lib)
 endif()
 target_link_libraries(cppkafka ${DEPENDENCIES})
 target_include_directories(cppkafka PUBLIC ${PROJECT_SOURCE_DIR}/include)
