@@ -32,13 +32,14 @@
 
 #include <string>
 #include <type_traits>
+#include "macros.h"
 
 namespace cppkafka {
 
 /**
  * Wrapper over a configuration (key, value) pair
  */
-class ConfigurationOption {
+class CPPKAFKA_API ConfigurationOption {
 public:
     /**
      * Construct using a std::string value

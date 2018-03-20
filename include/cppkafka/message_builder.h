@@ -41,7 +41,7 @@ namespace cppkafka {
  * \brief Base template class for message construction
  */
 template <typename BufferType, typename Concrete>
-class CPPKAFKA_API BasicMessageBuilder {
+class BasicMessageBuilder {
 public:
     /**
      * Construct a BasicMessageBuilder
