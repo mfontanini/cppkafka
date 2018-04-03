@@ -76,7 +76,7 @@ If you have installed _librdkafka_ on a non standard directory, you can use the
 cmake .. -DRDKAFKA_ROOT_DIR=/some/other/dir
 ```
 
-Note that the **RDKAFKA_ROOT_DIR** must contain the following structure:
+Note that the `RDKAFKA_ROOT_DIR` must contain the following structure:
 
 ```Shell
 ${RDKAFKA_ROOT_DIR}/
@@ -85,8 +85,6 @@ ${RDKAFKA_ROOT_DIR}/
                    |
                    + lib/librdkafka.a
 ```
-
----
 
 By default, a shared library will be built. If you want to perform a static build,
 use the _CPPKAFKA_BUILD_SHARED_ parameter:
