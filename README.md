@@ -87,7 +87,7 @@ ${RDKAFKA_ROOT_DIR}/
 ```
 
 By default, a shared library will be built. If you want to perform a static build,
-use the _CPPKAFKA_BUILD_SHARED_ parameter:
+use the `CPPKAFKA_BUILD_SHARED` parameter:
 
 ```Shell
 cmake .. -DCPPKAFKA_BUILD_SHARED=0
