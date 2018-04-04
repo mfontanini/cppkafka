@@ -76,14 +76,18 @@ If you have installed _librdkafka_ on a non standard directory, you can use the
 cmake .. -DRDKAFKA_ROOT_DIR=/some/other/dir
 ```
 
-Note that finding _librdkafka_ will succeed iff there's an _include_ and _lib_
-directories inside the specified path, including both the _rdkafka.h_ header
-and the _librdkafka_ library file.
+Note that the `RDKAFKA_ROOT_DIR` must contain the following structure:
 
----
+```Shell
+${RDKAFKA_ROOT_DIR}/
+                   |
+                   + include/librdkafka/rdkafka.h
+                   |
+                   + lib/librdkafka.a
+```
 
 By default, a shared library will be built. If you want to perform a static build,
-use the _CPPKAFKA_BUILD_SHARED_ parameter:
+use the `CPPKAFKA_BUILD_SHARED` parameter:
 
 ```Shell
 cmake .. -DCPPKAFKA_BUILD_SHARED=0

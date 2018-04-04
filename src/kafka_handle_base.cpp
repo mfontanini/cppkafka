@@ -172,7 +172,7 @@ void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
 Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf) {
     rd_kafka_topic_t* topic = rd_kafka_topic_new(get_handle(), name.data(), conf);
     if (!topic) {
-        throw HandleException(rd_kafka_errno2err(errno));
+        throw HandleException(rd_kafka_last_error());
     }
     return Topic(topic);
 }
