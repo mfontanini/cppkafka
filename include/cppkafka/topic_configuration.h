@@ -34,9 +34,19 @@
 #include <functional>
 #include <initializer_list>
 #include <librdkafka/rdkafka.h>
+#include <vector>
 #include "clonable_ptr.h"
 #include "configuration_base.h"
 #include "macros.h"
+#include "configuration_cache.h"
+#include "exceptions.h"
+#include "topic.h"
+#include "buffer.h"
+
+using std::string;
+using std::map;
+using std::vector;
+using std::initializer_list;
 
 namespace cppkafka {
 
@@ -46,10 +56,16 @@ class Buffer;
 /**
  * \brief Represents the topic configuration
  *
- * ConfigurationBase provides some extra overloads for set
+ * ConfigBase provides some extra overloads for set
  */
-class CPPKAFKA_API TopicConfiguration : public ConfigurationBase<TopicConfiguration> {
+template <typename Traits>
+class CPPKAFKA_API TopicConfig : public ConfigBase<TopicConfig<Traits>> {
 public:
+    using traits_type = Traits;
+    using config_type = typename traits_type::config_type;
+    using topic_config_type = TopicConfig<traits_type>;
+    using base_type = ConfigBase<topic_config_type>;
+    
     /**
      * \brief Partitioner callback
      *
@@ -63,24 +79,20 @@ public:
      */
     using PartitionerCallback = std::function<int32_t(const Topic&, const Buffer& key,
                                                       int32_t partition_count)>;
-
-    using ConfigurationBase<TopicConfiguration>::set;
-    using ConfigurationBase<TopicConfiguration>::get;
+    
+    using base_type::set;
+    using base_type::get;
 
     /**
      * Default constructs a topic configuration object
      */
-    TopicConfiguration();
+    TopicConfig();
 
     /**
-     * Constructs a TopicConfiguration object using a list of options
+     * Constructs a TopicConfig object using a list of options
      */
-    TopicConfiguration(const std::vector<ConfigurationOption>& options);
-
-    /**
-     * Constructs a TopicConfiguration object using a list of options
-     */
-    TopicConfiguration(const std::initializer_list<ConfigurationOption>& options);
+    TopicConfig(const std::vector<ConfigurationOption>& options);
+    TopicConfig(const std::initializer_list<ConfigurationOption>& options);
 
     /**
      * Sets an option
@@ -88,14 +100,15 @@ public:
      * \param name The name of the option
      * \param value The value of the option
      */
-    TopicConfiguration& set(const std::string& name, const std::string& value);
+    topic_config_type& set(const std::string& name, const std::string& value) override;
 
     /**
      * \brief Sets the partitioner callback
      *
      * This translates into a call to rd_kafka_topic_conf_set_partitioner_cb
      */
-    TopicConfiguration& set_partitioner_callback(PartitionerCallback callback);
+    template <typename T = traits_type, typename = std::enable_if_t<has_producer_traits<topic_config_type>::value>>
+    topic_config_type& set_partitioner_callback(PartitionerCallback callback);
 
     /**
      * \brief Sets the "this" pointer as the opaque pointer for this handle
@@ -103,11 +116,12 @@ public:
      * This method will be called by consumers/producers when the topic configuration object
      * has been put in a persistent memory location. Users of cppkafka do not need to use this.
      */
-    TopicConfiguration& set_as_opaque();
+    topic_config_type& set_as_opaque();
 
     /** 
      * Gets the partitioner callback
      */
+    template <typename T = traits_type, typename = std::enable_if_t<has_producer_traits<topic_config_type>::value>>
     const PartitionerCallback& get_partitioner_callback() const;
 
     /**
@@ -120,7 +134,7 @@ public:
      *
      * \param name The option's name
      */
-    std::string get(const std::string& name) const;
+    std::string get(const std::string& name) const override;
 
     /**
      * Gets all options, including default values which are set by rdkafka
@@ -131,12 +145,12 @@ public:
      * Gets the rdkafka handle
      */
     rd_kafka_topic_conf_t* get_handle() const;
+    
 private:
     using HandlePtr = ClonablePtr<rd_kafka_topic_conf_t,
                                   decltype(&rd_kafka_topic_conf_destroy),
                                   decltype(&rd_kafka_topic_conf_dup)>;
-
-    TopicConfiguration(rd_kafka_topic_conf_t* ptr);
+    
     static HandlePtr make_handle(rd_kafka_topic_conf_t* ptr);
 
     HandlePtr handle_;
@@ -144,5 +158,7 @@ private:
 };
 
 } // cppkafka
+
+#include "impl/topic_configuration_impl.h"
 
 #endif // CPPKAFKA_TOPIC_CONFIGURATION_H

@@ -1,7 +1,6 @@
 set(SOURCES
-    configuration.cpp
-    topic_configuration.cpp
     configuration_option.cpp
+    configuration_cache.cpp
     exceptions.cpp
     topic.cpp
     buffer.cpp
@@ -11,13 +10,7 @@ set(SOURCES
     metadata.cpp
     group_information.cpp
     error.cpp
-
-    kafka_handle_base.cpp
-    producer.cpp
-    consumer.cpp
-
     utils/backoff_performer.cpp
-    utils/backoff_committer.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka)

@@ -33,6 +33,8 @@
 #include <chrono>
 #include <functional>
 #include <thread>
+#include <algorithm>
+#include "../traits.h"
 #include "../consumer.h"
 #include "backoff_performer.h"
 
@@ -69,12 +71,13 @@ namespace cppkafka {
  * committer.commit(some_message);
  * \endcode
  */
-class BackoffCommitter : public BackoffPerformer {
+template <typename ConsumerType>
+class BasicBackoffCommitter : public BackoffPerformer {
 public:
     /**
      * \brief The error callback.
      * 
-     * Whenever an error occurs comitting an offset, this callback will be executed using
+     * Whenever an error occurs committing an offset, this callback will be executed using
      * the generated error. While the function returns true, then this is offset will be
      * committed again until it either succeeds or the function returns false.
      */
@@ -87,7 +90,7 @@ public:
      *
      * \param consumer The consumer to use for committing offsets
      */
-    BackoffCommitter(Consumer& consumer);
+    BasicBackoffCommitter(ConsumerType& consumer);
 
     /**
      * \brief Sets the error callback
@@ -140,10 +143,12 @@ private:
         return false;
     }
 
-    Consumer& consumer_;
+    ConsumerType& consumer_;
     ErrorCallback callback_;
 };
 
 } // cppkafka
+
+#include "impl/backoff_committer_impl.h"
 
 #endif // CPPKAFKA_BACKOFF_COMMITTER_H

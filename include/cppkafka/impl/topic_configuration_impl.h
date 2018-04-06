@@ -27,24 +27,13 @@
  *
  */
 
-#include "topic_configuration.h"
-#include <vector>
-#include <librdkafka/rdkafka.h>
-#include "exceptions.h"
-#include "topic.h"
-#include "buffer.h"
-
-using std::string;
-using std::map;
-using std::vector;
-using std::initializer_list;
-
 namespace cppkafka {
 
+template <typename TOPIC_CONFIG>
 int32_t partitioner_callback_proxy(const rd_kafka_topic_t* handle, const void *key_ptr,
                                    size_t key_size, int32_t partition_count,
                                    void* topic_opaque, void* message_opaque) {
-    const TopicConfiguration* config = static_cast<TopicConfiguration*>(topic_opaque);
+    const TOPIC_CONFIG* config = static_cast<TOPIC_CONFIG*>(topic_opaque);
     const auto& callback = config->get_partitioner_callback();
     if (callback) {
         Topic topic = Topic::make_non_owning(const_cast<rd_kafka_topic_t*>(handle));
@@ -58,27 +47,29 @@ int32_t partitioner_callback_proxy(const rd_kafka_topic_t* handle, const void *k
     }
 }
 
-TopicConfiguration::TopicConfiguration() 
+template <typename Traits>
+TopicConfig<Traits>::TopicConfig()
 : handle_(make_handle(rd_kafka_topic_conf_new())) {
 
 }
 
-TopicConfiguration::TopicConfiguration(const vector<ConfigurationOption>& options)
-: TopicConfiguration() {
+template <typename Traits>
+TopicConfig<Traits>::TopicConfig(const vector<ConfigurationOption>& options)
+: TopicConfig() {
     set(options);
 }
 
-TopicConfiguration::TopicConfiguration(const initializer_list<ConfigurationOption>& options)
-: TopicConfiguration() {
+template <typename Traits>
+TopicConfig<Traits>::TopicConfig(const std::initializer_list<ConfigurationOption>& options)
+: TopicConfig() {
     set(options);
 }
 
-TopicConfiguration::TopicConfiguration(rd_kafka_topic_conf_t* ptr) 
-: handle_(make_handle(ptr)) {
-
-}
-
-TopicConfiguration& TopicConfiguration::set(const string& name, const string& value) {
+template <typename Traits>
+TopicConfig<Traits>& TopicConfig<Traits>::set(const string& name, const string& value) {
+    if (!ConfigurationCache::instance()->validate_configuration_option(name, traits_type::topic_scope)) {
+        throw ConfigException(name, "invalid scope");
+    }
     char error_buffer[512];
     rd_kafka_conf_res_t result;
     result = rd_kafka_topic_conf_set(handle_.get(), name.data(), value.data(), error_buffer,
@@ -89,28 +80,35 @@ TopicConfiguration& TopicConfiguration::set(const string& name, const string& va
     return *this;
 }
 
-TopicConfiguration& TopicConfiguration::set_partitioner_callback(PartitionerCallback callback) {
+template <typename Traits>
+template <typename T, typename>
+TopicConfig<Traits>& TopicConfig<Traits>::set_partitioner_callback(PartitionerCallback callback) {
     partitioner_callback_ = move(callback);
-    rd_kafka_topic_conf_set_partitioner_cb(handle_.get(), &partitioner_callback_proxy);
+    rd_kafka_topic_conf_set_partitioner_cb(handle_.get(), &partitioner_callback_proxy<topic_config_type>);
     return *this;
 }
 
-TopicConfiguration& TopicConfiguration::set_as_opaque() {
+template <typename Traits>
+TopicConfig<Traits>& TopicConfig<Traits>::set_as_opaque() {
     rd_kafka_topic_conf_set_opaque(handle_.get(), this);
     return *this;
 }
 
-const TopicConfiguration::PartitionerCallback&
-TopicConfiguration::get_partitioner_callback() const {
+template <typename Traits>
+template <typename T, typename>
+const typename TopicConfig<Traits>::PartitionerCallback&
+TopicConfig<Traits>::get_partitioner_callback() const {
     return partitioner_callback_;
 }
 
-bool TopicConfiguration::has_property(const string& name) const {
+template <typename Traits>
+bool TopicConfig<Traits>::has_property(const string& name) const {
     size_t size = 0;
     return rd_kafka_topic_conf_get(handle_.get(), name.data(), nullptr, &size) == RD_KAFKA_CONF_OK;
 }
 
-string TopicConfiguration::get(const string& name) const {
+template <typename Traits>
+string TopicConfig<Traits>::get(const string& name) const {
     size_t size = 0;
     auto result = rd_kafka_topic_conf_get(handle_.get(), name.data(), nullptr, &size);
     if (result != RD_KAFKA_CONF_OK) {
@@ -121,19 +119,23 @@ string TopicConfiguration::get(const string& name) const {
     return string(buffer.data());
 }
 
-map<string, string> TopicConfiguration::get_all() const {
+template <typename Traits>
+map<string, string> TopicConfig<Traits>::get_all() const {
     size_t count = 0;
     const char** all = rd_kafka_topic_conf_dump(handle_.get(), &count);
-    map<string, string> output = parse_dump(all, count);
+    map<string, string> output = base_type::parse_dump(all, count);
     rd_kafka_conf_dump_free(all, count);
     return output;
 }
 
-rd_kafka_topic_conf_t* TopicConfiguration::get_handle() const {
+template <typename Traits>
+rd_kafka_topic_conf_t* TopicConfig<Traits>::get_handle() const {
     return handle_.get();
 }
 
-TopicConfiguration::HandlePtr TopicConfiguration::make_handle(rd_kafka_topic_conf_t* ptr) {
+template <typename Traits>
+typename TopicConfig<Traits>::HandlePtr
+TopicConfig<Traits>::make_handle(rd_kafka_topic_conf_t* ptr) {
     return HandlePtr(ptr, &rd_kafka_topic_conf_destroy, &rd_kafka_topic_conf_dup);
 }     
 

@@ -26,19 +26,19 @@ _cppkafka_'s API is simple to use. For example, this code creates a producer tha
 into some partition:
 
 ```c++
-#include <cppkafka/producer.h>
+#include <cppkafka/cppkafka.h>
 
 using namespace std;
 using namespace cppkafka;
 
 int main() {
     // Create the config
-    Configuration config = {
+    KafkaProducerConfig config = {
         { "metadata.broker.list", "127.0.0.1:9092" }
     };
 
     // Create the producer
-    Producer producer(config);
+    KafkaProducer producer(config);
 
     // Produce a message!
     string message = "hey there!";
@@ -95,7 +95,17 @@ cmake .. -DCPPKAFKA_BUILD_SHARED=0
 
 # Using
 
-If you want to use _cppkafka_, you'll need to link your application with:
+To compile and use _cppkafka_ classes you must include the following header:
+
+```Shell
+#include <cppkafka/cppkafka.h>
+```
+
+Important classes are defined in `cppkafka/types.h` however it's not necessary to include
+this file directly. Note that _legacy_ types should no longer by used, although some examples
+herein might still be using these.
+
+Then you'll need to link your application with:
 
 * _cppkafka_
 * _rdkafka_

@@ -50,7 +50,7 @@ class MessageTimestamp;
  *
  * Messages can be empty (contain a null rd_kafka_message_t*). Therefore, users must check
  * that the message isn't empty by using the operator bool() before using them. This is especially
- * necessary when calling Consumer::poll() as any poll operation that returns a null pointer will
+ * necessary when calling ConsumerHandle::poll() as any poll operation that returns a null pointer will
  * return an empty message.
  */
 class CPPKAFKA_API Message {

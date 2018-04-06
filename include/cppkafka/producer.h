@@ -31,26 +31,31 @@
 #define CPPKAFKA_PRODUCER_H
 
 #include <memory>
+#include <errno.h>
 #include "kafka_handle_base.h"
 #include "configuration.h"
 #include "buffer.h"
 #include "topic.h"
 #include "macros.h"
 #include "message_builder.h"
+#include "exceptions.h"
+
+using std::move;
+using std::string;
+using std::chrono::milliseconds;
 
 namespace cppkafka {
 
-class Topic;
 class Buffer;
-class TopicConfiguration;
+template <typename T> class TopicConfig;
 
 /**
- * \brief Producer class
+ * \brief ProducerHandle class
  *
  * This class allows producing messages on kafka.
  *
  * By default the payloads will be copied (using the RD_KAFKA_MSG_F_COPY flag) but the 
- * behavior can be changed, in which case rdkafka will be reponsible for freeing it.
+ * behavior can be changed, in which case rdkafka will be responsible for freeing it.
  *
  * In order to produce messages you could do something like:
  *
@@ -75,8 +80,13 @@ class TopicConfiguration;
  * 
  * \endcode
  */
-class CPPKAFKA_API Producer : public KafkaHandleBase {
+template <typename Traits>
+class CPPKAFKA_API ProducerHandle : public HandleBase<Traits> {
 public:
+    using traits_type = Traits;
+    using base_type = HandleBase<traits_type>;
+    using config_type = typename traits_type::config_type;
+    using topic_config_type = typename traits_type::topic_config_type;
     /**
      * The policy to use for the payload. The default policy is COPY_PAYLOAD
      */
@@ -90,7 +100,7 @@ public:
      *
      * \param config The configuration to use
      */
-    Producer(Configuration config);
+    ProducerHandle(config_type config);
 
     /**
      * Sets the payload policy
@@ -118,7 +128,7 @@ public:
      *
      * This translates into a call to rd_kafka_poll.
      *
-     * The timeout used on this call is the one configured via Producer::set_timeout.
+     * The timeout used on this call is the one configured via ProducerHandle::set_timeout.
      */
     int poll();
 
@@ -136,7 +146,7 @@ public:
      *
      * This translates into a call to rd_kafka_flush.
      *
-     * The timeout used on this call is the one configured via Producer::set_timeout.
+     * The timeout used on this call is the one configured via ProducerHandle::set_timeout.
      */
     void flush();
 
@@ -148,10 +158,13 @@ public:
      * \param timeout The timeout used on this call
      */
     void flush(std::chrono::milliseconds timeout);
+    
 private:
     PayloadPolicy message_payload_policy_;
 };
 
 } // cppkafka
+
+#include "impl/producer_impl.h"
 
 #endif // CPPKAFKA_PRODUCER_H
