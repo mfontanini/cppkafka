@@ -130,7 +130,7 @@ public:
     /**
      * Print to a stream
      */
-    friend std::ostream& operator<<(std::ostream& output, const TopicPartition& rhs);
+    CPPKAFKA_API friend std::ostream& operator<<(std::ostream& output, const TopicPartition& rhs);
 private:
     std::string topic_;
     int partition_;

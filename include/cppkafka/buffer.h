@@ -152,7 +152,7 @@ public:
     /**
      * Output operator
      */
-    friend std::ostream& operator<<(std::ostream& output, const Buffer& rhs);
+    CPPKAFKA_API friend std::ostream& operator<<(std::ostream& output, const Buffer& rhs);
 private:
     const DataType* data_;
     size_t size_;
@@ -161,12 +161,12 @@ private:
 /**
  * Compares Buffer objects for equality 
  */
-bool operator==(const Buffer& lhs, const Buffer& rhs);
+CPPKAFKA_API bool operator==(const Buffer& lhs, const Buffer& rhs);
 
 /**
  * Compares Buffer objects for inequality 
  */
-bool operator!=(const Buffer& lhs, const Buffer& rhs);
+CPPKAFKA_API bool operator!=(const Buffer& lhs, const Buffer& rhs);
 
 } // cppkafka
 

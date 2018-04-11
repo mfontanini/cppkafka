@@ -75,7 +75,7 @@ public:
     /**
      * Writes this error's string representation into a stream
      */
-    friend std::ostream& operator<<(std::ostream& output, const Error& rhs);
+    CPPKAFKA_API friend std::ostream& operator<<(std::ostream& output, const Error& rhs);
 private:
     rd_kafka_resp_err_t error_;
 };
