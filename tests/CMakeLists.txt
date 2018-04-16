@@ -28,12 +28,12 @@ create_test(producer)
 create_test(kafka_handle_base)
 create_test(topic_partition_list)
 create_test(configuration)
-create_test(compacted_topic_processor)
 
 add_executable(
     catch_tests
     EXCLUDE_FROM_ALL
     buffer_test.cpp
+    compacted_topic_processor_test.cpp
 
     # Main file
     test_main.cpp
