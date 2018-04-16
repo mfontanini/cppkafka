@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <gtest/gtest.h>
+#include <catch.hpp>
 #include "cppkafka/buffer.h"
 
 using std::string;
@@ -10,69 +10,59 @@ using std::ostringstream;
 
 using namespace cppkafka;
 
-class BufferTest : public testing::Test {
-public:
-    
-};
+TEST_CASE("conversions", "[buffer]") {
+    const string data = "Hello world!";
+    const Buffer buffer(data);
+    const Buffer empty_buffer;
 
-TEST_F(BufferTest, OperatorBool) {
-    string data = "Hello world!";
-    Buffer buffer1(data);
-    Buffer buffer2;
 
-    EXPECT_TRUE(buffer1);
-    EXPECT_FALSE(buffer2);
+    SECTION("bool conversion") {
+        REQUIRE(!!buffer == true);
+        REQUIRE(!!empty_buffer == false);
+    }
+
+    SECTION("string conversion") {
+        REQUIRE(static_cast<string>(buffer) == data);
+        REQUIRE(static_cast<string>(empty_buffer).empty());
+    }
+
+    SECTION("vector conversion") {
+        const vector<char> buffer_as_vector = buffer;
+        REQUIRE(string(buffer_as_vector.begin(), buffer_as_vector.end()) == data);
+    }
 }
 
-TEST_F(BufferTest, StringConversion) {
-    string data = "Hello world!";
-    Buffer buffer(data);
-    string buffer_as_string = buffer;
-    EXPECT_EQ(data, buffer_as_string);
-}
-
-TEST_F(BufferTest, StringConversionOnEmptyBuffer) {
-    Buffer buffer;
-    EXPECT_EQ("", static_cast<string>(buffer));
-}
-
-TEST_F(BufferTest, VectorConversion) {
-    string data = "Hello world!";
-    Buffer buffer(data);
-    vector<char> buffer_as_vector = buffer;
-    EXPECT_EQ(data, string(buffer_as_vector.begin(), buffer_as_vector.end()));
-}
-
-TEST_F(BufferTest, VectorConstruction) {
+TEST_CASE("construction", "[buffer]") {
     const string str_data = "Hello world!";
     const vector<uint8_t> data(str_data.begin(), str_data.end());
-    Buffer buffer(data);
-    EXPECT_EQ(str_data, buffer);
+    const Buffer buffer(data);
+    REQUIRE(str_data == buffer);
 }
 
-TEST_F(BufferTest, Equality) {
-    string data = "Hello world!";
-    Buffer buffer1(data);
-    Buffer buffer2(data);
 
-    EXPECT_EQ(buffer1, buffer2);
+TEST_CASE("comparison", "[buffer]") {
+    const string data = "Hello world!";
+    const Buffer buffer1(data);
+    const Buffer buffer2(data);
+    const Buffer empty_buffer;
+
+    SECTION("equality") {
+        REQUIRE(buffer1 == buffer2);
+        REQUIRE(buffer2 == buffer1);
+    }
+
+    SECTION("inequality") {
+        REQUIRE(buffer1 != empty_buffer);
+        REQUIRE(empty_buffer != buffer1);
+    }
 }
 
-TEST_F(BufferTest, InEquality) {
-    string data1 = "Hello world!";
-    string data2 = "Hello worldz";
-    Buffer buffer1(data1);
-    Buffer buffer2(data2);
-
-    EXPECT_NE(buffer1, buffer2);
-}
-
-TEST_F(BufferTest, OutputOperator) {
-    string data = "Hello \x7fwor\x03ld!";
-    string pretty_string = "Hello \\x7fwor\\x03ld!";
-    Buffer buffer(data);
+TEST_CASE("stream extraction", "[buffer]") {
+    const string data = "Hello \x7fwor\x03ld!";
+    const string pretty_string = "Hello \\x7fwor\\x03ld!";
+    const Buffer buffer(data);
 
     ostringstream output;
     output << buffer;
-    EXPECT_EQ(pretty_string, output.str());
+    REQUIRE(output.str() == pretty_string );
 }

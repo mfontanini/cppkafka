@@ -62,6 +62,16 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 if(NOT CPPKAFKA_DISABLE_TESTS)
+    set(CATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/Catch2)
+    if(EXISTS ${CATCH_ROOT}/CMakeLists.txt)
+        set(CATCH_INCLUDE ${CATCH_ROOT}/single_include)
+
+        #enable_testing()
+        #add_subdirectory(tests)
+    else()
+        message(STATUS "Disabling tests")
+    endif()
+
     set(GOOGLETEST_ROOT ${CMAKE_SOURCE_DIR}/third_party/googletest)
     if(EXISTS "${GOOGLETEST_ROOT}/CMakeLists.txt")
         set(GOOGLETEST_INCLUDE ${GOOGLETEST_ROOT}/googletest/include)
