@@ -6,7 +6,7 @@ using namespace cppkafka;
 
 using std::string;
 
-TEST_CASE("get/set", "[config]") {
+TEST_CASE("normal config", "[config]") {
     Configuration config;
 
     SECTION("get existing") {
@@ -58,7 +58,7 @@ TEST_CASE("get/set", "[config]") {
     }
 }
 
-TEST_CASE("topic config get/set", "[config]") {
+TEST_CASE("topic config", "[config]") {
     TopicConfiguration config;
 
     SECTION("get existing") {
