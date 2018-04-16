@@ -1,5 +1,5 @@
 #include <sstream>
-#include <gtest/gtest.h>
+#include <catch.hpp>
 #include "cppkafka/topic_partition_list.h"
 #include "cppkafka/topic_partition.h"
 
@@ -7,12 +7,7 @@ using std::ostringstream;
 
 using namespace cppkafka;
 
-class TopicPartitionListTest : public testing::Test {
-public:
-    
-};
-
-TEST_F(TopicPartitionListTest, Conversion) {
+TEST_CASE("rdkafka conversion", "[topic_partition]") {
     TopicPartitionList list1;
     list1.push_back("foo");
     list1.push_back({ "bar", 2 });
@@ -20,24 +15,24 @@ TEST_F(TopicPartitionListTest, Conversion) {
 
     TopicPartitionList list2 = convert(convert(list1));
 
-    EXPECT_EQ(list1.size(), list2.size());
+    REQUIRE(list1.size() == list2.size());
     for (size_t i = 0; i < list1.size(); ++i) {
         const auto& item1 = list1[i];
         const auto& item2 = list2[i];
-        EXPECT_EQ(item1.get_topic(), item2.get_topic());
-        EXPECT_EQ(item1.get_partition(), item2.get_partition());
-        EXPECT_EQ(item1.get_offset(), item2.get_offset());
+        REQUIRE(item1.get_topic() == item2.get_topic());
+        REQUIRE(item1.get_partition() == item2.get_partition());
+        REQUIRE(item1.get_offset() == item2.get_offset());
     }
 }
 
-TEST_F(TopicPartitionListTest, AsString) {
+TEST_CASE("topic partition to string", "[topic_partition]") {
     ostringstream output;
     TopicPartition topic_partition("foo", 5);
     output << topic_partition;
-    EXPECT_EQ("foo[5:#]", output.str());
+    REQUIRE(output.str() == "foo[5:#]");
 }
 
-TEST_F(TopicPartitionListTest, ListAsString) {
+TEST_CASE("topic partition list to string", "[topic_partition]") {
     ostringstream output;
     TopicPartitionList list;
     list.push_back("foo");
@@ -45,5 +40,5 @@ TEST_F(TopicPartitionListTest, ListAsString) {
     list.push_back({ "foobar", 3, 4 });
 
     output << list;
-    EXPECT_EQ("[ foo[-1:#], bar[2:#], foobar[3:4] ]", output.str());
+    REQUIRE(output.str() == "[ foo[-1:#], bar[2:#], foobar[3:4] ]");
 }

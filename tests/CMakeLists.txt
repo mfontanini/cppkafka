@@ -26,7 +26,6 @@ add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 create_test(consumer)
 create_test(producer)
 create_test(kafka_handle_base)
-create_test(topic_partition_list)
 
 add_executable(
     catch_tests
@@ -34,6 +33,7 @@ add_executable(
     buffer_test.cpp
     compacted_topic_processor_test.cpp
     configuration_test.cpp
+    topic_partition_list_test.cpp
 
     # Main file
     test_main.cpp
