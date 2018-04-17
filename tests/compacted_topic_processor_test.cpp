@@ -31,13 +31,13 @@ using namespace cppkafka;
 
 static const string KAFKA_TOPIC = "cppkafka_test1";
 
-Configuration make_producer_config() {
+static Configuration make_producer_config() {
     Configuration config;
     config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
     return config;
 }
 
-Configuration make_consumer_config() {
+static Configuration make_consumer_config() {
     Configuration config;
     config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
     config.set("enable.auto.commit", false);
