@@ -51,12 +51,12 @@ public:
 const string ConsumerTest::KAFKA_TOPIC = "cppkafka_test1";
 
 TEST_F(ConsumerTest, AssignmentCallback) {
-    vector<TopicPartition> assignment;
+    TopicPartitionList assignment;
     int partition = 0;
 
     // Create a consumer and subscribe to the topic
     Consumer consumer(make_consumer_config());
-    consumer.set_assignment_callback([&](const vector<TopicPartition>& topic_partitions) {
+    consumer.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment = topic_partitions;
     });
     consumer.subscribe({ KAFKA_TOPIC });
@@ -90,17 +90,17 @@ TEST_F(ConsumerTest, AssignmentCallback) {
 }
 
 TEST_F(ConsumerTest, Rebalance) {
-    vector<TopicPartition> assignment1;
-    vector<TopicPartition> assignment2;
+    TopicPartitionList assignment1;
+    TopicPartitionList assignment2;
     bool revocation_called = false;
     int partition = 0;
 
     // Create a consumer and subscribe to the topic
     Consumer consumer1(make_consumer_config());
-    consumer1.set_assignment_callback([&](const vector<TopicPartition>& topic_partitions) {
+    consumer1.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment1 = topic_partitions;
     });
-    consumer1.set_revocation_callback([&](const vector<TopicPartition>&) {
+    consumer1.set_revocation_callback([&](const TopicPartitionList&) {
         revocation_called = true;
     });
     consumer1.subscribe({ KAFKA_TOPIC });
@@ -108,7 +108,7 @@ TEST_F(ConsumerTest, Rebalance) {
 
     // Create a second consumer and subscribe to the topic
     Consumer consumer2(make_consumer_config());
-    consumer2.set_assignment_callback([&](const vector<TopicPartition>& topic_partitions) {
+    consumer2.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment2 = topic_partitions;
     });
     consumer2.subscribe({ KAFKA_TOPIC });

@@ -116,6 +116,14 @@ void Consumer::unassign() {
     check_error(error);
 }
 
+void Consumer::commit() {
+    commit(nullptr, false);
+}
+
+void Consumer::async_commit() {
+    commit(nullptr, true);
+}
+
 void Consumer::commit(const Message& msg) {
     commit(msg, false);
 }
@@ -125,11 +133,11 @@ void Consumer::async_commit(const Message& msg) {
 }
 
 void Consumer::commit(const TopicPartitionList& topic_partitions) {
-    commit(topic_partitions, false);
+    commit(&topic_partitions, false);
 }
 
 void Consumer::async_commit(const TopicPartitionList& topic_partitions) {
-    commit(topic_partitions, true);
+    commit(&topic_partitions, true);
 }
 
 KafkaHandleBase::OffsetTuple Consumer::get_offsets(const TopicPartition& topic_partition) const {
@@ -238,15 +246,15 @@ void Consumer::close() {
 
 void Consumer::commit(const Message& msg, bool async) {
     rd_kafka_resp_err_t error;
-    error = rd_kafka_commit_message(get_handle(), msg.get_handle(),
-                                    async ? 1 : 0);
+    error = rd_kafka_commit_message(get_handle(), msg.get_handle(), async ? 1 : 0);
     check_error(error);
 }
 
-void Consumer::commit(const TopicPartitionList& topic_partitions, bool async) {
-    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+void Consumer::commit(const TopicPartitionList* topic_partitions, bool async) {
     rd_kafka_resp_err_t error;
-    error = rd_kafka_commit(get_handle(), topic_list_handle.get(), async ? 1 : 0);
+    error = rd_kafka_commit(get_handle(),
+                            !topic_partitions ? nullptr : convert(*topic_partitions).get(),
+                            async ? 1 : 0);
     check_error(error);
 }
 

@@ -37,7 +37,7 @@ using std::ostream;
 
 namespace cppkafka {
 
-TopicPartitionsListPtr convert(const vector<TopicPartition>& topic_partitions) {
+TopicPartitionsListPtr convert(const TopicPartitionList& topic_partitions) {
     TopicPartitionsListPtr handle(rd_kafka_topic_partition_list_new(topic_partitions.size()),
                                   &rd_kafka_topic_partition_list_destroy);
     for (const auto& item : topic_partitions) {
@@ -50,12 +50,12 @@ TopicPartitionsListPtr convert(const vector<TopicPartition>& topic_partitions) {
     return handle;
 }
 
-vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions) {
+TopicPartitionList convert(const TopicPartitionsListPtr& topic_partitions) {
     return convert(topic_partitions.get());
 }
 
-vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions) {
-    vector<TopicPartition> output;
+TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions) {
+    TopicPartitionList output;
     for (int i = 0; i < topic_partitions->cnt; ++i) {
         const auto& elem = topic_partitions->elems[i];
         output.emplace_back(elem.topic, elem.partition, elem.offset);
