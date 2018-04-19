@@ -98,8 +98,11 @@ class TopicConfiguration;
 class CPPKAFKA_API Consumer : public KafkaHandleBase {
 public:
     using AssignmentCallback = std::function<void(TopicPartitionList&)>;
+    using PartitionAssignmentCallback = std::function<void(Consumer&, TopicPartitionList&)>;
     using RevocationCallback = std::function<void(const TopicPartitionList&)>;
+    using PartitionRevocationCallback = std::function<void(Consumer&, const TopicPartitionList&)>;
     using RebalanceErrorCallback = std::function<void(Error)>;
+    using PartitionRebalanceErrorCallback = std::function<void(Consumer&, Error)>;
 
     /**
      * \brief Creates an instance of a consumer.
@@ -134,6 +137,11 @@ public:
      *
      * \param callback The topic/partition assignment callback
      */
+    void set_partition_assignment_callback(PartitionAssignmentCallback callback);
+    
+    /**
+     * @remark Deprecated. Use set_partition_assignment_callback()
+     */
     void set_assignment_callback(AssignmentCallback callback);
 
     /**
@@ -149,6 +157,11 @@ public:
      *
      * \param callback The topic/partition revocation callback
      */
+    void set_partition_revocation_callback(PartitionRevocationCallback callback);
+    
+    /**
+     * @remark Deprecated. Use set_partition_revocation_callback()
+     */
     void set_revocation_callback(RevocationCallback callback);
 
     /**
@@ -159,6 +172,11 @@ public:
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
      * \param callback The rebalance error callback
+     */
+    void set_partition_rebalance_error_callback(PartitionRebalanceErrorCallback callback);
+    
+    /**
+     * @remark Deprecated. Use set_partition_rebalance_error_callback().
      */
     void set_rebalance_error_callback(RebalanceErrorCallback callback);
 
@@ -298,15 +316,30 @@ public:
     /**
      * Gets the partition assignment callback.
      */
+    const PartitionAssignmentCallback& get_partition_assignment_callback() const;
+    
+    /**
+     * @remark Legacy. Use get_partition_assignment_callback()
+     */
     const AssignmentCallback& get_assignment_callback() const;
 
     /**
      * Gets the partition revocation callback.
      */
+    const PartitionRevocationCallback& get_partition_revocation_callback() const;
+    
+    /**
+     * @remark Legacy. Use get_partition_revocation_callback()
+     */
     const RevocationCallback& get_revocation_callback() const;
 
     /**
      * Gets the rebalance error callback.
+     */
+    const PartitionRebalanceErrorCallback& get_partition_rebalance_error_callback() const;
+    
+    /**
+     * @remark Legacy. Use get_partition_rebalance_error_callback()
      */
     const RebalanceErrorCallback& get_rebalance_error_callback() const;
 
@@ -370,9 +403,12 @@ private:
     void commit(const TopicPartitionList* topic_partitions, bool async);
     void handle_rebalance(rd_kafka_resp_err_t err, TopicPartitionList& topic_partitions);
 
-    AssignmentCallback assignment_callback_;
-    RevocationCallback revocation_callback_;
-    RebalanceErrorCallback rebalance_error_callback_;
+    AssignmentCallback assignment_callback_;    //legacy
+    PartitionAssignmentCallback partition_assignment_callback_;
+    RevocationCallback revocation_callback_;    //legacy
+    PartitionRevocationCallback partition_revocation_callback_;
+    RebalanceErrorCallback rebalance_error_callback_; //legacy
+    PartitionRebalanceErrorCallback partition_rebalance_error_callback_;
 };
 
 } // cppkafka
