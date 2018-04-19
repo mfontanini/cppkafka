@@ -43,4 +43,14 @@
     #define CPPKAFKA_API
 #endif // _WIN32 && !CPPKAFKA_STATIC
 
+#if defined(_WIN32)
+    #define DEPRECATED __declspec(deprecated)
+#elif defined(__GNUC__)
+    #define DEPRECATED __attribute__((deprecated))
+#else
+    #pragma message("WARNING: DEPRECATED MACRO NOT DEFINED")
+    #define DEPRECATED
+#endif
+
+
 #endif // CPPKAFKA_MACROS_H

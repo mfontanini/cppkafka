@@ -83,12 +83,24 @@ void Consumer::set_assignment_callback(AssignmentCallback callback) {
     assignment_callback_ = move(callback);
 }
 
+void Consumer::set_partition_assignment_callback(PartitionAssignmentCallback callback) {
+    partition_assignment_callback_ = move(callback);
+}
+
 void Consumer::set_revocation_callback(RevocationCallback callback) {
     revocation_callback_ = move(callback);
 }
 
+void Consumer::set_partition_revocation_callback(PartitionRevocationCallback callback) {
+    partition_revocation_callback_ = move(callback);
+}
+
 void Consumer::set_rebalance_error_callback(RebalanceErrorCallback callback) {
     rebalance_error_callback_ = move(callback);
+}
+
+void Consumer::set_partition_rebalance_error_callback(PartitionRebalanceErrorCallback callback) {
+    partition_rebalance_error_callback_ = move(callback);
 }
 
 void Consumer::subscribe(const vector<string>& topics) {
@@ -190,12 +202,24 @@ const Consumer::AssignmentCallback& Consumer::get_assignment_callback() const {
     return assignment_callback_;
 }
 
+const Consumer::PartitionAssignmentCallback& Consumer::get_partition_assignment_callback() const {
+    return partition_assignment_callback_;
+}
+
 const Consumer::RevocationCallback& Consumer::get_revocation_callback() const {
     return revocation_callback_;
 }
 
+const Consumer::PartitionRevocationCallback& Consumer::get_partition_revocation_callback() const {
+    return partition_revocation_callback_;
+}
+
 const Consumer::RebalanceErrorCallback& Consumer::get_rebalance_error_callback() const {
     return rebalance_error_callback_;
+}
+
+const Consumer::PartitionRebalanceErrorCallback& Consumer::get_partition_rebalance_error_callback() const {
+    return partition_rebalance_error_callback_;
 }
 
 Message Consumer::poll() {
@@ -253,19 +277,28 @@ void Consumer::commit(const TopicPartitionList& topic_partitions, bool async) {
 void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
                                 TopicPartitionList& topic_partitions) {
     if (error == RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS) {
-        if (assignment_callback_) {
+        if (partition_assignment_callback_) {
+            partition_assignment_callback_(*this, topic_partitions);
+        }
+        else if (assignment_callback_) {
             assignment_callback_(topic_partitions);
         }
         assign(topic_partitions);
     }
     else if (error == RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS) {
-        if (revocation_callback_) {
+        if (partition_revocation_callback_) {
+            partition_revocation_callback_(*this, topic_partitions);
+        }
+        else if (revocation_callback_) {
             revocation_callback_(topic_partitions);
         }
         unassign();
     }
     else {
-        if (rebalance_error_callback_) {
+        if (partition_rebalance_error_callback_) {
+            partition_rebalance_error_callback_(*this, error);
+        }
+        else if (rebalance_error_callback_) {
             rebalance_error_callback_(error);
         }
         unassign();
