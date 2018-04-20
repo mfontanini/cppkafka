@@ -38,6 +38,7 @@
 #include "buffer.h"
 #include "macros.h"
 #include "error.h"
+#include "exceptions.h"
 
 namespace cppkafka {
 
@@ -83,6 +84,9 @@ public:
      * Gets the error attribute
      */
     Error get_error() const {
+        if (!handle_) {
+            throw HandleException(RD_KAFKA_RESP_ERR__STATE);
+        }
         return handle_->err;
     }
 
@@ -97,6 +101,9 @@ public:
      * Gets the topic that this message belongs to
      */
     std::string get_topic() const {
+        if (!handle_) {
+            throw HandleException(RD_KAFKA_RESP_ERR__STATE);
+        }
         return rd_kafka_topic_name(handle_->rkt);
     }
 
@@ -104,6 +111,9 @@ public:
      * Gets the partition that this message belongs to
      */
     int get_partition() const {
+        if (!handle_) {
+            throw HandleException(RD_KAFKA_RESP_ERR__STATE);
+        }
         return handle_->partition;
     }
 
@@ -125,6 +135,9 @@ public:
      * Gets the message offset
      */
     int64_t get_offset() const {
+        if (!handle_) {
+            throw HandleException(RD_KAFKA_RESP_ERR__STATE);
+        }
         return handle_->offset;
     }
 
@@ -135,6 +148,9 @@ public:
      * attribute 
      */
     void* get_user_data() const {
+        if (!handle_) {
+            throw HandleException(RD_KAFKA_RESP_ERR__STATE);
+        }
         return handle_->_private;
     }
 
