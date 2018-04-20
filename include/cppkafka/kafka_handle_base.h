@@ -39,11 +39,25 @@
 #include <tuple>
 #include <chrono>
 #include <librdkafka/rdkafka.h>
+#include "types.h"
 #include "topic_partition.h"
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
 #include "configuration.h"
 #include "macros.h"
+#include "metadata.h"
+#include "group_information.h"
+#include "exceptions.h"
+#include "topic.h"
+
+using std::string;
+using std::vector;
+using std::move;
+using std::make_tuple;
+using std::lock_guard;
+using std::mutex;
+using std::exception;
+using std::chrono::milliseconds;
 
 namespace cppkafka {
 
@@ -55,16 +69,20 @@ class GroupInformation;
 /**
  * Base class for kafka consumer/producer
  */
-class CPPKAFKA_API KafkaHandleBase {
+template <typename Traits>
+class CPPKAFKA_API HandleBase {
 public:
+    using traits_type = Traits;
+    using config_type = typename traits_type::config_type;
+    using topic_config_type = typename traits_type::topic_config_type;
     using OffsetTuple = std::tuple<int64_t, int64_t>;
     using TopicPartitionsTimestampsMap = std::map<TopicPartition, std::chrono::milliseconds>;
 
-    virtual ~KafkaHandleBase() = default;
-    KafkaHandleBase(const KafkaHandleBase&) = delete;
-    KafkaHandleBase(KafkaHandleBase&&) = delete;
-    KafkaHandleBase& operator=(const KafkaHandleBase&) = delete;
-    KafkaHandleBase& operator=(KafkaHandleBase&&) = delete;
+    virtual ~HandleBase() = default;
+    HandleBase(const HandleBase&) = delete;
+    HandleBase(HandleBase&&) = delete;
+    HandleBase& operator=(const HandleBase&) = delete;
+    HandleBase& operator=(HandleBase&&) = delete;
 
     /**
      * \brief Pauses consumption/production from the given topic/partition list
@@ -135,7 +153,7 @@ public:
      * \param name The name of the topic to be created 
      * \param config The configuration to be used for the new topic
      */
-    Topic get_topic(const std::string& name, TopicConfiguration config);
+    Topic get_topic(const std::string& name, topic_config_type config);
 
     /**
      * \brief Gets metadata for brokers, topics, partitions, etc
@@ -185,14 +203,14 @@ public:
     /**
      * Gets the configured timeout.
      *
-     * \sa KafkaHandleBase::set_timeout
+     * \sa HandleBase::set_timeout
      */
     std::chrono::milliseconds get_timeout() const;
 
     /**
      * Gets the handle's configuration
      */ 
-    const Configuration& get_configuration() const;
+    const config_type& get_configuration() const;
 
     /**
      * \brief Gets the length of the out queue 
@@ -200,30 +218,33 @@ public:
      * This calls rd_kafka_outq_len
      */
     int get_out_queue_length() const;
+    
 protected:
-    KafkaHandleBase(Configuration config);
-
+    HandleBase(config_type config);
     void set_handle(rd_kafka_t* handle);
     void check_error(rd_kafka_resp_err_t error) const;
     rd_kafka_conf_t* get_configuration_handle();
+    
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
     using HandlePtr = std::unique_ptr<rd_kafka_t, decltype(&rd_kafka_destroy)>;
-    using TopicConfigurationMap = std::unordered_map<std::string, TopicConfiguration>;
+    using TopicConfigurationMap = std::unordered_map<std::string, topic_config_type>;
 
-    Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
+    Topic get_kafka_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
     Metadata get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const;
     std::vector<GroupInformation> fetch_consumer_groups(const char* name);
-    void save_topic_config(const std::string& topic_name, TopicConfiguration config);
+    void save_topic_config(const std::string& topic_name, topic_config_type config);
 
     HandlePtr handle_;
     std::chrono::milliseconds timeout_ms_;
-    Configuration config_;
+    config_type config_;
     TopicConfigurationMap topic_configurations_;
     std::mutex topic_configurations_mutex_;
 };
 
 } // cppkafka
+
+#include "impl/kafka_handle_base_impl.h"
 
 #endif // CPPKAFKA_KAFKA_HANDLE_BASE_H

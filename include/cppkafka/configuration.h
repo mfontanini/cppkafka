@@ -35,21 +35,34 @@
 #include <functional>
 #include <initializer_list>
 #include <chrono>
+#include <vector>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
+#include "types.h"
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
 #include "clonable_ptr.h"
 #include "configuration_base.h"
 #include "macros.h"
+#include "configuration_cache.h"
+#include "exceptions.h"
+#include "message.h"
+
+using std::string;
+using std::map;
+using std::move;
+using std::vector;
+using std::initializer_list;
+using boost::optional;
+using std::chrono::milliseconds;
 
 namespace cppkafka {
 
 class Message;
 class Error;
-class Producer;
-class Consumer;
-class KafkaHandleBase;
+template <typename T> class ProducerHandle;
+template <typename T> class ConsumerHandle;
+template <typename T> class HandleBase;
 
 /**
  * \brief Represents a global configuration (rd_kafka_conf_t).
@@ -57,42 +70,45 @@ class KafkaHandleBase;
  * This wraps an rdkafka configuration handle. It can safely be copied (will use 
  * rd_kafka_conf_dup under the hood) and moved.
  *
- * Some other overloads for Configuration::set are given via ConfigurationBase.
+ * Some other overloads for HandleConfig::set are given via ConfigBase.
  */
-class CPPKAFKA_API Configuration : public ConfigurationBase<Configuration> {
+template <typename Traits>
+class CPPKAFKA_API HandleConfig : public ConfigBase<HandleConfig<Traits>> {
 public:
-    using DeliveryReportCallback = std::function<void(Producer& producer, const Message&)>;
-    using OffsetCommitCallback = std::function<void(Consumer& consumer, Error,
+    using traits_type = Traits;
+    using config_type = HandleConfig<traits_type>;
+    using topic_config_type = typename traits_type::topic_config_type;
+    using handle_base_type = HandleBase<traits_type>;
+    using base_type = ConfigBase<config_type>;
+    
+    using DeliveryReportCallback = std::function<void(ProducerHandle<Traits>& ProduceTraits, const Message&)>;
+    using OffsetCommitCallback = std::function<void(ConsumerHandle<Traits>& ConsumerTraits, Error,
                                                     const TopicPartitionList& topic_partitions)>;
-    using ErrorCallback = std::function<void(KafkaHandleBase& handle, int error,
+    using ErrorCallback = std::function<void(handle_base_type& handle, int error,
                                              const std::string& reason)>;
-    using ThrottleCallback = std::function<void(KafkaHandleBase& handle,
+    using ThrottleCallback = std::function<void(handle_base_type& handle,
                                                 const std::string& broker_name,
                                                 int32_t broker_id,
                                                 std::chrono::milliseconds throttle_time)>;
-    using LogCallback = std::function<void(KafkaHandleBase& handle, int level,
+    using LogCallback = std::function<void(handle_base_type& handle, int level,
                                            const std::string& facility,
                                            const std::string& message)>;
-    using StatsCallback = std::function<void(KafkaHandleBase& handle, const std::string& json)>;
-    using SocketCallback = std::function<int(int domain, int type, int protoco)>;
+    using StatsCallback = std::function<void(handle_base_type& handle, const std::string& json)>;
+    using SocketCallback = std::function<int(int domain, int type, int protocol)>;
 
-    using ConfigurationBase<Configuration>::set;
-    using ConfigurationBase<Configuration>::get;
-
-    /**
-     * Default constructs a Configuration object
-     */
-    Configuration();
+    using base_type::set;
+    using base_type::get;
 
     /**
-     * Constructs a Configuration object using a list of options
+     * Default constructs a HandleConfig object
      */
-    Configuration(const std::vector<ConfigurationOption>& options);
+    HandleConfig();
 
     /**
-     * Constructs a Configuration object using a list of options
+     * Constructs a HandleConfig object using a list of options
      */
-    Configuration(const std::initializer_list<ConfigurationOption>& options);
+    HandleConfig(const std::vector<ConfigurationOption>& options);
+    HandleConfig(const std::initializer_list<ConfigurationOption>& options);
 
     /**
      * \brief Sets an attribute.
@@ -102,50 +118,52 @@ public:
      * \param name The name of the attribute
      * \param value The value of the attribute
      */
-    Configuration& set(const std::string& name, const std::string& value);
+    config_type& set(const std::string& name, const std::string& value) override;
 
     /**
      * Sets the delivery report callback (invokes rd_kafka_conf_set_dr_msg_cb)
      */
-    Configuration& set_delivery_report_callback(DeliveryReportCallback callback);
+    template <typename T = traits_type, typename = std::enable_if_t<has_producer_traits<config_type>::value>>
+    config_type& set_delivery_report_callback(DeliveryReportCallback callback);
 
     /**
      * Sets the offset commit callback (invokes rd_kafka_conf_set_offset_commit_cb)
      */
-    Configuration& set_offset_commit_callback(OffsetCommitCallback callback);
+    template <typename T = traits_type, typename = std::enable_if_t<has_consumer_traits<config_type>::value>>
+    config_type& set_offset_commit_callback(OffsetCommitCallback callback);
 
     /** 
      * Sets the error callback (invokes rd_kafka_conf_set_error_cb)
      */
-    Configuration& set_error_callback(ErrorCallback callback);
+    config_type& set_error_callback(ErrorCallback callback);
 
     /** 
      * Sets the throttle callback (invokes rd_kafka_conf_set_throttle_cb)
      */
-    Configuration& set_throttle_callback(ThrottleCallback callback);
+    config_type& set_throttle_callback(ThrottleCallback callback);
 
     /** 
      * Sets the log callback (invokes rd_kafka_conf_set_log_cb)
      */
-    Configuration& set_log_callback(LogCallback callback);
+    config_type& set_log_callback(LogCallback callback);
 
     /** 
      * Sets the stats callback (invokes rd_kafka_conf_set_stats_cb)
      */
-    Configuration& set_stats_callback(StatsCallback callback);
+    config_type& set_stats_callback(StatsCallback callback);
 
     /** 
      * Sets the socket callback (invokes rd_kafka_conf_set_socket_cb)
      */
-    Configuration& set_socket_callback(SocketCallback callback);
+    config_type& set_socket_callback(SocketCallback callback);
 
     /** 
      * Sets the default topic configuration
      */
-    Configuration& set_default_topic_configuration(TopicConfiguration config);
+    config_type& set_default_topic_configuration(topic_config_type config);
 
     /**
-     * Returns true iff the given property name has been set
+     * Returns true if the given property name has been set
      */
     bool has_property(const std::string& name) const;
 
@@ -159,7 +177,7 @@ public:
      *
      * \throws ConfigOptionNotFound if the option is not present
      */
-    std::string get(const std::string& name) const;
+    std::string get(const std::string& name) const override;
 
     /**
      * Gets all options, including default values which are set by rdkafka
@@ -169,11 +187,13 @@ public:
     /**
      * Gets the delivery report callback
      */
+    template <typename T = traits_type, typename = std::enable_if_t<has_producer_traits<config_type>::value>>
     const DeliveryReportCallback& get_delivery_report_callback() const;
 
     /**
      * Gets the offset commit callback
      */
+    template <typename T = traits_type, typename = std::enable_if_t<has_consumer_traits<config_type>::value>>
     const OffsetCommitCallback& get_offset_commit_callback() const;
 
     /**
@@ -204,21 +224,21 @@ public:
     /**
      * Gets the default topic configuration
      */
-    const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
+    const boost::optional<topic_config_type>& get_default_topic_configuration() const;
 
     /**
      * Gets the default topic configuration
      */
-    boost::optional<TopicConfiguration>& get_default_topic_configuration();
+    boost::optional<topic_config_type>& get_default_topic_configuration();
+    
 private:
     using HandlePtr = ClonablePtr<rd_kafka_conf_t, decltype(&rd_kafka_conf_destroy),
                                   decltype(&rd_kafka_conf_dup)>;
-
-    Configuration(rd_kafka_conf_t* ptr);
+    
     static HandlePtr make_handle(rd_kafka_conf_t* ptr);
 
     HandlePtr handle_;
-    boost::optional<TopicConfiguration> default_topic_config_;
+    boost::optional<topic_config_type> default_topic_config_;
     DeliveryReportCallback delivery_report_callback_;
     OffsetCommitCallback offset_commit_callback_;
     ErrorCallback error_callback_;
@@ -229,5 +249,7 @@ private:
 };
 
 } // cppkafka
+
+#include "impl/configuration_impl.h"
 
 #endif // CPPKAFKA_CONFIGURATION_H

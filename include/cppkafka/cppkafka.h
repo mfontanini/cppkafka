@@ -27,32 +27,22 @@
  *
  */
 
-#include <algorithm>
+/**
+ * @brief Main include header file
+ */
+ 
+#ifndef CPPKAFKA_CPPKAFKA_H
+#define CPPKAFKA_CPPKAFKA_H
+
+#include "types.h"
+#include "configuration.h"
+#include "topic_configuration.h"
+#include "producer.h"
+#include "consumer.h"
+#include "utils/backoff_performer.h"
 #include "utils/backoff_committer.h"
+#include "utils/buffered_producer.h"
+#include "utils/compacted_topic_processor.h"
+#include "utils/consumer_dispatcher.h"
 
-using std::min;
-
-namespace cppkafka {
-
-BackoffCommitter::BackoffCommitter(Consumer& consumer)
-: consumer_(consumer) {
-
-}
-
-void BackoffCommitter::set_error_callback(ErrorCallback callback) {
-    callback_ = move(callback);
-}
-
-void BackoffCommitter::commit(const Message& msg) {
-    perform([&] { 
-        return do_commit(msg);
-    });
-}
-
-void BackoffCommitter::commit(const TopicPartitionList& topic_partitions) {
-    perform([&] { 
-        return do_commit(topic_partitions);
-    });
-}
-
-} // cppkafka
+#endif //CPPKAFKA_CPPKAFKA_H

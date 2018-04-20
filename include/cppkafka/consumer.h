@@ -35,13 +35,23 @@
 #include <chrono>
 #include <functional>
 #include "kafka_handle_base.h"
+#include "topic.h"
 #include "message.h"
 #include "macros.h"
 #include "error.h"
+#include "exceptions.h"
+#include "configuration.h"
+#include "topic_partition_list.h"
+
+using std::vector;
+using std::string;
+using std::move;
+using std::make_tuple;
+using std::chrono::milliseconds;
 
 namespace cppkafka {
 
-class TopicConfiguration;
+template <typename T> class TopicConfig;
 
 /**
  * \brief High level kafka consumer class
@@ -95,8 +105,13 @@ class TopicConfiguration;
  * }
  * \endcode
  */
-class CPPKAFKA_API Consumer : public KafkaHandleBase {
+template <typename Traits>
+class CPPKAFKA_API ConsumerHandle : public HandleBase<Traits> {
 public:
+    using traits_type = Traits;
+    using base_type = HandleBase<traits_type>;
+    using config_type = typename traits_type::config_type;
+    using topic_config_type = typename traits_type::topic_config_type;
     using AssignmentCallback = std::function<void(TopicPartitionList&)>;
     using RevocationCallback = std::function<void(const TopicPartitionList&)>;
     using RebalanceErrorCallback = std::function<void(Error)>;
@@ -109,27 +124,27 @@ public:
      *
      * \param config The configuration to be used
      */ 
-    Consumer(Configuration config);
-    Consumer(const Consumer&) = delete;
-    Consumer(Consumer&&) = delete;
-    Consumer& operator=(const Consumer&) = delete;
-    Consumer& operator=(Consumer&&) = delete;
+    ConsumerHandle(config_type config);
+    ConsumerHandle(const ConsumerHandle&) = delete;
+    ConsumerHandle(ConsumerHandle&&) = delete;
+    ConsumerHandle& operator=(const ConsumerHandle&) = delete;
+    ConsumerHandle& operator=(ConsumerHandle&&) = delete;
 
     /**
      * \brief Closes and estroys the rdkafka handle
      *
-     * This will call Consumer::close before destroying the handle
+     * This will call ConsumerHandle::close before destroying the handle
      */
-    ~Consumer();
+    ~ConsumerHandle();
 
     /**
      * \brief Sets the topic/partition assignment callback
      * 
-     * The Consumer class will use rd_kafka_conf_set_rebalance_cb and will handle the
+     * The ConsumerHandle class will use rd_kafka_conf_set_rebalance_cb and will handle the
      * rebalance, converting from rdkafka topic partition list handles into vector<TopicPartition>
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
-     * \note You *do not need* to call Consumer::assign with the provided topic parttitions. This
+     * \note You *do not need* to call ConsumerHandle::assign with the provided topic parttitions. This
      * will be handled automatically by cppkafka.
      *
      * \param callback The topic/partition assignment callback
@@ -139,11 +154,11 @@ public:
     /**
      * \brief Sets the topic/partition revocation callback
      * 
-     * The Consumer class will use rd_kafka_conf_set_rebalance_cb and will handle the
+     * The ConsumerHandle class will use rd_kafka_conf_set_rebalance_cb and will handle the
      * rebalance, converting from rdkafka topic partition list handles into vector<TopicPartition>
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
-     * \note You *do not need* to call Consumer::assign with an empty topic partition list or
+     * \note You *do not need* to call ConsumerHandle::assign with an empty topic partition list or
      * anything like that. That's handled automatically by cppkafka. This is just a notifitation
      * so your application code can react to revocations
      *
@@ -154,7 +169,7 @@ public:
     /**
      * \brief Sets the rebalance error callback
      * 
-     * The Consumer class will use rd_kafka_conf_set_rebalance_cb and will handle the
+     * The ConsumerHandle class will use rd_kafka_conf_set_rebalance_cb and will handle the
      * rebalance, converting from rdkafka topic partition list handles into vector<TopicPartition>
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
@@ -236,7 +251,7 @@ public:
      *
      * \param topic_partition The topic/partition to get the offsets from 
      */
-    OffsetTuple get_offsets(const TopicPartition& topic_partition) const;
+    typename base_type::OffsetTuple get_offsets(const TopicPartition& topic_partition) const;
 
     /**
      * \brief Gets the offsets committed for the given topic/partition list
@@ -301,7 +316,7 @@ public:
      * will think this consumer is down and will trigger a rebalance (if using dynamic 
      * subscription).
      *
-     * The timeout used on this call will be the one configured via Consumer::set_timeout.
+     * The timeout used on this call will be the one configured via ConsumerHandle::set_timeout.
      *
      * The returned message *might* be empty. If's necessary to check that it's a valid one before
      * using it:
@@ -318,8 +333,8 @@ public:
     /**
      * \brief Polls for new messages
      *
-     * Same as the other overload of Consumer::poll but the provided timeout will be used
-     * instead of the one configured on this Consumer.
+     * Same as the other overload of ConsumerHandle::poll but the provided timeout will be used
+     * instead of the one configured on this ConsumerHandle.
      *
      * \param timeout The timeout to be used on this call
      */
@@ -343,9 +358,12 @@ public:
      * \param timeout The timeout for this operation
      */
     std::vector<Message> poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout);
+    
 private:
-    static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
-                                rd_kafka_topic_partition_list_t *partitions, void *opaque);
+    static void rebalance_proxy(rd_kafka_t *handle,
+                                rd_kafka_resp_err_t error,
+                                rd_kafka_topic_partition_list_t *partitions,
+                                void *opaque);
 
     void close();
     void commit(const Message& msg, bool async);
@@ -358,5 +376,7 @@ private:
 };
 
 } // cppkafka
+
+#include "impl/consumer_impl.h"
 
 #endif // CPP_KAFKA_CONSUMER_H

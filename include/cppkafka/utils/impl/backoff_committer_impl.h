@@ -27,59 +27,33 @@
  *
  */
 
-#ifndef CPPKAFKA_CONFIGURATION_OPTION_H
-#define CPPKAFKA_CONFIGURATION_OPTION_H
-
-#include <string>
-#include "types.h"
-#include "macros.h"
+using std::min;
 
 namespace cppkafka {
 
-/**
- * Wrapper over a configuration (key, value) pair
- */
-class CPPKAFKA_API ConfigurationOption {
-public:
-    /**
-     * Construct using a std::string value
-     */
-    ConfigurationOption(const std::string& key, const std::string& value);
-    
-    /**
-     * Construct using a const char* value
-     */
-    ConfigurationOption(const std::string& key, const char* value);
-    
-    /**
-     * Construct using a bool value
-     */
-    ConfigurationOption(const std::string& key, bool value);
+template <typename ConsumerType>
+BasicBackoffCommitter<ConsumerType>::BasicBackoffCommitter(ConsumerType& consumer)
+: consumer_(consumer) {
 
-    /**
-     * Construct using any integral value
-     */
-    template <typename T,
-              typename = std::enable_if_t<std::is_integral<T>::value>>
-    ConfigurationOption(const std::string& key, T value)
-    : ConfigurationOption(key, std::to_string(value)) {
+}
 
-    }
+template <typename ConsumerType>
+void BasicBackoffCommitter<ConsumerType>::set_error_callback(ErrorCallback callback) {
+    callback_ = move(callback);
+}
 
-    /**
-     * Gets the key
-     */
-    const std::string& get_key() const;
+template <typename ConsumerType>
+void BasicBackoffCommitter<ConsumerType>::commit(const Message& msg) {
+    perform([&] { 
+        return do_commit(msg);
+    });
+}
 
-    /**
-     * Gets the value
-     */
-    const std::string& get_value() const;
-private:
-    std::string key_;
-    std::string value_;
-};
+template <typename ConsumerType>
+void BasicBackoffCommitter<ConsumerType>::commit(const TopicPartitionList& topic_partitions) {
+    perform([&] { 
+        return do_commit(topic_partitions);
+    });
+}
 
 } // cppkafka
-
-#endif // CPPKAFKA_CONFIGURATION_OPTION_H

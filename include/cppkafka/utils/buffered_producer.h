@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <map>
 #include <boost/optional.hpp>
+#include "../traits.h"
 #include "../producer.h"
 #include "../message.h"
 
@@ -58,9 +59,11 @@ namespace cppkafka {
  *
  * This class is not thread safe.
  */
-template <typename BufferType>
+template <typename BufferType, typename ProducerType = Producer>
 class CPPKAFKA_API BufferedProducer {
 public:
+    using traits_type = typename ProducerType::traits_type;
+    using config_type = typename traits_type::config_type;
     /**
      * Concrete builder
      */
@@ -76,7 +79,7 @@ public:
      *
      * \param config The configuration to be used on the actual Producer object
      */
-    BufferedProducer(Configuration config);
+    BufferedProducer(config_type config);
 
     /**
      * \brief Adds a message to the producer's buffer. 
@@ -130,12 +133,12 @@ public:
     /**
      * Gets the Producer object
      */
-    Producer& get_producer();
+    ProducerType& get_producer();
 
     /**
      * Gets the Producer object
      */
-    const Producer& get_producer() const;
+    const ProducerType& get_producer() const;
 
     /**
      * Simple helper to construct a builder object
@@ -158,158 +161,18 @@ private:
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder);
     void produce_message(const MessageBuilder& message);
-    Configuration prepare_configuration(Configuration config);
+    config_type prepare_configuration(config_type config);
     void on_delivery_report(const Message& message);
 
-    Producer producer_;
+    ProducerType producer_;
     QueueType messages_;
     ProduceFailureCallback produce_failure_callback_;
     size_t expected_acks_{0};
     size_t messages_acked_{0};
 };
 
-template <typename BufferType>
-BufferedProducer<BufferType>::BufferedProducer(Configuration config)
-: producer_(prepare_configuration(std::move(config))) {
-
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
-    do_add_message(builder);
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::add_message(Builder builder) {
-    do_add_message(move(builder));
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
-    produce_message(builder);
-    expected_acks_++;
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::flush() {
-    while (!messages_.empty()) {
-        produce_message(messages_.front());
-        messages_.pop();
-    }
-
-    wait_for_acks();
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::wait_for_acks() {
-    while (messages_acked_ < expected_acks_) {
-        try {
-            producer_.flush();
-        }
-        catch (const HandleException& ex) {
-            // If we just hit the timeout, keep going, otherwise re-throw
-            if (ex.get_error() == RD_KAFKA_RESP_ERR__TIMED_OUT) {
-                continue;
-            }
-            else {
-                throw;
-            }
-        }
-    }
-    expected_acks_ = 0;
-    messages_acked_ = 0;
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::clear() {
-    QueueType tmp;
-    std::swap(tmp, messages_);
-    expected_acks_ = 0;
-    messages_acked_ = 0;
-}
-
-template <typename BufferType>
-template <typename BuilderType>
-void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
-    expected_acks_++;
-    messages_.push(std::move(builder));
-}
-
-template <typename BufferType>
-Producer& BufferedProducer<BufferType>::get_producer() {
-    return producer_;
-}
-
-template <typename BufferType>
-const Producer& BufferedProducer<BufferType>::get_producer() const {
-    return producer_;
-}
-
-template <typename BufferType>
-typename BufferedProducer<BufferType>::Builder
-BufferedProducer<BufferType>::make_builder(std::string topic) {
-    return Builder(std::move(topic));
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::set_produce_failure_callback(ProduceFailureCallback callback) {
-    produce_failure_callback_ = std::move(callback);
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::produce_message(const MessageBuilder& builder) {
-    bool sent = false;
-    while (!sent) {
-        try {
-            producer_.produce(builder);
-            sent = true;
-        }
-        catch (const HandleException& ex) {
-            const Error error = ex.get_error();
-            if (error == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
-                // If the output queue is full, then just poll
-                producer_.poll();
-            }
-            else {
-                throw;
-            }
-        }
-    }
-}
-
-template <typename BufferType>
-Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration config) {
-    using std::placeholders::_2;
-    auto callback = std::bind(&BufferedProducer<BufferType>::on_delivery_report, this, _2);
-    config.set_delivery_report_callback(std::move(callback));
-    return config;
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
-    // We should produce this message again if it has an error and we either don't have a 
-    // produce failure callback or we have one but it returns true
-    bool should_produce = message.get_error() &&
-                          (!produce_failure_callback_ || produce_failure_callback_(message));
-    if (should_produce) {
-        MessageBuilder builder(message.get_topic());
-        const auto& key = message.get_key();
-        const auto& payload = message.get_payload();
-        builder.partition(message.get_partition())
-               .key(Buffer(key.get_data(), key.get_size()))
-               .payload(Buffer(payload.get_data(), payload.get_size()))
-               .user_data(message.get_user_data());
-        if (message.get_timestamp()) {
-            builder.timestamp(message.get_timestamp()->get_timestamp());
-        }
-        produce_message(builder);
-        return;
-    }
-    // If production was successful or the produce failure callback returned false, then
-    // let's consider it to be acked 
-    messages_acked_++;
-}
-
 } // cppkafka
+
+#include "impl/buffered_producer_impl.h"
 
 #endif // CPPKAFKA_BUFFERED_PRODUCER_H

@@ -33,38 +33,43 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <sstream>
 #include "exceptions.h"
 #include "configuration_option.h"
 
 namespace cppkafka {
 
 template <typename Concrete>
-class ConfigurationBase {
+class ConfigBase {
 private:
     template <typename T>
-    struct Type2Type { };
+    struct Type2Type {};
+    
 public:
+    virtual ~ConfigBase() = default;
+
+    /**
+     * Sets a std::string value
+     */
+    virtual Concrete& set(const std::string& name,
+                          const std::string& value) = 0;
+    
     /**
      * Sets a bool value
      */
     Concrete& set(const std::string& name, bool value) {
-        return proxy_set(name, value ? "true" : "false");
+        return set(name, value ? std::string("true") : std::string("false"));
     }
-
+    
     /**
-     * Sets a value of any integral value
+     * Sets a value of any integral value.
+     *
+     * Valid value type: any integral type which is supported by rdkafka
      */
     template <typename T,
-              typename = typename std::enable_if<std::is_integral<T>::value>::type>
+              typename = std::enable_if_t<is_rdkafka_type<T>::value>>
     Concrete& set(const std::string& name, T value) {
-        return proxy_set(name, std::to_string(value));
-    }
-
-    /**
-     * Sets a cstring value
-     */
-    Concrete& set(const std::string& name, const char* value) {
-        return proxy_set(name, value);
+        return set(name, std::to_string(value));
     }
 
     /**
@@ -72,10 +77,12 @@ public:
      */
     Concrete& set(const std::vector<ConfigurationOption>& options) {
         for (const auto& option : options) {
-            proxy_set(option.get_key(), option.get_value());
+            set(option.get_key(), option.get_value());
         }
         return static_cast<Concrete&>(*this);
     }
+    
+    virtual std::string get(const std::string& name) const = 0;
 
     /**
      * \brief Gets a value, converting it to the given type.
@@ -85,16 +92,15 @@ public:
      * If the configuration value can't be converted to the given type, then 
      * InvalidConfigOptionType is thrown.
      *
-     * Valid conversion types:
-     * * std::string
-     * * bool
-     * * int
+     * Valid conversion types: any integral type which is supported by rdkafka
      */
-    template <typename T>
+    template <typename T,
+              typename = std::enable_if_t<is_rdkafka_type<T>::value>>
     T get(const std::string& name) const {
         std::string value = static_cast<const Concrete&>(*this).get(name);
         return convert(value, Type2Type<T>());
     }
+    
 protected:
     static std::map<std::string, std::string> parse_dump(const char** values, size_t count) {
         std::map<std::string, std::string> output;
@@ -104,10 +110,6 @@ protected:
         return output;
     }
 private:
-    Concrete& proxy_set(const std::string& name, const std::string& value) {
-        return static_cast<Concrete&>(*this).set(name, value);
-    }
-
     static std::string convert(const std::string& value, Type2Type<std::string>) {
         return value;
     }
@@ -124,13 +126,15 @@ private:
         }
     }
 
-    static int convert(const std::string& value, Type2Type<int>) {
-        try {
-            return std::stoi(value);
+    template <typename T>
+    static int convert(const std::string& value, Type2Type<T>) {
+        std::istringstream ss(value);
+        T ret;
+        ss >> ret;
+        if (ss.fail()) {
+            throw InvalidConfigOptionType(value, "invalid type");
         }
-        catch (std::exception&) {
-            throw InvalidConfigOptionType(value, "int");
-        }
+        return ret;
     }
 };
 

@@ -27,33 +27,25 @@
  *
  */
 
-#include "consumer.h"
-#include "exceptions.h"
-#include "configuration.h"
-#include "topic_partition_list.h"
-
-using std::vector;
-using std::string;
-using std::move;
-using std::make_tuple;
-
-using std::chrono::milliseconds;
-
 namespace cppkafka {
 
-void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
-                               rd_kafka_topic_partition_list_t *partitions, void *opaque) {
+template <typename Traits>
+void ConsumerHandle<Traits>::rebalance_proxy(rd_kafka_t*,
+                                       rd_kafka_resp_err_t error,
+                                       rd_kafka_topic_partition_list_t *partitions,
+                                       void *opaque) {
     TopicPartitionList list = convert(partitions);
-    static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
+    static_cast<ConsumerHandle*>(opaque)->handle_rebalance(error, list);
 }
 
-Consumer::Consumer(Configuration config) 
-: KafkaHandleBase(move(config)) {
+template <typename Traits>
+ConsumerHandle<Traits>::ConsumerHandle(typename Traits::config_type config)
+: base_type(move(config)) {
     char error_buffer[512];
-    rd_kafka_conf_t* config_handle = get_configuration_handle();
+    rd_kafka_conf_t* config_handle = this->get_configuration_handle();
     // Set ourselves as the opaque pointer
     rd_kafka_conf_set_opaque(config_handle, this);
-    rd_kafka_conf_set_rebalance_cb(config_handle, &Consumer::rebalance_proxy);
+    rd_kafka_conf_set_rebalance_cb(config_handle, &ConsumerHandle<Traits>::rebalance_proxy);
     rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, 
                                    rd_kafka_conf_dup(config_handle),
                                    error_buffer, sizeof(error_buffer));
@@ -61,10 +53,11 @@ Consumer::Consumer(Configuration config)
         throw Exception("Failed to create consumer handle: " + string(error_buffer));
     }
     rd_kafka_poll_set_consumer(ptr);
-    set_handle(ptr);
+    this->set_handle(ptr);
 }
 
-Consumer::~Consumer() {
+template <typename Traits>
+ConsumerHandle<Traits>::~ConsumerHandle() {
     try {
         // make sure to destroy the function closures. in case they hold kafka
         // objects, they will need to be destroyed before we destroy the handle
@@ -79,92 +72,108 @@ Consumer::~Consumer() {
     }
 }
 
-void Consumer::set_assignment_callback(AssignmentCallback callback) {
+template <typename Traits>
+void ConsumerHandle<Traits>::set_assignment_callback(AssignmentCallback callback) {
     assignment_callback_ = move(callback);
 }
 
-void Consumer::set_revocation_callback(RevocationCallback callback) {
+template <typename Traits>
+void ConsumerHandle<Traits>::set_revocation_callback(RevocationCallback callback) {
     revocation_callback_ = move(callback);
 }
 
-void Consumer::set_rebalance_error_callback(RebalanceErrorCallback callback) {
+template <typename Traits>
+void ConsumerHandle<Traits>::set_rebalance_error_callback(RebalanceErrorCallback callback) {
     rebalance_error_callback_ = move(callback);
 }
 
-void Consumer::subscribe(const vector<string>& topics) {
+template <typename Traits>
+void ConsumerHandle<Traits>::subscribe(const vector<string>& topics) {
     TopicPartitionList topic_partitions(topics.begin(), topics.end());
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
-    rd_kafka_resp_err_t error = rd_kafka_subscribe(get_handle(), topic_list_handle.get());
-    check_error(error);
+    rd_kafka_resp_err_t error = rd_kafka_subscribe(this->get_handle(), topic_list_handle.get());
+    this->check_error(error);
 }
 
-void Consumer::unsubscribe() {
-    rd_kafka_resp_err_t error = rd_kafka_unsubscribe(get_handle());
-    check_error(error);
+template <typename Traits>
+void ConsumerHandle<Traits>::unsubscribe() {
+    rd_kafka_resp_err_t error = rd_kafka_unsubscribe(this->get_handle());
+    this->check_error(error);
 }
 
-void Consumer::assign(const TopicPartitionList& topic_partitions) {
+template <typename Traits>
+void ConsumerHandle<Traits>::assign(const TopicPartitionList& topic_partitions) {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     // If the list is empty, then we need to use a null pointer
     auto handle = topic_partitions.empty() ? nullptr : topic_list_handle.get();
-    rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), handle);
-    check_error(error);
+    rd_kafka_resp_err_t error = rd_kafka_assign(this->get_handle(), handle);
+    this->check_error(error);
 }
 
-void Consumer::unassign() {
-    rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), nullptr);
-    check_error(error);
+template <typename Traits>
+void ConsumerHandle<Traits>::unassign() {
+    rd_kafka_resp_err_t error = rd_kafka_assign(this->get_handle(), nullptr);
+    this->check_error(error);
 }
 
-void Consumer::commit(const Message& msg) {
+template <typename Traits>
+void ConsumerHandle<Traits>::commit(const Message& msg) {
     commit(msg, false);
 }
 
-void Consumer::async_commit(const Message& msg) {
+template <typename Traits>
+void ConsumerHandle<Traits>::async_commit(const Message& msg) {
     commit(msg, true);
 }
 
-void Consumer::commit(const TopicPartitionList& topic_partitions) {
+template <typename Traits>
+void ConsumerHandle<Traits>::commit(const TopicPartitionList& topic_partitions) {
     commit(topic_partitions, false);
 }
 
-void Consumer::async_commit(const TopicPartitionList& topic_partitions) {
+template <typename Traits>
+void ConsumerHandle<Traits>::async_commit(const TopicPartitionList& topic_partitions) {
     commit(topic_partitions, true);
 }
 
-KafkaHandleBase::OffsetTuple Consumer::get_offsets(const TopicPartition& topic_partition) const {
+template <typename Traits>
+typename HandleBase<Traits>::OffsetTuple
+ConsumerHandle<Traits>::get_offsets(const TopicPartition& topic_partition) const {
     int64_t low;
     int64_t high;
     const string& topic = topic_partition.get_topic();
     const int partition = topic_partition.get_partition(); 
-    rd_kafka_resp_err_t result = rd_kafka_get_watermark_offsets(get_handle(), topic.data(),
+    rd_kafka_resp_err_t result = rd_kafka_get_watermark_offsets(this->get_handle(), topic.data(),
                                                                 partition, &low, &high);
-    check_error(result);
+    this->check_error(result);
     return make_tuple(low, high);
 }
 
+template <typename Traits>
 TopicPartitionList
-Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) const {
+ConsumerHandle<Traits>::get_offsets_committed(const TopicPartitionList& topic_partitions) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
-    rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), topic_list_handle.get(),
-                                                   static_cast<int>(get_timeout().count()));
-    check_error(error);
+    rd_kafka_resp_err_t error = rd_kafka_committed(this->get_handle(), topic_list_handle.get(),
+                                                   static_cast<int>(this->get_timeout().count()));
+    this->check_error(error);
     return convert(topic_list_handle);
 }
 
+template <typename Traits>
 TopicPartitionList
-Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) const {
+ConsumerHandle<Traits>::get_offsets_position(const TopicPartitionList& topic_partitions) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
-    rd_kafka_resp_err_t error = rd_kafka_position(get_handle(), topic_list_handle.get());
-    check_error(error);
+    rd_kafka_resp_err_t error = rd_kafka_position(this->get_handle(), topic_list_handle.get());
+    this->check_error(error);
     return convert(topic_list_handle);
 }
 
-vector<string> Consumer::get_subscription() const {
+template <typename Traits>
+vector<string> ConsumerHandle<Traits>::get_subscription() const {
     rd_kafka_resp_err_t error;
     rd_kafka_topic_partition_list_t* list = nullptr;
-    error = rd_kafka_subscription(get_handle(), &list);
-    check_error(error);
+    error = rd_kafka_subscription(this->get_handle(), &list);
+    this->check_error(error);
 
     auto handle = make_handle(list);
     vector<string> output;
@@ -174,51 +183,63 @@ vector<string> Consumer::get_subscription() const {
     return output;
 }
 
-TopicPartitionList Consumer::get_assignment() const {
+template <typename Traits>
+TopicPartitionList ConsumerHandle<Traits>::get_assignment() const {
     rd_kafka_resp_err_t error;
     rd_kafka_topic_partition_list_t* list = nullptr;
-    error = rd_kafka_assignment(get_handle(), &list);
-    check_error(error);
+    error = rd_kafka_assignment(this->get_handle(), &list);
+    this->check_error(error);
     return convert(make_handle(list));
 }
 
-string Consumer::get_member_id() const {
-    return rd_kafka_memberid(get_handle());
+template <typename Traits>
+string ConsumerHandle<Traits>::get_member_id() const {
+    return rd_kafka_memberid(this->get_handle());
 }
 
-const Consumer::AssignmentCallback& Consumer::get_assignment_callback() const {
+template <typename Traits>
+const typename ConsumerHandle<Traits>::AssignmentCallback&
+ConsumerHandle<Traits>::get_assignment_callback() const {
     return assignment_callback_;
 }
 
-const Consumer::RevocationCallback& Consumer::get_revocation_callback() const {
+template <typename Traits>
+const typename ConsumerHandle<Traits>::RevocationCallback&
+ConsumerHandle<Traits>::get_revocation_callback() const {
     return revocation_callback_;
 }
 
-const Consumer::RebalanceErrorCallback& Consumer::get_rebalance_error_callback() const {
+template <typename Traits>
+const typename ConsumerHandle<Traits>::RebalanceErrorCallback&
+ConsumerHandle<Traits>::get_rebalance_error_callback() const {
     return rebalance_error_callback_;
 }
 
-Message Consumer::poll() {
-    return poll(get_timeout());
+template <typename Traits>
+Message ConsumerHandle<Traits>::poll() {
+    return poll(this->get_timeout());
 }
 
-Message Consumer::poll(milliseconds timeout) {
-    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(),
+template <typename Traits>
+Message ConsumerHandle<Traits>::poll(milliseconds timeout) {
+    rd_kafka_message_t* message = rd_kafka_consumer_poll(this->get_handle(),
                                                          static_cast<int>(timeout.count()));
     return message ? Message(message) : Message();
 }
 
-vector<Message> Consumer::poll_batch(size_t max_batch_size) {
-    return poll_batch(max_batch_size, get_timeout());
+template <typename Traits>
+vector<Message> ConsumerHandle<Traits>::poll_batch(size_t max_batch_size) {
+    return poll_batch(max_batch_size, this->get_timeout());
 }
 
-vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
+template <typename Traits>
+vector<Message> ConsumerHandle<Traits>::poll_batch(size_t max_batch_size, milliseconds timeout) {
     vector<rd_kafka_message_t*> raw_messages(max_batch_size);
-    rd_kafka_queue_t* queue = rd_kafka_queue_get_consumer(get_handle());
+    rd_kafka_queue_t* queue = rd_kafka_queue_get_consumer(this->get_handle());
     ssize_t result = rd_kafka_consume_batch_queue(queue, timeout.count(), raw_messages.data(),
                                                   raw_messages.size());
     if (result == -1) {
-        check_error(rd_kafka_last_error());
+        this->check_error(rd_kafka_last_error());
         // on the off-chance that check_error() does not throw an error
         result = 0;
     }
@@ -231,26 +252,30 @@ vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout
     return output;
 }
 
-void Consumer::close() {
-    rd_kafka_resp_err_t error = rd_kafka_consumer_close(get_handle());
-    check_error(error);
+template <typename Traits>
+void ConsumerHandle<Traits>::close() {
+    rd_kafka_resp_err_t error = rd_kafka_consumer_close(this->get_handle());
+    this->check_error(error);
 }
 
-void Consumer::commit(const Message& msg, bool async) {
+template <typename Traits>
+void ConsumerHandle<Traits>::commit(const Message& msg, bool async) {
     rd_kafka_resp_err_t error;
-    error = rd_kafka_commit_message(get_handle(), msg.get_handle(),
+    error = rd_kafka_commit_message(this->get_handle(), msg.get_handle(),
                                     async ? 1 : 0);
-    check_error(error);
+    this->check_error(error);
 }
 
-void Consumer::commit(const TopicPartitionList& topic_partitions, bool async) {
+template <typename Traits>
+void ConsumerHandle<Traits>::commit(const TopicPartitionList& topic_partitions, bool async) {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error;
-    error = rd_kafka_commit(get_handle(), topic_list_handle.get(), async ? 1 : 0);
-    check_error(error);
+    error = rd_kafka_commit(this->get_handle(), topic_list_handle.get(), async ? 1 : 0);
+    this->check_error(error);
 }
 
-void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
+template <typename Traits>
+void ConsumerHandle<Traits>::handle_rebalance(rd_kafka_resp_err_t error,
                                 TopicPartitionList& topic_partitions) {
     if (error == RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS) {
         if (assignment_callback_) {
