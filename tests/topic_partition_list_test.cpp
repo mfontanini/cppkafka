@@ -34,7 +34,7 @@ TEST_F(TopicPartitionListTest, AsString) {
     ostringstream output;
     TopicPartition topic_partition("foo", 5);
     output << topic_partition;
-    EXPECT_EQ("foo[5]", output.str());
+    EXPECT_EQ("foo[5:#]", output.str());
 }
 
 TEST_F(TopicPartitionListTest, ListAsString) {
@@ -42,7 +42,8 @@ TEST_F(TopicPartitionListTest, ListAsString) {
     TopicPartitionList list;
     list.push_back("foo");
     list.push_back({ "bar", 2 });
+    list.push_back({ "foobar", 3, 4 });
 
     output << list;
-    EXPECT_EQ("[ foo[-1], bar[2] ]", output.str());
+    EXPECT_EQ("[ foo[-1:#], bar[2:#], foobar[3:4] ]", output.str());
 }
