@@ -25,7 +25,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 # Build output checks
 option(CPPKAFKA_BUILD_SHARED "Build cppkafka as a shared library." ON)
-option(CPPKAKFA_DISABLE_TESTS "Disable build of cppkafka tests." OFF)
+option(CPPKAFKA_DISABLE_TESTS "Disable build of cppkafka tests." OFF)
 if(CPPKAFKA_BUILD_SHARED)
     message(STATUS "Build will generate a shared library. "
             "Use CPPKAFKA_BUILD_SHARED=0 to perform a static build")
@@ -61,7 +61,7 @@ if(DOXYGEN_FOUND)
     )
 endif(DOXYGEN_FOUND)
 
-if(NOT CPPKAKFA_DISABLE_TESTS)
+if(NOT CPPKAFKA_DISABLE_TESTS)
     set(GOOGLETEST_ROOT ${CMAKE_SOURCE_DIR}/third_party/googletest)
     if(EXISTS "${GOOGLETEST_ROOT}/CMakeLists.txt")
         set(GOOGLETEST_INCLUDE ${GOOGLETEST_ROOT}/googletest/include)
