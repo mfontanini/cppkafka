@@ -126,12 +126,12 @@ TEST_F(KafkaHandleBaseTest, ConsumerGroups) {
 
     MemberAssignmentInformation assignment = member.get_member_assignment();
     EXPECT_EQ(0, assignment.get_version());
-    vector<TopicPartition> expected_topic_partitions = {
+    TopicPartitionList expected_topic_partitions = {
         { KAFKA_TOPIC, 0 },
         { KAFKA_TOPIC, 1 },
         { KAFKA_TOPIC, 2 }
     };
-    vector<TopicPartition> topic_partitions = assignment.get_topic_partitions();
+    TopicPartitionList topic_partitions = assignment.get_topic_partitions();
     sort(topic_partitions.begin(), topic_partitions.end());
     EXPECT_EQ(expected_topic_partitions, topic_partitions);
     /*for (const auto c : ) {

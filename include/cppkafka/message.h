@@ -33,6 +33,7 @@
 #include <memory>
 #include <cstdint>
 #include <chrono>
+#include <cassert>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
 #include "buffer.h"
@@ -83,6 +84,7 @@ public:
      * Gets the error attribute
      */
     Error get_error() const {
+        assert(handle_);
         return handle_->err;
     }
 
@@ -97,6 +99,7 @@ public:
      * Gets the topic that this message belongs to
      */
     std::string get_topic() const {
+        assert(handle_);
         return rd_kafka_topic_name(handle_->rkt);
     }
 
@@ -104,6 +107,7 @@ public:
      * Gets the partition that this message belongs to
      */
     int get_partition() const {
+        assert(handle_);
         return handle_->partition;
     }
 
@@ -125,6 +129,7 @@ public:
      * Gets the message offset
      */
     int64_t get_offset() const {
+        assert(handle_);
         return handle_->offset;
     }
 
@@ -135,6 +140,7 @@ public:
      * attribute 
      */
     void* get_user_data() const {
+        assert(handle_);
         return handle_->_private;
     }
 

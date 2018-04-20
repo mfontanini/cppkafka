@@ -41,7 +41,7 @@ Message Message::make_non_owning(rd_kafka_message_t* handle) {
     return Message(handle, NonOwningTag());
 }
 
-Message::Message() 
+Message::Message()
 : handle_(nullptr, nullptr) {
 
 }

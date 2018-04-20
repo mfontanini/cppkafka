@@ -49,9 +49,9 @@ using TopicPartitionsListPtr = std::unique_ptr<rd_kafka_topic_partition_list_t,
 using TopicPartitionList = std::vector<TopicPartition>;
 
 // Conversions between rdkafka handles and TopicPartitionList
-CPPKAFKA_API TopicPartitionsListPtr convert(const std::vector<TopicPartition>& topic_partitions);
-CPPKAFKA_API std::vector<TopicPartition> convert(const TopicPartitionsListPtr& topic_partitions);
-CPPKAFKA_API std::vector<TopicPartition> convert(rd_kafka_topic_partition_list_t* topic_partitions);
+CPPKAFKA_API TopicPartitionsListPtr convert(const TopicPartitionList& topic_partitions);
+CPPKAFKA_API TopicPartitionList convert(const TopicPartitionsListPtr& topic_partitions);
+CPPKAFKA_API TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions);
 CPPKAFKA_API TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
 
 CPPKAFKA_API std::ostream& operator<<(std::ostream& output, const TopicPartitionList& rhs);

@@ -64,14 +64,14 @@ class TopicConfiguration;
  * Consumer consumer(config);
  *
  * // Set the assignment callback
- * consumer.set_assignment_callback([&](vector<TopicPartition>& topic_partitions) {
+ * consumer.set_assignment_callback([&](TopicPartitionList& topic_partitions) {
  *     // Here you could fetch offsets and do something, altering the offsets on the
  *     // topic_partitions vector if needed
  *     cout << "Got assigned " << topic_partitions.size() << " partitions!" << endl;
  * });
  *
  * // Set the revocation callback
- * consumer.set_revocation_callback([&](const vector<TopicPartition>& topic_partitions) {
+ * consumer.set_revocation_callback([&](const TopicPartitionList& topic_partitions) {
  *     cout << topic_partitions.size() << " partitions revoked!" << endl;
  * });
  * 
@@ -126,7 +126,7 @@ public:
      * \brief Sets the topic/partition assignment callback
      * 
      * The Consumer class will use rd_kafka_conf_set_rebalance_cb and will handle the
-     * rebalance, converting from rdkafka topic partition list handles into vector<TopicPartition>
+     * rebalance, converting from rdkafka topic partition list handles into TopicPartitionList
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
      * \note You *do not need* to call Consumer::assign with the provided topic parttitions. This
@@ -140,7 +140,7 @@ public:
      * \brief Sets the topic/partition revocation callback
      * 
      * The Consumer class will use rd_kafka_conf_set_rebalance_cb and will handle the
-     * rebalance, converting from rdkafka topic partition list handles into vector<TopicPartition>
+     * rebalance, converting from rdkafka topic partition list handles into TopicPartitionList
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
      * \note You *do not need* to call Consumer::assign with an empty topic partition list or
@@ -155,7 +155,7 @@ public:
      * \brief Sets the rebalance error callback
      * 
      * The Consumer class will use rd_kafka_conf_set_rebalance_cb and will handle the
-     * rebalance, converting from rdkafka topic partition list handles into vector<TopicPartition>
+     * rebalance, converting from rdkafka topic partition list handles into TopicPartitionList
      * and executing the assignment/revocation/rebalance_error callbacks.
      *
      * \param callback The rebalance error callback
@@ -192,6 +192,24 @@ public:
      * parameter
      */ 
     void unassign();
+    
+    /**
+     * \brief Commits the current partition assignment
+     *
+     * This translates into a call to rd_kafka_commit with a null partition list.
+     *
+     * \remark This function is equivalent to calling commit(get_assignment())
+     */
+    void commit();
+    
+    /**
+     * \brief Commits the current partition assignment asynchronously
+     *
+     * This translates into a call to rd_kafka_commit with a null partition list.
+     *
+     * \remark This function is equivalent to calling async_commit(get_assignment())
+     */
+    void async_commit();
 
     /**
      * \brief Commits the given message synchronously
@@ -349,7 +367,7 @@ private:
 
     void close();
     void commit(const Message& msg, bool async);
-    void commit(const TopicPartitionList& topic_partitions, bool async);
+    void commit(const TopicPartitionList* topic_partitions, bool async);
     void handle_rebalance(rd_kafka_resp_err_t err, TopicPartitionList& topic_partitions);
 
     AssignmentCallback assignment_callback_;
