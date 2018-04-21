@@ -96,27 +96,27 @@ TEST_CASE("consumption", "[consumer][compacted]") {
 
     size_t set_count = 0;
     size_t delete_count = 0;
-    REQUIRE(!events.empty());
+    CHECK(events.empty() == false);
     for (const Event& event : events) {
         switch (event.get_type()) {
             case Event::SET_ELEMENT:
                 {
                     auto iter = elements.find(to_string(event.get_key()));
                     REQUIRE(iter != elements.end());
-                    REQUIRE(iter->second.value == event.get_value());
-                    REQUIRE(iter->second.partition == event.get_partition());
+                    CHECK(iter->second.value == event.get_value());
+                    CHECK(iter->second.partition == event.get_partition());
                     set_count++;
                 }
                 break;
             case Event::DELETE_ELEMENT:
-                REQUIRE(event.get_partition() == 0);
-                REQUIRE(event.get_key() == 42);
+                CHECK(event.get_partition() == 0);
+                CHECK(event.get_key() == 42);
                 delete_count++;
                 break;
             default:
             break;
         } 
     }
-    REQUIRE(set_count == 2);
-    REQUIRE(delete_count == 1);
+    CHECK(set_count == 2);
+    CHECK(delete_count == 1);
 }

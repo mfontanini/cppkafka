@@ -11,9 +11,9 @@ TEST_CASE("normal config", "[config]") {
 
     SECTION("get existing") {
         config.set("group.id", "foo").set("metadata.broker.list", "asd:9092");
-        REQUIRE(config.get("group.id") == "foo");
-        REQUIRE(config.get("metadata.broker.list") == "asd:9092");
-        REQUIRE(config.get<string>("group.id") == "foo");
+        CHECK(config.get("group.id") == "foo");
+        CHECK(config.get("metadata.broker.list") == "asd:9092");
+        CHECK(config.get<string>("group.id") == "foo");
     }
 
     SECTION("get non existent") {
@@ -24,9 +24,9 @@ TEST_CASE("normal config", "[config]") {
         config.set("enable.auto.commit", true);
         config.set("auto.commit.interval.ms", 100);
 
-        REQUIRE(config.get("enable.auto.commit") == "true");
-        REQUIRE(config.get("auto.commit.interval.ms") == "100");
-        REQUIRE(config.get<int>("auto.commit.interval.ms") == 100);
+        CHECK(config.get("enable.auto.commit") == "true");
+        CHECK(config.get("auto.commit.interval.ms") == "100");
+        CHECK(config.get<int>("auto.commit.interval.ms") == 100);
     }
 
     SECTION("set multiple") {
@@ -37,24 +37,24 @@ TEST_CASE("normal config", "[config]") {
             { "topic.metadata.refresh.sparse", true }
         };
 
-        REQUIRE(config.get("group.id") == "foo");
-        REQUIRE(config.get("metadata.broker.list") == "asd:9092");
-        REQUIRE(config.get<int>("message.max.bytes") == 2000);
-        REQUIRE(config.get<bool>("topic.metadata.refresh.sparse") == true);
+        CHECK(config.get("group.id") == "foo");
+        CHECK(config.get("metadata.broker.list") == "asd:9092");
+        CHECK(config.get<int>("message.max.bytes") == 2000);
+        CHECK(config.get<bool>("topic.metadata.refresh.sparse") == true);
     }
 
     SECTION("default topic config") {
         config.set_default_topic_configuration({{ "request.required.acks", 2 }});
 
         const auto& topic_config = config.get_default_topic_configuration();
-        REQUIRE(!!topic_config == true);
-        REQUIRE(topic_config->get<int>("request.required.acks") == 2);
+        CHECK(!!topic_config == true);
+        CHECK(topic_config->get<int>("request.required.acks") == 2);
     }
 
     SECTION("get all") {
         config.set("enable.auto.commit", false);
         auto option_map = config.get_all();
-        REQUIRE(option_map.at("enable.auto.commit") == "false");
+        CHECK(option_map.at("enable.auto.commit") == "false");
     }
 }
 
@@ -63,9 +63,9 @@ TEST_CASE("topic config", "[config]") {
 
     SECTION("get existing") {
         config.set("auto.commit.enable", true).set("offset.store.method", "broker");
-        REQUIRE(config.get("auto.commit.enable") == "true");
-        REQUIRE(config.get("offset.store.method") == "broker");
-        REQUIRE(config.get<bool>("auto.commit.enable") == true);
+        CHECK(config.get("auto.commit.enable") == "true");
+        CHECK(config.get("offset.store.method") == "broker");
+        CHECK(config.get<bool>("auto.commit.enable") == true);
     }
 
     SECTION("get non existent") {
@@ -79,15 +79,15 @@ TEST_CASE("topic config", "[config]") {
             { "request.required.acks", 2 },
             { "produce.offset.report", true }
         };
-        REQUIRE(config.get("compression.codec") == "none");
-        REQUIRE(config.get("offset.store.method") == "file");
-        REQUIRE(config.get<int>("request.required.acks") == 2);
-        REQUIRE(config.get<bool>("produce.offset.report") == true);
+        CHECK(config.get("compression.codec") == "none");
+        CHECK(config.get("offset.store.method") == "file");
+        CHECK(config.get<int>("request.required.acks") == 2);
+        CHECK(config.get<bool>("produce.offset.report") == true);
     }
 
     SECTION("get all") {
         config.set("auto.commit.enable", false);
         auto option_map = config.get_all();
-        REQUIRE(option_map.at("auto.commit.enable") == "false");
+        CHECK(option_map.at("auto.commit.enable") == "false");
     }
 }

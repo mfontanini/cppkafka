@@ -15,13 +15,13 @@ TEST_CASE("rdkafka conversion", "[topic_partition]") {
 
     TopicPartitionList list2 = convert(convert(list1));
 
-    REQUIRE(list1.size() == list2.size());
+    CHECK(list1.size() == list2.size());
     for (size_t i = 0; i < list1.size(); ++i) {
         const auto& item1 = list1[i];
         const auto& item2 = list2[i];
-        REQUIRE(item1.get_topic() == item2.get_topic());
-        REQUIRE(item1.get_partition() == item2.get_partition());
-        REQUIRE(item1.get_offset() == item2.get_offset());
+        CHECK(item1.get_topic() == item2.get_topic());
+        CHECK(item1.get_partition() == item2.get_partition());
+        CHECK(item1.get_offset() == item2.get_offset());
     }
 }
 
@@ -29,7 +29,7 @@ TEST_CASE("topic partition to string", "[topic_partition]") {
     ostringstream output;
     TopicPartition topic_partition("foo", 5);
     output << topic_partition;
-    REQUIRE(output.str() == "foo[5:#]");
+    CHECK(output.str() == "foo[5:#]");
 }
 
 TEST_CASE("topic partition list to string", "[topic_partition]") {
@@ -40,5 +40,5 @@ TEST_CASE("topic partition list to string", "[topic_partition]") {
     list.push_back({ "foobar", 3, 4 });
 
     output << list;
-    REQUIRE(output.str() == "[ foo[-1:#], bar[2:#], foobar[3:4] ]");
+    CHECK(output.str() == "[ foo[-1:#], bar[2:#], foobar[3:4] ]");
 }

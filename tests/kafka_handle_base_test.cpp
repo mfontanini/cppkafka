@@ -55,7 +55,7 @@ TEST_CASE("metadata", "[handle_base]") {
         const auto& broker = brokers[0];
         // TODO: resolve this
         //REQUIRE(broker.get_host() == get_kafka_host());
-        REQUIRE(broker.get_port() == get_kafka_port());
+        CHECK(broker.get_port() == get_kafka_port());
     }
 
     SECTION("topics") {
@@ -63,7 +63,7 @@ TEST_CASE("metadata", "[handle_base]") {
         size_t found_topics = 0;
 
         const vector<TopicMetadata>& topics = metadata.get_topics();
-        REQUIRE(topics.size() >= 2);
+        CHECK(topics.size() >= 2);
 
         for (const auto& topic : topics) {
             if (topic_names.count(topic.get_name()) == 1) {
@@ -82,16 +82,16 @@ TEST_CASE("metadata", "[handle_base]") {
                 found_topics++;
             }
         }
-        REQUIRE(found_topics == topic_names.size());
+        CHECK(found_topics == topic_names.size());
 
         // Find by names
-        REQUIRE(metadata.get_topics(topic_names).size() == topic_names.size());
+        CHECK(metadata.get_topics(topic_names).size() == topic_names.size());
         // Find by prefix
-        REQUIRE(metadata.get_topics_prefixed("cppkafka_").size() == topic_names.size());
+        CHECK(metadata.get_topics_prefixed("cppkafka_").size() == topic_names.size());
 
         // Now get the whole metadata only for this topic
         Topic topic = producer.get_topic(KAFKA_TOPIC);
-        REQUIRE(producer.get_metadata(topic).get_name() == KAFKA_TOPIC);
+        CHECK(producer.get_metadata(topic).get_name() == KAFKA_TOPIC);
     }
 }
 
@@ -111,15 +111,15 @@ TEST_CASE("consumer groups", "[handle_base]") {
     runner.try_join();
 
     GroupInformation information = consumer.get_consumer_group(consumer_group);
-    REQUIRE(information.get_name() == consumer_group);
-    REQUIRE(information.get_protocol_type() == "consumer");
-    REQUIRE(information.get_members().size() == 1);
+    CHECK(information.get_name() == consumer_group);
+    CHECK(information.get_protocol_type() == "consumer");
+    CHECK(information.get_members().size() == 1);
 
     auto member = information.get_members()[0];
-    REQUIRE(member.get_client_id() == client_id);
+    CHECK(member.get_client_id() == client_id);
 
     MemberAssignmentInformation assignment = member.get_member_assignment();
-    REQUIRE(assignment.get_version() == 0);
+    CHECK(assignment.get_version() == 0);
     TopicPartitionList expected_topic_partitions = {
         { KAFKA_TOPIC, 0 },
         { KAFKA_TOPIC, 1 },
@@ -127,5 +127,5 @@ TEST_CASE("consumer groups", "[handle_base]") {
     };
     TopicPartitionList topic_partitions = assignment.get_topic_partitions();
     sort(topic_partitions.begin(), topic_partitions.end());
-    REQUIRE(topic_partitions == expected_topic_partitions);
+    CHECK(topic_partitions == expected_topic_partitions);
 }
