@@ -23,7 +23,6 @@ add_library(cppkafka-test EXCLUDE_FROM_ALL test_utils.cpp)
 target_link_libraries(cppkafka-test cppkafka ${RDKAFKA_LIBRARY} pthread)
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
-create_test(consumer)
 
 add_executable(
     catch_tests
@@ -34,6 +33,7 @@ add_executable(
     topic_partition_list_test.cpp
     kafka_handle_base_test.cpp
     producer_test.cpp
+    consumer_test.cpp
 
     # Main file
     test_main.cpp
