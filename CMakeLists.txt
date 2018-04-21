@@ -66,34 +66,8 @@ if(NOT CPPKAFKA_DISABLE_TESTS)
     if(EXISTS ${CATCH_ROOT}/CMakeLists.txt)
         set(CATCH_INCLUDE ${CATCH_ROOT}/single_include)
 
-        #enable_testing()
-        #add_subdirectory(tests)
-    else()
-        message(STATUS "Disabling tests")
-    endif()
-
-    set(GOOGLETEST_ROOT ${CMAKE_SOURCE_DIR}/third_party/googletest)
-    if(EXISTS "${GOOGLETEST_ROOT}/CMakeLists.txt")
-        set(GOOGLETEST_INCLUDE ${GOOGLETEST_ROOT}/googletest/include)
-        set(GOOGLETEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/googletest)
-        set(GOOGLETEST_LIBRARY ${GOOGLETEST_BINARY_DIR}/googletest)
-
-        include(ExternalProject)
-
-        ExternalProject_Add(
-        googletest
-        DOWNLOAD_COMMAND ""
-        SOURCE_DIR ${GOOGLETEST_ROOT}
-        BINARY_DIR ${GOOGLETEST_BINARY_DIR}
-        CMAKE_CACHE_ARGS "-DBUILD_GTEST:bool=ON" "-DBUILD_GMOCK:bool=OFF"
-                        "-Dgtest_force_shared_crt:bool=ON"
-        INSTALL_COMMAND ""
-        )
-
         enable_testing()
         add_subdirectory(tests)
-        # Make sure we build googletest before anything else
-        add_dependencies(cppkafka googletest)
     else()
         message(STATUS "Disabling tests because submodule googletest isn't pulled out")
     endif()
