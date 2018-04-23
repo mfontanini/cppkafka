@@ -1,10 +1,6 @@
-include_directories(${GOOGLETEST_INCLUDE})
-include_directories(SYSTEM ${CATCH_INCLUDE})
-message(STATUS ${CATCH_INCLUDE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
+include_directories(SYSTEM ${CATCH_INCLUDE})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${RDKAFKA_INCLUDE_DIR})
-
-link_directories(${GOOGLETEST_LIBRARY})
 
 set(KAFKA_TEST_INSTANCE "kafka-vm:9092" 
     CACHE STRING "The kafka instance to which to connect to run tests")
