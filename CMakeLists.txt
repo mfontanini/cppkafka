@@ -69,7 +69,7 @@ if(NOT CPPKAFKA_DISABLE_TESTS)
         enable_testing()
         add_subdirectory(tests)
     else()
-        message(STATUS "Disabling tests because submodule googletest isn't pulled out")
+        message(STATUS "Disabling tests because submodule Catch2 isn't checked out")
     endif()
 endif()
 
