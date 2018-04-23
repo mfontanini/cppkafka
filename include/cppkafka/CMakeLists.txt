@@ -1,3 +1,21 @@
+# Local function to auto-generate main cppkafka.h header file
+function(make_cppkafka_header)
+    set(CPPKAFKA_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/cppkafka.h)
+    file(GLOB INCLUDE_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.h" "utils/*.h")
+    foreach(header ${INCLUDE_HEADERS})
+        if (NOT ${header} MATCHES "cppkafka.h")
+            SET(CPPKAFKA_HEADERS "${CPPKAFKA_HEADERS}#include <cppkafka/${header}>\n")
+        endif()
+    endforeach()
+
+    #create file from template
+    configure_file(${PROJECT_SOURCE_DIR}/cppkafka.h.in ${CPPKAFKA_HEADER})
+endfunction()
+
+# Run file generation function
+make_cppkafka_header()
+
+# Install headers including the auto-generated cppkafka.h
 file(GLOB INCLUDE_FILES "*.h")
 file(GLOB UTILS_INCLUDE_FILES "utils/*.h")
 install(

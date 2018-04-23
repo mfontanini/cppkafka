@@ -26,7 +26,7 @@ _cppkafka_'s API is simple to use. For example, this code creates a producer tha
 into some partition:
 
 ```c++
-#include <cppkafka/producer.h>
+#include <cppkafka/cppkafka.h>
 
 using namespace std;
 using namespace cppkafka;
