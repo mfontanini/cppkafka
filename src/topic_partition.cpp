@@ -33,6 +33,7 @@
 #include "topic_partition.h"
 
 using std::string;
+using std::to_string;
 using std::ostream;
 using std::tie;
 
@@ -92,7 +93,10 @@ bool TopicPartition::operator!=(const TopicPartition& rhs) const {
 }
 
 ostream& operator<<(ostream& output, const TopicPartition& rhs) {
-    return output << rhs.get_topic() << "[" << rhs.get_partition() << "]";
+    return output << rhs.get_topic() << "["
+                  << rhs.get_partition() << ":"
+                  << (rhs.get_offset() == RD_KAFKA_OFFSET_INVALID ? "#" : to_string(rhs.get_offset()))
+                  << "]";
 }
 
 } // cppkafka
