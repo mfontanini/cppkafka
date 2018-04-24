@@ -31,5 +31,4 @@
 #define CPPKAFKA_H
 
 @CPPKAFKA_HEADERS@
-
 #endif

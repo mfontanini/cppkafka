@@ -55,5 +55,4 @@
 #include <cppkafka/utils/compacted_topic_processor.h>
 #include <cppkafka/utils/consumer_dispatcher.h>
 
-
 #endif
