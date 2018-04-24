@@ -3,7 +3,7 @@
 #include <chrono>
 #include <set>
 #include <condition_variable>
-#include <gtest/gtest.h>
+#include <catch.hpp>
 #include "cppkafka/producer.h"
 #include "cppkafka/consumer.h"
 #include "cppkafka/utils/buffered_producer.h"
@@ -26,34 +26,29 @@ using std::chrono::milliseconds;
 
 using namespace cppkafka;
 
-class ProducerTest : public testing::Test {
-public:
-    static const string KAFKA_TOPIC;
+static const string KAFKA_TOPIC = "cppkafka_test1";
 
-    Configuration make_producer_config() {
-        Configuration config = {
-            { "metadata.broker.list", KAFKA_TEST_INSTANCE },
-            { "queue.buffering.max.ms", 0 },
-            { "api.version.request", true },
-            { "queue.buffering.max.ms", 50 }
-        };
-        return config;
-    }
+static Configuration make_producer_config() {
+    Configuration config = {
+        { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+        { "queue.buffering.max.ms", 0 },
+        { "api.version.request", true },
+        { "queue.buffering.max.ms", 50 }
+    };
+    return config;
+}
 
-    Configuration make_consumer_config() {
-        Configuration config = {
-            { "metadata.broker.list", KAFKA_TEST_INSTANCE },
-            { "enable.auto.commit", false },
-            { "group.id", "producer_test" },
-            { "api.version.request", true }
-        };
-        return config;
-    }
-};
+static Configuration make_consumer_config() {
+    Configuration config = {
+        { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+        { "enable.auto.commit", false },
+        { "group.id", "producer_test" },
+        { "api.version.request", true }
+    };
+    return config;
+}
 
-const string ProducerTest::KAFKA_TOPIC = "cppkafka_test1";
-
-TEST_F(ProducerTest, OneMessageOnFixedPartition) {
+TEST_CASE("simple production", "[producer]") {
     int partition = 0;
 
     // Create a consumer and assign this topic/partition
@@ -61,59 +56,121 @@ TEST_F(ProducerTest, OneMessageOnFixedPartition) {
     consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
     ConsumerRunner runner(consumer, 1, 1);
 
-    // Now create a producer and produce a message
-    Producer producer(make_producer_config());
-    string payload = "Hello world! 1";
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
-    runner.try_join();
+    Configuration config = make_producer_config();
+    SECTION("message with no key") {
+        // Now create a producer and produce a message
+        const string payload = "Hello world! 1";
+        Producer producer(config);
+        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+        runner.try_join();
 
-    const auto& messages = runner.get_messages();
-    ASSERT_EQ(1, messages.size());
-    const auto& message = messages[0];
-    EXPECT_EQ(Buffer(payload), message.get_payload());
-    EXPECT_FALSE(message.get_key());
-    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
-    EXPECT_EQ(partition, message.get_partition());
-    EXPECT_FALSE(message.get_error());
+        const auto& messages = runner.get_messages();
+        REQUIRE(messages.size() == 1);
+        const auto& message = messages[0];
+        CHECK(message.get_payload() == payload);
+        CHECK(!!message.get_key() == false);
+        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_partition() == partition);
+        CHECK(!!message.get_error() == false);
 
-    int64_t low;
-    int64_t high;
-    tie(low, high) = producer.query_offsets({ KAFKA_TOPIC, partition });
-    EXPECT_GT(high, low);
+        int64_t low;
+        int64_t high;
+        tie(low, high) = producer.query_offsets({ KAFKA_TOPIC, partition });
+        CHECK(high > low);
+    }
+
+    SECTION("message with key") {
+        const string payload = "Hello world! 2";
+        const string key = "such key";
+        const milliseconds timestamp{15};
+        Producer producer(config);
+        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition)
+                                                     .key(key)
+                                                     .payload(payload)
+                                                     .timestamp(timestamp));
+        runner.try_join();
+
+        const auto& messages = runner.get_messages();
+        REQUIRE(messages.size() == 1);
+        const auto& message = messages[0];
+        CHECK(message.get_payload() == payload);
+        CHECK(message.get_key() == key);
+        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_partition() == partition);
+        CHECK(!!message.get_error() == false);
+        REQUIRE(!!message.get_timestamp() == true);
+        CHECK(message.get_timestamp()->get_timestamp() == timestamp);
+    }
+
+    SECTION("callbacks") {
+        // Now create a producer and produce a message
+        const string payload = "Hello world! 3";
+        const string key = "hehe";
+        bool delivery_report_called = false;
+        config.set_delivery_report_callback([&](Producer&, const Message& msg) {
+            CHECK(msg.get_payload() == payload);
+            delivery_report_called = true;
+        });
+
+        TopicConfiguration topic_config;
+        topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
+                                                  int32_t partition_count) {
+            CHECK(msg_key == key);
+            CHECK(partition_count == 3);
+            CHECK(topic.get_name() == KAFKA_TOPIC);
+            return 0;
+        });
+        config.set_default_topic_configuration(topic_config);
+
+        Producer producer(config);
+        producer.produce(MessageBuilder(KAFKA_TOPIC).key(key).payload(payload));
+        while (producer.get_out_queue_length() > 0) {
+            producer.poll();
+        }
+        runner.try_join();
+
+        const auto& messages = runner.get_messages();
+        REQUIRE(messages.size() == 1);
+        const auto& message = messages[0];
+        CHECK(message.get_payload() == payload);
+        CHECK(message.get_key() == key);
+        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_partition() == partition);
+        CHECK(!!message.get_error() == false);
+        CHECK(delivery_report_called == true);
+    }
+
+    SECTION("partitioner callback") {
+        // Now create a producer and produce a message
+        const string payload = "Hello world! 4";
+        const string key = "hehe";
+        bool callback_called = false;
+
+        TopicConfiguration topic_config;
+        topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
+                                                  int32_t partition_count) {
+            CHECK(msg_key == key);
+            CHECK(partition_count == 3);
+            CHECK(topic.get_name() == KAFKA_TOPIC);
+            callback_called = true;
+            return 0;
+        });
+        config.set_default_topic_configuration(topic_config);
+        Producer producer(config);
+
+        producer.produce(MessageBuilder(KAFKA_TOPIC).key(key).payload(payload));
+        producer.poll();
+        runner.try_join();
+
+        const auto& messages = runner.get_messages();
+        REQUIRE(messages.size() == 1);
+        const auto& message = messages[0];
+        CHECK(message.get_partition() == partition);
+        CHECK(callback_called == true);
+    }
 }
 
-TEST_F(ProducerTest, OneMessageUsingKey) {
-    int partition = 0;
-
-    // Create a consumer and assign this topic/partition
-    Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
-    ConsumerRunner runner(consumer, 1, 1);
-
-    // Now create a producer and produce a message
-    Producer producer(make_producer_config());
-    string payload = "Hello world! 2";
-    string key = "such key";
-    const milliseconds timestamp{15};
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition)
-                                                 .key(key)
-                                                 .payload(payload)
-                                                 .timestamp(timestamp));
-    runner.try_join();
-
-    const auto& messages = runner.get_messages();
-    ASSERT_EQ(1, messages.size());
-    const auto& message = messages[0];
-    EXPECT_EQ(Buffer(payload), message.get_payload());
-    EXPECT_EQ(Buffer(key), message.get_key());
-    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
-    EXPECT_EQ(partition, message.get_partition());
-    EXPECT_FALSE(message.get_error());
-    EXPECT_TRUE(message.get_timestamp());
-    EXPECT_EQ(timestamp, message.get_timestamp()->get_timestamp());
-}
-
-TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {
+TEST_CASE("multiple messages", "[producer]") {
     size_t message_count = 10;
     int partitions = 3;
     set<string> payloads;
@@ -125,110 +182,27 @@ TEST_F(ProducerTest, MultipleMessagesUnassignedPartitions) {
 
     // Now create a producer and produce a message
     Producer producer(make_producer_config());
-    string payload_base = "Hello world ";
+    const string payload_base = "Hello world ";
     for (size_t i = 0; i < message_count; ++i) {
-        string payload = payload_base + to_string(i);
+        const string payload = payload_base + to_string(i);
         payloads.insert(payload);
         producer.produce(MessageBuilder(KAFKA_TOPIC).payload(payload));
     }
     runner.try_join();
 
     const auto& messages = runner.get_messages();
-    ASSERT_EQ(message_count, messages.size());
+    REQUIRE(messages.size() == message_count);
     for (const auto& message : messages) {
-        EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
-        EXPECT_EQ(1, payloads.erase(message.get_payload()));
-        EXPECT_FALSE(message.get_error());
-        EXPECT_FALSE(message.get_key());
-        EXPECT_GE(message.get_partition(), 0);
-        EXPECT_LT(message.get_partition(), 3);
+        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(payloads.erase(message.get_payload()) == 1);
+        CHECK(!!message.get_error() == false);
+        CHECK(!!message.get_key() == false);
+        CHECK(message.get_partition() >= 0);
+        CHECK(message.get_partition() < 3);
     }
 }
 
-TEST_F(ProducerTest, Callbacks) {
-    int partition = 0;
-
-    // Create a consumer and assign this topic/partition
-    Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
-    ConsumerRunner runner(consumer, 1, 1);
-
-    // Now create a producer and produce a message
-    string payload = "Hello world! 3";
-    string key = "hehe";
-    bool delivery_report_called = false;
-    Configuration config = make_producer_config();
-    config.set_delivery_report_callback([&](Producer&, const Message& msg) {
-        EXPECT_EQ(Buffer(payload), msg.get_payload());
-        delivery_report_called = true;
-    });
-
-    TopicConfiguration topic_config;
-    topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
-                                              int32_t partition_count) {
-        EXPECT_EQ(Buffer(key), msg_key);
-        EXPECT_EQ(3, partition_count);
-        EXPECT_EQ(KAFKA_TOPIC, topic.get_name());
-        return 0;
-    });
-    config.set_default_topic_configuration(topic_config);
-
-    Producer producer(move(config));
-    producer.produce(MessageBuilder(KAFKA_TOPIC).key(key).payload(payload));
-    while (producer.get_out_queue_length() > 0) {
-        producer.poll();
-    }
-    runner.try_join();
-
-    const auto& messages = runner.get_messages();
-    ASSERT_EQ(1, messages.size());
-    const auto& message = messages[0];
-    EXPECT_EQ(Buffer(payload), message.get_payload());
-    EXPECT_EQ(Buffer(key), message.get_key());
-    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
-    EXPECT_EQ(partition, message.get_partition());
-    EXPECT_FALSE(message.get_error());
-    EXPECT_TRUE(delivery_report_called);
-}
-
-TEST_F(ProducerTest, PartitionerCallbackOnDefaultTopicConfig) {
-    int partition = 0;
-
-    // Create a consumer and assign this topic/partition
-    Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
-    ConsumerRunner runner(consumer, 1, 1);
-
-    // Now create a producer and produce a message
-    string payload = "Hello world! 4";
-    string key = "hehe";
-    bool callback_called = false;
-
-    Configuration config = make_producer_config();
-    TopicConfiguration topic_config;
-    topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
-                                              int32_t partition_count) {
-        EXPECT_EQ(Buffer(key), msg_key);
-        EXPECT_EQ(3, partition_count);
-        EXPECT_EQ(KAFKA_TOPIC, topic.get_name());
-        callback_called = true;
-        return 0;
-    });
-    config.set_default_topic_configuration(topic_config);
-
-    Producer producer(move(config));
-    producer.produce(MessageBuilder(KAFKA_TOPIC).key(key).payload(payload));
-    producer.poll();
-    runner.try_join();
-
-    const auto& messages = runner.get_messages();
-    ASSERT_EQ(1, messages.size());
-    const auto& message = messages[0];
-    EXPECT_EQ(partition, message.get_partition());
-    EXPECT_TRUE(callback_called);   
-}
-
-TEST_F(ProducerTest, BufferedProducer) {
+TEST_CASE("buffered producer", "[producer]") {
     int partition = 0;
 
     // Create a consumer and assign this topic/partition
@@ -238,8 +212,8 @@ TEST_F(ProducerTest, BufferedProducer) {
 
     // Now create a buffered producer and produce two messages
     BufferedProducer<string> producer(make_producer_config());
-    string payload = "Hello world! 2";
-    string key = "such key";
+    const string payload = "Hello world! 2";
+    const string key = "such key";
     producer.add_message(MessageBuilder(KAFKA_TOPIC).partition(partition)
                                                     .key(key)
                                                     .payload(payload));
@@ -253,16 +227,16 @@ TEST_F(ProducerTest, BufferedProducer) {
     runner.try_join();
 
     const auto& messages = runner.get_messages();
-    ASSERT_EQ(3, messages.size());
+    REQUIRE(messages.size() == 3);
     const auto& message = messages[0];
-    EXPECT_EQ(Buffer(key), message.get_key());
-    EXPECT_EQ(KAFKA_TOPIC, message.get_topic());
-    EXPECT_EQ(partition, message.get_partition());
-    EXPECT_FALSE(message.get_error());
+    CHECK(message.get_key() == key);
+    CHECK(message.get_topic() == KAFKA_TOPIC);
+    CHECK(message.get_partition() == partition);
+    CHECK(!!message.get_error() == false);
 
-    EXPECT_FALSE(messages[1].get_key());
-    EXPECT_FALSE(messages[2].get_key());
+    CHECK(!!messages[1].get_key() == false);
+    CHECK(!!messages[2].get_key() == false);
     for (const auto& message : messages) {
-        EXPECT_EQ(Buffer(payload), message.get_payload());
+        CHECK(message.get_payload() == payload);
     }
 }

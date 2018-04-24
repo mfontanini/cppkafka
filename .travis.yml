@@ -40,4 +40,4 @@ script:
   - cmake .. -DRDKAFKA_ROOT_DIR=../librdkafka/install/ -DKAFKA_TEST_INSTANCE=localhost:9092
   - make examples
   - make tests
-  - ctest -V
+  - ./tests/cppkafka_tests
