@@ -2,6 +2,7 @@
 function(make_cppkafka_header)
     set(CPPKAFKA_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/cppkafka.h)
     file(GLOB INCLUDE_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.h" "utils/*.h")
+    list(SORT INCLUDE_HEADERS)
     foreach(header ${INCLUDE_HEADERS})
         if (NOT ${header} MATCHES "cppkafka.h")
             SET(CPPKAFKA_HEADERS "${CPPKAFKA_HEADERS}#include <cppkafka/${header}>\n")
