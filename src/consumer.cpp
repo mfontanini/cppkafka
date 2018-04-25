@@ -26,9 +26,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+#include <sstream>
 #include "consumer.h"
 #include "exceptions.h"
+#include "logging.h"
 #include "configuration.h"
 #include "topic_partition_list.h"
 
@@ -36,7 +37,7 @@ using std::vector;
 using std::string;
 using std::move;
 using std::make_tuple;
-
+using std::ostringstream;
 using std::chrono::milliseconds;
 
 namespace cppkafka {
@@ -73,9 +74,17 @@ Consumer::~Consumer() {
         rebalance_error_callback_ = nullptr;
         close();
     }
-    catch (const Exception&) {
-        // If close throws just silently ignore until there's some
-        // logging facility (if any)
+    catch (const Exception& ex) {
+        constexpr const char* library_name = "cppkafka";
+        ostringstream error_msg;
+        error_msg << "Failed to close consumer [" << get_name() << "]: " << ex.what();
+        const auto& callback = get_configuration().get_log_callback();
+        if (callback) {
+            callback(*this, static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str());
+        }
+        else {
+            rd_kafka_log_print(get_handle(), static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str().c_str());
+        }
     }
 }
 
