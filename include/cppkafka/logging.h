@@ -27,33 +27,23 @@
  *
  */
 
-#ifndef CPPKAFKA_H
-#define CPPKAFKA_H
+#ifndef CPPKAFKA_LOGGING_H
+#define CPPKAFKA_LOGGING_H
 
-#include <cppkafka/buffer.h>
-#include <cppkafka/clonable_ptr.h>
-#include <cppkafka/configuration.h>
-#include <cppkafka/configuration_base.h>
-#include <cppkafka/configuration_option.h>
-#include <cppkafka/consumer.h>
-#include <cppkafka/error.h>
-#include <cppkafka/exceptions.h>
-#include <cppkafka/group_information.h>
-#include <cppkafka/kafka_handle_base.h>
-#include <cppkafka/logging.h>
-#include <cppkafka/macros.h>
-#include <cppkafka/message.h>
-#include <cppkafka/message_builder.h>
-#include <cppkafka/metadata.h>
-#include <cppkafka/producer.h>
-#include <cppkafka/topic.h>
-#include <cppkafka/topic_configuration.h>
-#include <cppkafka/topic_partition.h>
-#include <cppkafka/topic_partition_list.h>
-#include <cppkafka/utils/backoff_committer.h>
-#include <cppkafka/utils/backoff_performer.h>
-#include <cppkafka/utils/buffered_producer.h>
-#include <cppkafka/utils/compacted_topic_processor.h>
-#include <cppkafka/utils/consumer_dispatcher.h>
+namespace cppkafka {
 
-#endif
+// Based on syslog.h levels
+enum class LogLevel : int {
+    LOG_EMERG   = 0,    /* system is unusable */
+    LOG_ALERT   = 1,    /* action must be taken immediately */
+    LOG_CRIT    = 2,    /* critical conditions */
+    LOG_ERR     = 3,    /* error conditions */
+    LOG_WARNING = 4,    /* warning conditions */
+    LOG_NOTICE  = 5,    /* normal but significant condition */
+    LOG_INFO    = 6,    /* informational */
+    LOG_DEBUG   = 7     /* debug-level messages */
+};
+
+} //cppkafka
+
+#endif //CPPKAFKA_LOGGING_H
