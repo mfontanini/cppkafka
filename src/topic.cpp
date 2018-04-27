@@ -34,7 +34,7 @@ using std::string;
 
 namespace cppkafka {
 
-void dummy_topic_destroyer(rd_kafka_topic_t*) {
+void dummy_deleter(rd_kafka_topic_t*) {
 
 }
 
@@ -47,13 +47,13 @@ Topic::Topic()
 
 }
 
-Topic::Topic(rd_kafka_topic_t* handle) 
+Topic::Topic(rd_kafka_topic_t* handle)
 : handle_(handle, &rd_kafka_topic_destroy) {
 
 }
 
 Topic::Topic(rd_kafka_topic_t* handle, NonOwningTag)
-: handle_(handle, &dummy_topic_destroyer) {
+: handle_(handle, &dummy_deleter) {
 
 }
 

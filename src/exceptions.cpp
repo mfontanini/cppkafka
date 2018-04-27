@@ -108,4 +108,15 @@ Error ConsumerException::get_error() const {
     return error_;
 }
 
+// QueueException
+
+QueueException::QueueException(Error error)
+: Exception(error.to_string()), error_(error) {
+
+}
+
+Error QueueException::get_error() const {
+    return error_;
+}
+
 } // cppkafka

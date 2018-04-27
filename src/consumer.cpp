@@ -52,14 +52,14 @@ void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
     static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
 }
 
-Consumer::Consumer(Configuration config) 
+Consumer::Consumer(Configuration config)
 : KafkaHandleBase(move(config)) {
     char error_buffer[512];
     rd_kafka_conf_t* config_handle = get_configuration_handle();
     // Set ourselves as the opaque pointer
     rd_kafka_conf_set_opaque(config_handle, this);
     rd_kafka_conf_set_rebalance_cb(config_handle, &Consumer::rebalance_proxy);
-    rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER, 
+    rd_kafka_t* ptr = rd_kafka_new(RD_KAFKA_CONSUMER,
                                    rd_kafka_conf_dup(config_handle),
                                    error_buffer, sizeof(error_buffer));
     if (!ptr) {
@@ -165,7 +165,7 @@ KafkaHandleBase::OffsetTuple Consumer::get_offsets(const TopicPartition& topic_p
     int64_t low;
     int64_t high;
     const string& topic = topic_partition.get_topic();
-    const int partition = topic_partition.get_partition(); 
+    const int partition = topic_partition.get_partition();
     rd_kafka_resp_err_t result = rd_kafka_get_watermark_offsets(get_handle(), topic.data(),
                                                                 partition, &low, &high);
     check_error(result);
@@ -232,9 +232,7 @@ Message Consumer::poll() {
 }
 
 Message Consumer::poll(milliseconds timeout) {
-    rd_kafka_message_t* message = rd_kafka_consumer_poll(get_handle(),
-                                                         static_cast<int>(timeout.count()));
-    return message ? Message(message) : Message();
+    return rd_kafka_consumer_poll(get_handle(), static_cast<int>(timeout.count()));
 }
 
 vector<Message> Consumer::poll_batch(size_t max_batch_size) {
@@ -258,6 +256,24 @@ vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout
         output.emplace_back(ptr);
     }
     return output;
+}
+
+Queue Consumer::get_main_queue() const {
+    Queue queue = Queue::make_non_owning(rd_kafka_queue_get_main(get_handle()));
+    queue.disable_queue_forwarding();
+    return queue;
+}
+
+Queue Consumer::get_consumer_queue() const {
+    return Queue::make_non_owning(rd_kafka_queue_get_consumer(get_handle()));
+}
+
+Queue Consumer::get_partition_queue(const TopicPartition& partition) const {
+    Queue queue = Queue::make_non_owning(rd_kafka_queue_get_partition(get_handle(),
+                                                                      partition.get_topic().c_str(),
+                                                                      partition.get_partition()));
+    queue.disable_queue_forwarding();
+    return queue;
 }
 
 void Consumer::close() {

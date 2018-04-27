@@ -177,6 +177,8 @@ private:
     Buffer key_;
 };
 
+using MessageList = std::vector<Message>;
+
 /**
  * Represents a message's timestamp
  */
