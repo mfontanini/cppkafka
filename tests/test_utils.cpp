@@ -79,7 +79,7 @@ ConsumerRunner::~ConsumerRunner() {
     try_join();
 }
 
-const vector<Message>& ConsumerRunner::get_messages() const {
+const MessageList& ConsumerRunner::get_messages() const {
     return messages_;
 }
 

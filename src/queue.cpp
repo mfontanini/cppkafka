@@ -99,11 +99,11 @@ MessageList Queue::consume_batch(size_t max_batch_size) const {
 }
 
 MessageList Queue::consume_batch(size_t max_batch_size, milliseconds timeout) const {
-    vector<rd_kafka_message_t*> raw_message_list(max_batch_size);
+    vector<rd_kafka_message_t*> raw_messages(max_batch_size);
     ssize_t num_messages = rd_kafka_consume_batch_queue(handle_.get(),
                                                         static_cast<int>(timeout.count()),
-                                                        raw_message_list.data(),
-                                                        max_batch_size);
+                                                        raw_messages.data(),
+                                                        raw_messages.size());
     if (num_messages == -1) {
         rd_kafka_resp_err_t error = rd_kafka_last_error();
         if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
@@ -112,10 +112,7 @@ MessageList Queue::consume_batch(size_t max_batch_size, milliseconds timeout) co
         return MessageList();
     }
     // Build message list
-    MessageList messages;
-    messages.reserve(raw_message_list.size());
-    messages.assign(raw_message_list.begin(), raw_message_list.end());
-    return messages;
+    return MessageList(raw_messages.begin(), raw_messages.end());
 }
 
 } //cppkafka

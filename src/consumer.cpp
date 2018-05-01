@@ -235,11 +235,11 @@ Message Consumer::poll(milliseconds timeout) {
     return rd_kafka_consumer_poll(get_handle(), static_cast<int>(timeout.count()));
 }
 
-vector<Message> Consumer::poll_batch(size_t max_batch_size) {
+MessageList Consumer::poll_batch(size_t max_batch_size) {
     return poll_batch(max_batch_size, get_timeout());
 }
 
-vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
+MessageList Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
     vector<rd_kafka_message_t*> raw_messages(max_batch_size);
     rd_kafka_queue_t* queue = rd_kafka_queue_get_consumer(get_handle());
     ssize_t result = rd_kafka_consume_batch_queue(queue, timeout.count(), raw_messages.data(),
@@ -247,15 +247,9 @@ vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout
     if (result == -1) {
         check_error(rd_kafka_last_error());
         // on the off-chance that check_error() does not throw an error
-        result = 0;
+        return MessageList();
     }
-    vector<Message> output;
-    raw_messages.resize(result);
-    output.reserve(result);
-    for (const auto ptr : raw_messages) {
-        output.emplace_back(ptr);
-    }
-    return output;
+    return MessageList(raw_messages.begin(), raw_messages.end());
 }
 
 Queue Consumer::get_main_queue() const {

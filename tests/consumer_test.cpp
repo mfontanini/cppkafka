@@ -228,10 +228,10 @@ TEST_CASE("consume batch", "[consumer]") {
     producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
     producer.flush();
 
-    vector<Message> all_messages;
+    MessageList all_messages;
     int i = 0;
     while (i < 5 && all_messages.size() != 2) {
-        vector<Message> messages = consumer.poll_batch(2);
+        MessageList messages = consumer.poll_batch(2);
         all_messages.insert(all_messages.end(), make_move_iterator(messages.begin()),
                             make_move_iterator(messages.end()));
         ++i;

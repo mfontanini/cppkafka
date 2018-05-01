@@ -124,7 +124,6 @@ void RoundRobinPollAdapter::consume_batch(MessageList& messages, ssize_t& count,
         return;
     }
     // concatenate both lists
-    messages.reserve(messages.size() + partition_messages.size());
     messages.insert(messages.end(),
                     make_move_iterator(partition_messages.begin()),
                     make_move_iterator(partition_messages.end()));
