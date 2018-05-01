@@ -78,11 +78,11 @@ void Queue::disable_queue_forwarding() const {
     return rd_kafka_queue_forward(handle_.get(), nullptr);
 }
 
-void Queue::set_consume_timeout(milliseconds timeout) {
+void Queue::set_timeout(milliseconds timeout) {
     timeout_ms_ = timeout;
 }
 
-milliseconds Queue::get_consume_timeout() const {
+milliseconds Queue::get_timeout() const {
     return timeout_ms_;
 }
 
@@ -99,7 +99,6 @@ MessageList Queue::consume_batch(size_t max_batch_size) const {
 }
 
 MessageList Queue::consume_batch(size_t max_batch_size, milliseconds timeout) const {
-    MessageList message_list;
     vector<rd_kafka_message_t*> raw_message_list(max_batch_size);
     ssize_t num_messages = rd_kafka_consume_batch_queue(handle_.get(),
                                                         static_cast<int>(timeout.count()),
@@ -110,14 +109,13 @@ MessageList Queue::consume_batch(size_t max_batch_size, milliseconds timeout) co
         if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
             throw QueueException(error);
         }
-        return message_list;
+        return MessageList();
     }
-    raw_message_list.resize(num_messages);
-    message_list.reserve(num_messages);
-    for (auto&& message : raw_message_list) {
-        message_list.emplace_back(message);
-    }
-    return message_list;
+    // Build message list
+    MessageList messages;
+    messages.reserve(raw_message_list.size());
+    messages.assign(raw_message_list.begin(), raw_message_list.end());
+    return messages;
 }
 
 } //cppkafka

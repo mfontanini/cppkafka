@@ -102,14 +102,14 @@ public:
      *
      * \param timeout The timeout to be set
      */
-    void set_consume_timeout(std::chrono::milliseconds timeout);
+    void set_timeout(std::chrono::milliseconds timeout);
     
     /**
      * Gets the configured timeout.
      *
      * \sa Queue::set_timeout
      */
-    std::chrono::milliseconds get_consume_timeout() const;
+    std::chrono::milliseconds get_timeout() const;
     
     /**
      * \brief Consume a message from this queue

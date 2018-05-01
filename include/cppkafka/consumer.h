@@ -347,8 +347,8 @@ public:
      *
      * The timeout used on this call will be the one configured via Consumer::set_timeout.
      *
-     * \return A message. The returned message *might* be empty. If's necessary to check
-     * that it's a valid one before using it:
+     * \return A message. The returned message *might* be empty. It's necessary to check
+     * that it's valid before using it:
      *
      * \code
      * Message msg = consumer.poll();

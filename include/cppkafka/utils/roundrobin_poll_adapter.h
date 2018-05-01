@@ -46,15 +46,8 @@ namespace cppkafka {
  * messages from each partition in turn. For performance reasons, librdkafka pre-fetches batches
  * of messages from the kafka broker (one batch from each partition), and stores them locally in
  * partition queues. Since all the internal partition queues are forwarded by default unto the
- * group consumer queue (one per consumer), these batches end up being queued in sequence or arrival.
- * For instance, a topic with 4 partitions (each containing N messages) will end up being queued as
- * N1|N2|N3|N4 in the consumer queue. This means that for the Consumer to process messages from the
- * 4th partition, it needs to consume 3xN messages. The larger the number of partitions, the more
- * starvation occurs. While this behavior is acceptable for some applications, real-time applications
- * sensitive to timing or those where messages must be processed more or less in the same order as
- * they're being produced, the default librdkafka behavior is unacceptable.
- * Fortunately, librdkafka exposes direct access to its partition queues which means that various
- * polling strategies can be implemented to suit needs.
+ * group consumer queue (one per consumer), these batches end up being polled and consumed in the
+ * same sequence order.
  * This adapter allows fair round-robin polling of all assigned partitions, one message at a time
  * (or one batch at a time if poll_batch() is used). Note that poll_batch() has nothing to do with
  * the internal batching mechanism of librdkafka.
@@ -64,6 +57,7 @@ namespace cppkafka {
  * \code
  * // Create a consumer
  * Consumer consumer(...);
+ * consumer.subscribe({ "my_topic" });
  *
  * // Optionally set the callbacks. This must be done *BEFORE* creating the adapter
  * consumer.set_assignment_callback(...);
@@ -72,9 +66,6 @@ namespace cppkafka {
  *
  * // Create the adapter and use it for polling
  * RoundRobinPollAdapter adapter(consumer);
- *
- * // Subscribe *AFTER* the adapter has been created
- * consumer.subscribe({ "my_topic" });
  *
  * while (true) {
  *     // Poll each partition in turn
@@ -118,17 +109,16 @@ public:
     /**
      * \brief Polls all assigned partitions for new messages in round-robin fashion
      *
-     * Each call to poll() will result in another partition being polled. Aside from
-     * the partition, this function will also poll the main queue for events. If an
-     * event is found, it is immediately returned. As such the main queue has higher
-     * priority than the partition queues. Because of this, you
-     * need to call poll periodically as a keep alive mechanism, otherwise the broker
-     * will think this consumer is down and will trigger a rebalance (if using dynamic
-     * subscription).
+     * Each call to poll() will first consume from the global event queue and if there are
+     * no pending events, will attempt to consume from all partitions until a valid message is found.
      * The timeout used on this call will be the one configured via RoundRobinPollAdapter::set_timeout.
      *
      * \return A message. The returned message *might* be empty. It's necessary to check
      * that it's a valid one before using it (see example above).
+     *
+     * \remark You need to call poll() or poll_batch() periodically as a keep alive mechanism,
+     * otherwise the broker will think this consumer is down and will trigger a rebalance
+     * (if using dynamic subscription)
      */
     Message poll();
     
@@ -145,55 +135,44 @@ public:
     /**
      * \brief Polls all assigned partitions for a batch of new messages in round-robin fashion
      *
-     * Each call to poll() will result in another partition being polled. Aside from
-     * the partition, this function will also poll the main queue for events. If a batch of
-     * events is found, it is prepended to the returned message list. If after polling the
-     * main queue the batch size has reached max_batch_size, it is immediately returned and
-     * the partition is no longer polled. Otherwise the partition is polled for the remaining
-     * messages up to the max_batch_size limit.
-     * Because of this, you need to call poll periodically as a keep alive mechanism,
-     * otherwise the broker will think this consumer is down and will trigger a rebalance
-     * (if using dynamic subscription).
+     * Each call to poll_batch() will first attempt to consume from the global event queue
+     * and if the maximum batch number has not yet been filled, will attempt to fill it by
+     * reading the remaining messages from each partition.
      *
      * \param max_batch_size The maximum amount of messages expected
      *
      * \return A list of messages
+     *
+     * \remark You need to call poll() or poll_batch() periodically as a keep alive mechanism,
+     * otherwise the broker will think this consumer is down and will trigger a rebalance
+     * (if using dynamic subscription)
      */
     MessageList poll_batch(size_t max_batch_size);
 
     /**
-     * \brief Polls for a batch of messages depending on the configured PollStrategy
+     * \brief Polls all assigned partitions for a batch of new messages in round-robin fashion
      *
      * Same as the other overload of RoundRobinPollAdapter::poll_batch but the provided
      * timeout will be used instead of the one configured on this Consumer.
      *
      * \param max_batch_size The maximum amount of messages expected
+     *
      * \param timeout The timeout for this operation
      *
      * \return A list of messages
      */
     MessageList poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout);
     
-    /**
-     * \brief Gets the number of assigned partitions that can be polled across all topics
-     *
-     * \return The number of partitions
-     */
-    size_t get_num_partitions();
-    
 private:
+    void consume_batch(MessageList& messages, ssize_t& count, std::chrono::milliseconds timeout);
+    
     class CircularBuffer {
     public:
-        // typedefs
-        using toppar_t = std::pair<std::string, int>; //<topic, partition>
-        using qmap_t = std::map<toppar_t, Queue>;
-        using qiter_t = qmap_t::iterator;
-        
-        qmap_t& ref() {
+        using QueueMap = std::map<TopicPartition, Queue>;
+        QueueMap& get_queues() {
             return queues_;
         }
-        
-        Queue& next() {
+        Queue& get_next_queue() {
             if (queues_.empty()) {
                 throw QueueException(RD_KAFKA_RESP_ERR__STATE);
             }
@@ -202,11 +181,10 @@ private:
             }
             return iter_->second;
         }
-        
         void rewind() { iter_ = queues_.begin(); }
     private:
-        qmap_t  queues_;
-        qiter_t iter_ = queues_.begin();
+        QueueMap            queues_;
+        QueueMap::iterator  iter_{queues_.begin()};
     };
     
     void on_assignment(TopicPartitionList& partitions);

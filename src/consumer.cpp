@@ -259,19 +259,19 @@ vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout
 }
 
 Queue Consumer::get_main_queue() const {
-    Queue queue = Queue::make_non_owning(rd_kafka_queue_get_main(get_handle()));
+    Queue queue(rd_kafka_queue_get_main(get_handle()));
     queue.disable_queue_forwarding();
     return queue;
 }
 
 Queue Consumer::get_consumer_queue() const {
-    return Queue::make_non_owning(rd_kafka_queue_get_consumer(get_handle()));
+    return rd_kafka_queue_get_consumer(get_handle());
 }
 
 Queue Consumer::get_partition_queue(const TopicPartition& partition) const {
-    Queue queue = Queue::make_non_owning(rd_kafka_queue_get_partition(get_handle(),
-                                                                      partition.get_topic().c_str(),
-                                                                      partition.get_partition()));
+    Queue queue(rd_kafka_queue_get_partition(get_handle(),
+                                             partition.get_topic().c_str(),
+                                             partition.get_partition()));
     queue.disable_queue_forwarding();
     return queue;
 }
