@@ -30,7 +30,8 @@
 #ifndef CPPKAFKA_ROUNDROBIN_POLL_ADAPTER_H
 #define CPPKAFKA_ROUNDROBIN_POLL_ADAPTER_H
 
-#include <list>
+#include <map>
+#include <string>
 #include "../exceptions.h"
 #include "../consumer.h"
 #include "../queue.h"
@@ -173,12 +174,25 @@ public:
      */
     MessageList poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout);
     
+    /**
+     * \brief Gets the number of assigned partitions that can be polled across all topics
+     *
+     * \return The number of partitions
+     */
+    size_t get_num_partitions();
+    
 private:
     class CircularBuffer {
-        using qlist = std::list<Queue>;
-        using qiter = qlist::iterator;
     public:
-        qlist& ref() { return queues_; }
+        // typedefs
+        using toppar_t = std::pair<std::string, int>; //<topic, partition>
+        using qmap_t = std::map<toppar_t, Queue>;
+        using qiter_t = qmap_t::iterator;
+        
+        qmap_t& ref() {
+            return queues_;
+        }
+        
         Queue& next() {
             if (queues_.empty()) {
                 throw QueueException(RD_KAFKA_RESP_ERR__STATE);
@@ -186,12 +200,13 @@ private:
             if (++iter_ == queues_.end()) {
                 iter_ = queues_.begin();
             }
-            return *iter_;
+            return iter_->second;
         }
+        
         void rewind() { iter_ = queues_.begin(); }
     private:
-        qlist queues_;
-        qiter iter_ = queues_.begin();
+        qmap_t  queues_;
+        qiter_t iter_ = queues_.begin();
     };
     
     void on_assignment(TopicPartitionList& partitions);
