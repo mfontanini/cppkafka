@@ -11,7 +11,6 @@ using std::mutex;
 using std::lock_guard;
 using std::unique_lock;
 using std::condition_variable;
-
 using std::chrono::system_clock;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
@@ -19,6 +18,7 @@ using std::chrono::seconds;
 using cppkafka::Consumer;
 using cppkafka::ConsumerDispatcher;
 using cppkafka::Message;
+using cppkafka::MessageList;
 using cppkafka::TopicPartition;
 
 ConsumerRunner::ConsumerRunner(Consumer& consumer, size_t expected, size_t partitions) 
