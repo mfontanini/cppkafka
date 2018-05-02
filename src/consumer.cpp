@@ -249,23 +249,23 @@ MessageList Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
         // on the off-chance that check_error() does not throw an error
         return MessageList();
     }
-    return MessageList(raw_messages.begin(), raw_messages.end());
+    return MessageList(raw_messages.begin(), raw_messages.begin() + result);
 }
 
 Queue Consumer::get_main_queue() const {
-    Queue queue(rd_kafka_queue_get_main(get_handle()));
+    Queue queue(Queue::make_non_owning(rd_kafka_queue_get_main(get_handle())));
     queue.disable_queue_forwarding();
     return queue;
 }
 
 Queue Consumer::get_consumer_queue() const {
-    return rd_kafka_queue_get_consumer(get_handle());
+    return Queue::make_non_owning(rd_kafka_queue_get_consumer(get_handle()));
 }
 
 Queue Consumer::get_partition_queue(const TopicPartition& partition) const {
-    Queue queue(rd_kafka_queue_get_partition(get_handle(),
-                                             partition.get_topic().c_str(),
-                                             partition.get_partition()));
+    Queue queue(Queue::make_non_owning(rd_kafka_queue_get_partition(get_handle(),
+                                                                    partition.get_topic().c_str(),
+                                                                    partition.get_partition())));
     queue.disable_queue_forwarding();
     return queue;
 }

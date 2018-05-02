@@ -164,7 +164,10 @@ public:
     MessageList poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout);
     
 private:
-    void consume_batch(MessageList& messages, ssize_t& count, std::chrono::milliseconds timeout);
+    void consume_batch(Queue& queue,
+                       MessageList& messages,
+                       ssize_t& count,
+                       std::chrono::milliseconds timeout);
     
     class CircularBuffer {
     public:

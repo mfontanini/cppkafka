@@ -80,20 +80,21 @@ Message RoundRobinPollAdapter::poll() {
 }
 
 Message RoundRobinPollAdapter::poll(milliseconds timeout) {
-    size_t num_queues = partition_queues_.get_queues().size();
     // Always give priority to group and global events
-    Message message = consumer_queue_.consume(num_queues ? milliseconds(0) : timeout);
-    if (!message) {
-        while (num_queues--) {
-            //consume the next partition
-            message = partition_queues_.get_next_queue().consume();
-            if (message) {
-                return message;
-            }
+    Message message = consumer_queue_.consume(milliseconds(0));
+    if (message) {
+        return message;
+    }
+    size_t num_queues = partition_queues_.get_queues().size();
+    while (num_queues--) {
+        //consume the next partition (non-blocking)
+        message = partition_queues_.get_next_queue().consume(milliseconds(0));
+        if (message) {
+            return message;
         }
     }
-    // wait on the next queue
-    return partition_queues_.get_next_queue().consume(timeout);
+    // We still don't have a valid message so we block on the event queue
+    return consumer_queue_.consume(timeout);
 }
 
 MessageList RoundRobinPollAdapter::poll_batch(size_t max_batch_size) {
@@ -101,34 +102,39 @@ MessageList RoundRobinPollAdapter::poll_batch(size_t max_batch_size) {
 }
 
 MessageList RoundRobinPollAdapter::poll_batch(size_t max_batch_size, milliseconds timeout) {
-    size_t num_queues = partition_queues_.get_queues().size();
+    MessageList messages;
     ssize_t count = max_batch_size;
-    // batch from the group event queue first
-    MessageList messages = consumer_queue_.consume_batch(count, num_queues ? milliseconds(0) : timeout);
-    count -= messages.size();
+    
+    // batch from the group event queue first (non-blocking)
+    consume_batch(consumer_queue_, messages, count, milliseconds(0));
+    size_t num_queues = partition_queues_.get_queues().size();
     while ((count > 0) && (num_queues--)) {
-        // batch from the next partition
-        consume_batch(messages, count, milliseconds(0));
+        // batch from the next partition (non-blocking)
+        consume_batch(partition_queues_.get_next_queue(), messages, count, milliseconds(0));
     }
+    // we still have space left in the buffer
     if (count > 0) {
-        // wait on the next queue
-        consume_batch(messages, count, timeout);
+        // wait on the event queue until timeout
+        consume_batch(consumer_queue_, messages, count, timeout);
     }
     return messages;
 }
 
-void RoundRobinPollAdapter::consume_batch(MessageList& messages, ssize_t& count, milliseconds timeout)
+void RoundRobinPollAdapter::consume_batch(Queue& queue,
+                                          MessageList& messages,
+                                          ssize_t& count,
+                                          milliseconds timeout)
 {
-    MessageList partition_messages = partition_queues_.get_next_queue().consume_batch(count, timeout);
-    if (partition_messages.empty()) {
+    MessageList queue_messages = queue.consume_batch(count, timeout);
+    if (queue_messages.empty()) {
         return;
     }
     // concatenate both lists
     messages.insert(messages.end(),
-                    make_move_iterator(partition_messages.begin()),
-                    make_move_iterator(partition_messages.end()));
+                    make_move_iterator(queue_messages.begin()),
+                    make_move_iterator(queue_messages.end()));
     // reduce total batch count
-    count -= partition_messages.size();
+    count -= queue_messages.size();
 }
 
 void RoundRobinPollAdapter::on_assignment(TopicPartitionList& partitions) {
@@ -148,12 +154,10 @@ void RoundRobinPollAdapter::on_assignment(TopicPartitionList& partitions) {
 void RoundRobinPollAdapter::on_revocation(const TopicPartitionList& partitions) {
     for (const auto& partition : partitions) {
         // get the queue associated with this partition
-        auto qit = partition_queues_.get_queues().find(partition);
-        if (qit != partition_queues_.get_queues().end()) {
-            // restore forwarding on this queue
-            qit->second.forward_to_queue(consumer_queue_);
+        auto toppar_it = partition_queues_.get_queues().find(partition);
+        if (toppar_it != partition_queues_.get_queues().end()) {
             // remove this queue from the list
-            partition_queues_.get_queues().erase(qit);
+            partition_queues_.get_queues().erase(toppar_it);
         }
     }
     // reset the queue iterator
@@ -174,8 +178,8 @@ void RoundRobinPollAdapter::on_rebalance_error(Error error) {
 
 void RoundRobinPollAdapter::restore_forwarding() {
     // forward all partition queues
-    for (const auto& toppar_queue : partition_queues_.get_queues()) {
-        toppar_queue.second.forward_to_queue(consumer_queue_);
+    for (const auto& toppar : partition_queues_.get_queues()) {
+        toppar.second.forward_to_queue(consumer_queue_);
     }
 }
 
