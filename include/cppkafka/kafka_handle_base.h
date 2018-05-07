@@ -79,7 +79,7 @@ public:
     /**
      * \brief Resumes consumption/production from the given topic/partition list
      *
-     * This translates into a call to  rd_kafka_resume_partitions
+     * This translates into a call to rd_kafka_resume_partitions
      *
      * \param topic_partitions The topic/partition list to resume consuming/producing from/to
      */

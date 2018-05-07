@@ -56,6 +56,8 @@
 #include <cppkafka/utils/buffered_producer.h>
 #include <cppkafka/utils/compacted_topic_processor.h>
 #include <cppkafka/utils/consumer_dispatcher.h>
-#include <cppkafka/utils/roundrobin_poll_adapter.h>
+#include <cppkafka/utils/poll_interface.h>
+#include <cppkafka/utils/poll_strategy_base.h>
+#include <cppkafka/utils/roundrobin_poll_strategy.h>
 
 #endif

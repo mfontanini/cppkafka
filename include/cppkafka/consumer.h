@@ -116,7 +116,7 @@ public:
     Consumer& operator=(Consumer&&) = delete;
 
     /**
-     * \brief Closes and estroys the rdkafka handle
+     * \brief Closes and destroys the rdkafka handle
      *
      * This will call Consumer::close before destroying the handle
      */
