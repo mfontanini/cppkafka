@@ -168,17 +168,19 @@ private:
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
 
+    
+    Configuration::DeliveryReportCallback delivery_report_callback_;
     Producer producer_;
     QueueType messages_;
     ProduceFailureCallback produce_failure_callback_;
-    Configuration::DeliveryReportCallback delivery_report_callback_;
     size_t expected_acks_{0};
     size_t messages_acked_{0};
 };
 
 template <typename BufferType>
 BufferedProducer<BufferType>::BufferedProducer(Configuration config)
-: producer_(prepare_configuration(std::move(config))) {
+: delivery_report_callback_(config.get_delivery_report_callback()),
+  producer_(prepare_configuration(std::move(config))) {
 
 }
 
@@ -293,7 +295,6 @@ void BufferedProducer<BufferType>::produce_message(const MessageBuilder& builder
 template <typename BufferType>
 Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration config) {
     using std::placeholders::_2;
-    delivery_report_callback_ = config.get_delivery_report_callback();
     auto callback = std::bind(&BufferedProducer<BufferType>::on_delivery_report, this, _2);
     config.set_delivery_report_callback(std::move(callback));
     return config;
