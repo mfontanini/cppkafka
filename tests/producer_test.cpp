@@ -240,3 +240,34 @@ TEST_CASE("buffered producer", "[producer]") {
         CHECK(message.get_payload() == payload);
     }
 }
+
+TEST_CASE("buffered producer with limited buffer", "[producer]") {
+    int partition = 0;
+    int num_messages = 4;
+    
+    // Create a consumer and assign this topic/partition
+    Consumer consumer(make_consumer_config());
+    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    ConsumerRunner runner(consumer, 3, 1);
+
+    // Now create a buffered producer and produce two messages
+    BufferedProducer<string> producer(make_producer_config());
+    const string payload = "Hello world! 2";
+    const string key = "such key";
+    REQUIRE(producer.get_buffer_size() == 0);
+    REQUIRE(producer.get_max_buffer_size() == -1);
+    
+    // Limit the size of the internal buffer
+    producer.set_max_buffer_size(num_messages-1);
+    while (num_messages--) {
+        producer.add_message(MessageBuilder(KAFKA_TOPIC).partition(partition).key(key).payload(payload));
+    }
+    REQUIRE(producer.get_buffer_size() == 1);
+    
+    // Finish the runner
+    runner.try_join();
+
+    // Validate messages received
+    const auto& messages = runner.get_messages();
+    REQUIRE(messages.size() == producer.get_max_buffer_size());
+}

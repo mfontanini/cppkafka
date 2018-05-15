@@ -128,6 +128,27 @@ public:
     void clear();
     
     /**
+     * \brief Sets the maximum amount of messages to be enqueued in the buffer.
+     *
+     * After 'max_buffer_size' is reached, flush() will be called automatically.
+     *
+     * \param size The max size of the internal buffer. Allowed values are:
+     *             -1 : Unlimited buffer size. Must be flushed manually (default value)
+     *              0 : Don't buffer anything. add_message() behaves like produce()
+     *            > 0 : Max number of messages before flush() is called.
+     *
+     * \remark add_message() will block when 'max_buffer_size' is reached due to flush()
+     */
+    void set_max_buffer_size(ssize_t max_buffer_size);
+    
+    /**
+     * \brief Return the maximum allowed buffer size.
+     *
+     * \return The max buffer size. A value of -1 indicates an unbounded buffer.
+     */
+    ssize_t get_max_buffer_size() const;
+    
+    /**
      * \brief Get the number of messages in the buffer
      *
      * \return The number of messages
@@ -175,6 +196,7 @@ private:
     ProduceFailureCallback produce_failure_callback_;
     size_t expected_acks_{0};
     size_t messages_acked_{0};
+    ssize_t max_buffer_size_{-1};
 };
 
 template <typename BufferType>
@@ -206,7 +228,6 @@ void BufferedProducer<BufferType>::flush() {
         produce_message(messages_.front());
         messages_.pop();
     }
-
     wait_for_acks();
 }
 
@@ -239,6 +260,19 @@ void BufferedProducer<BufferType>::clear() {
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::set_max_buffer_size(ssize_t max_buffer_size) {
+    if (max_buffer_size < -1) {
+        throw Exception("Invalid buffer size.");
+    }
+    max_buffer_size_ = max_buffer_size;
+}
+
+template <typename BufferType>
+ssize_t BufferedProducer<BufferType>::get_max_buffer_size() const {
+    return max_buffer_size_;
+}
+
+template <typename BufferType>
 size_t BufferedProducer<BufferType>::get_buffer_size() const {
     return messages_.size();
 }
@@ -247,7 +281,10 @@ template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
     expected_acks_++;
-    messages_.push(std::move(builder));
+    messages_.push(std::forward<BuilderType>(builder));
+    if ((max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
+        flush();
+    }
 }
 
 template <typename BufferType>
