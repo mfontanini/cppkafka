@@ -52,7 +52,7 @@ void producer_run(BufferedProducer<string>& producer,
                   int& exit_flag, condition_variable& clear,
                   int num_messages,
                   int partition) {
-    MessageBuilder builder(KAFKA_TOPIC);
+    MessageBuilder builder(KAFKA_TOPICS[0]);
     string key("wassup?");
     string payload("nothing much!");
     
@@ -145,7 +145,7 @@ TEST_CASE("simple production", "[producer]") {
         const string key = "replay key";
         const milliseconds timestamp{15};
         Producer producer(config);
-        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition)
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition)
                                                      .key(key)
                                                      .payload(payload)
                                                      .timestamp(timestamp));
@@ -165,7 +165,7 @@ TEST_CASE("simple production", "[producer]") {
         const auto& message = messages[0];
         CHECK(message.get_payload() == payload);
         CHECK(message.get_key() == key);
-        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
         CHECK(message.get_partition() == partition);
         CHECK(!!message.get_error() == false);
         REQUIRE(!!message.get_timestamp() == true);
@@ -316,7 +316,7 @@ TEST_CASE("buffered producer with limited buffer", "[producer]") {
     
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    consumer.assign({ TopicPartition(KAFKA_TOPICS[0], partition) });
     ConsumerRunner runner(consumer, 3, 1);
 
     // Now create a buffered producer and produce two messages
@@ -329,7 +329,7 @@ TEST_CASE("buffered producer with limited buffer", "[producer]") {
     // Limit the size of the internal buffer
     producer.set_max_buffer_size(num_messages-1);
     while (num_messages--) {
-        producer.add_message(MessageBuilder(KAFKA_TOPIC).partition(partition).key(key).payload(payload));
+        producer.add_message(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).key(key).payload(payload));
     }
     REQUIRE(producer.get_buffer_size() == 1);
     
@@ -351,7 +351,7 @@ TEST_CASE("multi-threaded buffered producer", "[producer][buffered_producer]") {
 
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    consumer.assign({ TopicPartition(KAFKA_TOPICS[0], partition) });
     ConsumerRunner runner(consumer, num_messages, 1);
     
     BufferedProducer<string> producer(make_producer_config());

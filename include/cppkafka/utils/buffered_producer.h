@@ -207,13 +207,6 @@ public:
     ssize_t get_max_buffer_size() const;
     
     /**
-     * \brief Get the number of unsent messages in the buffer
-     *
-     * \return The number of messages
-     */
-    size_t get_buffer_size() const;
-    
-    /**
      * \brief Get the number of messages not yet acked by the broker
      *
      * \return The number of messages
@@ -515,7 +508,6 @@ void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
 template <typename BufferType>
 Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration config) {
     using std::placeholders::_2;
-    delivery_report_callback_ = config.get_delivery_report_callback();
     auto callback = std::bind(&BufferedProducer<BufferType>::on_delivery_report, this, _2);
     config.set_delivery_report_callback(std::move(callback));
     return config;
