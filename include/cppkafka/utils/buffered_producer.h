@@ -126,6 +126,13 @@ public:
      * Clears any buffered messages
      */
     void clear();
+    
+    /**
+     * \brief Get the number of messages in the buffer
+     *
+     * \return The number of messages
+     */
+    size_t get_buffer_size() const;
 
     /**
      * Gets the Producer object
@@ -164,6 +171,7 @@ private:
     Producer producer_;
     QueueType messages_;
     ProduceFailureCallback produce_failure_callback_;
+    Configuration::DeliveryReportCallback delivery_report_callback_;
     size_t expected_acks_{0};
     size_t messages_acked_{0};
 };
@@ -229,6 +237,11 @@ void BufferedProducer<BufferType>::clear() {
 }
 
 template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_buffer_size() const {
+    return messages_.size();
+}
+
+template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
     expected_acks_++;
@@ -280,6 +293,7 @@ void BufferedProducer<BufferType>::produce_message(const MessageBuilder& builder
 template <typename BufferType>
 Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration config) {
     using std::placeholders::_2;
+    delivery_report_callback_ = config.get_delivery_report_callback();
     auto callback = std::bind(&BufferedProducer<BufferType>::on_delivery_report, this, _2);
     config.set_delivery_report_callback(std::move(callback));
     return config;
@@ -287,7 +301,11 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
-    // We should produce this message again if it has an error and we either don't have a 
+    // Call the user-supplied delivery report callback if any
+    if (delivery_report_callback_) {
+        delivery_report_callback_(producer_, message);
+    }
+    // We should produce this message again if it has an error and we either don't have a
     // produce failure callback or we have one but it returns true
     bool should_produce = message.get_error() &&
                           (!produce_failure_callback_ || produce_failure_callback_(message));
