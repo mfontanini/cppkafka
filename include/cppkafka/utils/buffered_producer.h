@@ -179,6 +179,13 @@ public:
     void clear();
     
     /**
+     * \brief Get the number of messages in the buffer
+     *
+     * \return The number of messages
+     */
+    size_t get_buffer_size() const;
+    
+    /**
      * \brief Sets the maximum amount of messages to be enqueued in the buffer.
      *
      * After 'max_buffer_size' is reached, flush() will be called automatically.
@@ -401,6 +408,11 @@ void BufferedProducer<BufferType>::clear() {
 }
 
 template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_buffer_size() const {
+    return messages_.size();
+}
+
+template <typename BufferType>
 void BufferedProducer<BufferType>::set_max_buffer_size(ssize_t max_buffer_size) {
     if (max_buffer_size < -1) {
         throw Exception("Invalid buffer size.");
@@ -411,11 +423,6 @@ void BufferedProducer<BufferType>::set_max_buffer_size(ssize_t max_buffer_size) 
 template <typename BufferType>
 ssize_t BufferedProducer<BufferType>::get_max_buffer_size() const {
     return max_buffer_size_;
-}
-
-template <typename BufferType>
-size_t BufferedProducer<BufferType>::get_buffer_size() const {
-    return messages_.size();
 }
 
 template <typename BufferType>
@@ -508,6 +515,7 @@ void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
 template <typename BufferType>
 Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration config) {
     using std::placeholders::_2;
+    delivery_report_callback_ = config.get_delivery_report_callback();
     auto callback = std::bind(&BufferedProducer<BufferType>::on_delivery_report, this, _2);
     config.set_delivery_report_callback(std::move(callback));
     return config;
