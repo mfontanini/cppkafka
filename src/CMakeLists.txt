@@ -19,7 +19,7 @@ set(SOURCES
 
     utils/backoff_performer.cpp
     utils/backoff_committer.cpp
-        utils/poll_strategy_base.cpp
+    utils/poll_strategy_base.cpp
     utils/roundrobin_poll_strategy.cpp
 )
 

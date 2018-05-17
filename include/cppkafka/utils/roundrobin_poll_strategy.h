@@ -83,8 +83,7 @@ namespace cppkafka {
  * the Consumer instance it owns.
  */
 
-class RoundRobinPollStrategy : public PollStrategyBase
-{
+class RoundRobinPollStrategy : public PollStrategyBase {
 public:
     RoundRobinPollStrategy(Consumer& consumer);
     
@@ -113,14 +112,11 @@ public:
  
 protected:
     /**
-     * \sa PollStrategyBase::get_next_queue
-     */
-    QueueData& get_next_queue(void* opaque = nullptr) final;
-    
-    /**
      * \sa PollStrategyBase::reset_state
      */
     void reset_state() final;
+    
+    QueueData& get_next_queue();
     
 private:
     void consume_batch(Queue& queue,

@@ -51,20 +51,20 @@ Message RoundRobinPollStrategy::poll() {
 
 Message RoundRobinPollStrategy::poll(milliseconds timeout) {
     // Always give priority to group and global events
-    Message message = get_consumer_queue().queue_.consume(milliseconds(0));
+    Message message = get_consumer_queue().queue.consume(milliseconds(0));
     if (message) {
         return message;
     }
     size_t num_queues = get_partition_queues().size();
     while (num_queues--) {
         //consume the next partition (non-blocking)
-        message = get_next_queue().queue_.consume(milliseconds(0));
+        message = get_next_queue().queue.consume(milliseconds(0));
         if (message) {
             return message;
         }
     }
     // We still don't have a valid message so we block on the event queue
-    return get_consumer_queue().queue_.consume(timeout);
+    return get_consumer_queue().queue.consume(timeout);
 }
 
 MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size) {
@@ -76,16 +76,16 @@ MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size, millisecon
     ssize_t count = max_batch_size;
     
     // batch from the group event queue first (non-blocking)
-    consume_batch(get_consumer_queue().queue_, messages, count, milliseconds(0));
+    consume_batch(get_consumer_queue().queue, messages, count, milliseconds(0));
     size_t num_queues = get_partition_queues().size();
     while ((count > 0) && (num_queues--)) {
         // batch from the next partition (non-blocking)
-        consume_batch(get_next_queue().queue_, messages, count, milliseconds(0));
+        consume_batch(get_next_queue().queue, messages, count, milliseconds(0));
     }
     // we still have space left in the buffer
     if (count > 0) {
         // wait on the event queue until timeout
-        consume_batch(get_consumer_queue().queue_, messages, count, timeout);
+        consume_batch(get_consumer_queue().queue, messages, count, timeout);
     }
     return messages;
 }
@@ -93,8 +93,7 @@ MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size, millisecon
 void RoundRobinPollStrategy::consume_batch(Queue& queue,
                                            MessageList& messages,
                                            ssize_t& count,
-                                           milliseconds timeout)
-{
+                                           milliseconds timeout) {
     MessageList queue_messages = queue.consume_batch(count, timeout);
     if (queue_messages.empty()) {
         return;
@@ -111,11 +110,11 @@ void RoundRobinPollStrategy::consume_batch(Queue& queue,
 void RoundRobinPollStrategy::restore_forwarding() {
     // forward all partition queues
     for (const auto& toppar : get_partition_queues()) {
-        toppar.second.queue_.forward_to_queue(get_consumer_queue().queue_);
+        toppar.second.queue.forward_to_queue(get_consumer_queue().queue);
     }
 }
 
-QueueData& RoundRobinPollStrategy::get_next_queue(void* opaque) {
+QueueData& RoundRobinPollStrategy::get_next_queue() {
     if (get_partition_queues().empty()) {
         throw QueueException(RD_KAFKA_RESP_ERR__STATE);
     }

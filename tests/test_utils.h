@@ -41,8 +41,7 @@ private:
  * \brief Specific implementation which can be used with other
  *        util classes such as BasicConsumerDispatcher.
  */
-class PollStrategyAdapter : public Consumer
-{
+class PollStrategyAdapter : public Consumer {
 public:
     PollStrategyAdapter(Configuration config);
     void add_polling_strategy(std::unique_ptr<PollInterface> poll_strategy);

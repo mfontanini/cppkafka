@@ -72,7 +72,7 @@ struct PollInterface {
      *
      * Each call to poll() will first consume from the global event queue and if there are
      * no pending events, will attempt to consume from all partitions until a valid message is found.
-     * The timeout used on this call will be the one configured via RoundRobinPollStrategy::set_timeout.
+     * The timeout used on this call will be the one configured via PollInterface::set_timeout.
      *
      * \return A message. The returned message *might* be empty. It's necessary to check
      * that it's a valid one before using it (see example above).
@@ -86,7 +86,7 @@ struct PollInterface {
     /**
      * \brief Polls for new messages
      *
-     * Same as the other overload of RoundRobinPollStrategy::poll but the provided
+     * Same as the other overload of PollInterface::poll but the provided
      * timeout will be used instead of the one configured on this Consumer.
      *
      * \param timeout The timeout to be used on this call
@@ -113,7 +113,7 @@ struct PollInterface {
     /**
      * \brief Polls all assigned partitions for a batch of new messages in round-robin fashion
      *
-     * Same as the other overload of RoundRobinPollStrategy::poll_batch but the provided
+     * Same as the other overload of PollInterface::poll_batch but the provided
      * timeout will be used instead of the one configured on this Consumer.
      *
      * \param max_batch_size The maximum amount of messages expected

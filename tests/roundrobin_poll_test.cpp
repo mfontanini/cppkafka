@@ -108,9 +108,7 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
 
     // Create a consumer and subscribe to the topic
     PollStrategyAdapter consumer(make_consumer_config());
-    TopicPartitionList partitions;
-    for (int i = 0; i < KAFKA_NUM_PARTITIONS; partitions.emplace_back(KAFKA_TOPICS[0], i++));
-    consumer.assign(partitions);
+    consumer.subscribe({ KAFKA_TOPICS[0] });
     consumer.add_polling_strategy(unique_ptr<PollInterface>(new RoundRobinPollStrategy(consumer)));
     
     PollConsumerRunner runner(consumer, total_messages, KAFKA_NUM_PARTITIONS);
@@ -130,10 +128,14 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
     REQUIRE(runner.get_messages().size() == total_messages);
     
     // Check that we have one message from each partition in desired order
-    vector<int> partition_order = make_roundrobin_partition_vector(total_messages);
-    
+    vector<int> partition_order = make_roundrobin_partition_vector(total_messages+KAFKA_NUM_PARTITIONS);
+    int partition_idx;
     for (int i = 0; i < total_messages; ++i) {
-        REQUIRE(runner.get_messages()[i].get_partition() == partition_order[i+1]);
+        if (i == 0) {
+            // find first polled partition index
+            partition_idx = runner.get_messages()[i].get_partition();
+        }
+        REQUIRE(runner.get_messages()[i].get_partition() == partition_order[i+partition_idx]);
         REQUIRE((string)runner.get_messages()[i].get_payload() == payload);
     }
     

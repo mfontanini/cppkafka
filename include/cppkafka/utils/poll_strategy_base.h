@@ -43,8 +43,8 @@ namespace cppkafka {
  *        related (user-specific) information.
  */
 struct QueueData {
-    Queue       queue_;
-    boost::any  metadata_;
+    Queue       queue;
+    boost::any  metadata;
 };
 
 /**
@@ -52,8 +52,7 @@ struct QueueData {
  *
  * \brief Base implementation of  the PollInterface
  */
-class PollStrategyBase : public PollInterface
-{
+class PollStrategyBase : public PollInterface {
 public:
     using QueueMap = std::map<TopicPartition, QueueData>;
     
@@ -98,18 +97,6 @@ protected:
      * \return The consumer queue
      */
     QueueData& get_consumer_queue();
-    
-    /**
-     * \brief Return the next queue to be processed
-     *
-     * Depending on the polling strategy, each implementation must define it's own algorithm for
-     * determining the next queue to poll.
-     *
-     * \param opaque Application specific data which can help determine the next queue.
-     *
-     * \return A partition queue
-     */
-    virtual QueueData& get_next_queue(void* opaque = nullptr) = 0;
     
     /**
      * \brief Reset the internal state of the queues.

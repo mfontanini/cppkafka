@@ -18,7 +18,7 @@ add_executable(
     kafka_handle_base_test.cpp
     producer_test.cpp
     consumer_test.cpp
-        roundrobin_poll_test.cpp
+    roundrobin_poll_test.cpp
 
     # Main file
     test_main.cpp
