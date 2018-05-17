@@ -108,6 +108,16 @@ public:
      * \param builder The builder that contains the message to be produced
      */
     void produce(const MessageBuilder& builder);
+    
+    /**
+     * \brief Produces a message without buffering it
+     *
+     * The message will still be tracked so that a call to flush or wait_for_acks will actually
+     * wait for it to be acknowledged.
+     *
+     * \param message The message to be produced
+     */
+    void produce(const Message& message);
 
     /**
      * \brief Flushes the buffered messages.
@@ -185,7 +195,8 @@ private:
 
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder);
-    void produce_message(const MessageBuilder& message);
+    template <typename MessageType>
+    void produce_message(const MessageType& message);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
 
@@ -219,6 +230,12 @@ void BufferedProducer<BufferType>::add_message(Builder builder) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
     produce_message(builder);
+    expected_acks_++;
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::produce(const Message& message) {
+    produce_message(message);
     expected_acks_++;
 }
 
@@ -309,11 +326,12 @@ void BufferedProducer<BufferType>::set_produce_failure_callback(ProduceFailureCa
 }
 
 template <typename BufferType>
-void BufferedProducer<BufferType>::produce_message(const MessageBuilder& builder) {
+template <typename MessageType>
+void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
     bool sent = false;
     while (!sent) {
         try {
-            producer_.produce(builder);
+            producer_.produce(message);
             sent = true;
         }
         catch (const HandleException& ex) {
