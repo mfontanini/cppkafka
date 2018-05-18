@@ -57,6 +57,10 @@ TopicPartitionList Consumer::get_matching_partitions(TopicPartitionList&& partit
     TopicPartitionList matches;
     for (const auto& topic : topics) {
         for (auto& partition : partitions) {
+            if (topic.size() != partition.get_topic().size()) {
+                continue;
+            }
+            // compare both strings
             bool match = equal(topic.begin(), topic.end(), partition.get_topic().begin(),
                                [](char c1, char c2)->bool {
                 return toupper(c1) == toupper(c2);
@@ -150,7 +154,7 @@ void Consumer::pause() {
     pause_partitions(get_assignment());
 }
 
-void Consumer::pause_topics(const std::vector<string>& topics) {
+void Consumer::pause_topics(const vector<string>& topics) {
     pause_partitions(get_matching_partitions(get_assignment(), topics));
 }
 
@@ -158,7 +162,7 @@ void Consumer::resume() {
     resume_partitions(get_assignment());
 }
 
-void Consumer::resume_topics(const std::vector<string>& topics) {
+void Consumer::resume_topics(const vector<string>& topics) {
     resume_partitions(get_matching_partitions(get_assignment(), topics));
 }
 
