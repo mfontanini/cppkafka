@@ -27,6 +27,8 @@
  *
  */
 #include <sstream>
+#include <algorithm>
+#include <cctype>
 #include "consumer.h"
 #include "exceptions.h"
 #include "logging.h"
@@ -39,6 +41,8 @@ using std::move;
 using std::make_tuple;
 using std::ostringstream;
 using std::chrono::milliseconds;
+using std::toupper;
+using std::equal;
 
 namespace cppkafka {
 
@@ -46,6 +50,23 @@ void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
                                rd_kafka_topic_partition_list_t *partitions, void *opaque) {
     TopicPartitionList list = convert(partitions);
     static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
+}
+
+TopicPartitionList Consumer::get_matching_partitions(TopicPartitionList&& partitions,
+                                                     const vector<string>& topics) {
+    TopicPartitionList matches;
+    for (const auto& topic : topics) {
+        for (auto& partition : partitions) {
+            bool match = equal(topic.begin(), topic.end(), partition.get_topic().begin(),
+                               [](char c1, char c2)->bool {
+                return toupper(c1) == toupper(c2);
+            });
+            if (match) {
+                matches.emplace_back(move(partition));
+            }
+        }
+    }
+    return matches;
 }
 
 Consumer::Consumer(Configuration config) 
@@ -123,6 +144,22 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
 void Consumer::unassign() {
     rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), nullptr);
     check_error(error);
+}
+
+void Consumer::pause() {
+    pause_partitions(get_assignment());
+}
+
+void Consumer::pause_topics(const std::vector<string>& topics) {
+    pause_partitions(get_matching_partitions(get_assignment(), topics));
+}
+
+void Consumer::resume() {
+    resume_partitions(get_assignment());
+}
+
+void Consumer::resume_topics(const std::vector<string>& topics) {
+    resume_partitions(get_matching_partitions(get_assignment(), topics));
 }
 
 void Consumer::commit() {

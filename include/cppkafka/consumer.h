@@ -194,6 +194,30 @@ public:
     void unassign();
     
     /**
+     * \brief Pauses all consumption
+     */
+    void pause();
+    
+    /**
+     * \brief Pauses consumption from the given topic list
+     *
+     * \param List of topics
+     */
+    void pause_topics(const std::vector<std::string>& topics);
+    
+    /**
+     * \brief Resumes all consumption
+     */
+     void resume();
+     
+     /**
+     * \brief Resumes consumption from the given topic list
+     *
+     * \param List of topics
+     */
+    void resume_topics(const std::vector<std::string>& topics);
+    
+    /**
      * \brief Commits the current partition assignment
      *
      * This translates into a call to rd_kafka_commit with a null partition list.
@@ -364,6 +388,8 @@ public:
 private:
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);
+    static TopicPartitionList get_matching_partitions(TopicPartitionList&& partitions,
+                                                      const std::vector<std::string>& topics);
 
     void close();
     void commit(const Message& msg, bool async);
