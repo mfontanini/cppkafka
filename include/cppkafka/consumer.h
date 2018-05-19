@@ -388,7 +388,7 @@ public:
 private:
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);
-    static TopicPartitionList get_matching_partitions(TopicPartitionList&& partitions,
+    static TopicPartitionList get_matching_partitions(TopicPartitionList partitions,
                                                       const std::vector<std::string>& topics);
 
     void close();
