@@ -366,17 +366,7 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     bool should_produce = message.get_error() &&
                           (!produce_failure_callback_ || produce_failure_callback_(message));
     if (should_produce) {
-        MessageBuilder builder(message.get_topic());
-        const auto& key = message.get_key();
-        const auto& payload = message.get_payload();
-        builder.partition(message.get_partition())
-               .key(Buffer(key.get_data(), key.get_size()))
-               .payload(Buffer(payload.get_data(), payload.get_size()))
-               .user_data(message.get_user_data());
-        if (message.get_timestamp()) {
-            builder.timestamp(message.get_timestamp()->get_timestamp());
-        }
-        produce_message(builder);
+        produce_message(message);
         return;
     }
     // If production was successful or the produce failure callback returned false, then
