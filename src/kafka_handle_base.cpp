@@ -48,7 +48,7 @@ namespace cppkafka {
 const milliseconds KafkaHandleBase::DEFAULT_TIMEOUT{1000};
 
 KafkaHandleBase::KafkaHandleBase(Configuration config) 
-: handle_(nullptr, nullptr), timeout_ms_(DEFAULT_TIMEOUT), config_(move(config)) {
+: timeout_ms_(DEFAULT_TIMEOUT), config_(move(config)), handle_(nullptr, nullptr) {
     auto& maybe_config = config_.get_default_topic_configuration();
     if (maybe_config) {
         maybe_config->set_as_opaque();

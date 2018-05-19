@@ -217,11 +217,11 @@ private:
     std::vector<GroupInformation> fetch_consumer_groups(const char* name);
     void save_topic_config(const std::string& topic_name, TopicConfiguration config);
 
-    HandlePtr handle_;
     std::chrono::milliseconds timeout_ms_;
     Configuration config_;
     TopicConfigurationMap topic_configurations_;
     std::mutex topic_configurations_mutex_;
+    HandlePtr handle_;
 };
 
 } // cppkafka
