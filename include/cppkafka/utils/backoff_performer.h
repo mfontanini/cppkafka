@@ -46,6 +46,7 @@ public:
     static const TimeUnit DEFAULT_INITIAL_BACKOFF;
     static const TimeUnit DEFAULT_BACKOFF_STEP;
     static const TimeUnit DEFAULT_MAXIMUM_BACKOFF;
+    static const size_t DEFAULT_MAXIMUM_RETRIES;
 
     /**
      * The backoff policy to use
@@ -97,6 +98,15 @@ public:
      * \param value The value to be used
      */
     void set_maximum_backoff(TimeUnit value);
+    
+    /**
+     * \brief Sets the maximum number of retries for the commit operation
+     *
+     * \param value The number of retries before giving up
+     *
+     * \remark Setting value to 0 is equivalent to 1, i.e. it will try at least once
+     */
+    void set_maximum_retries(size_t value);
 
     /**
      * \brief Executes an action and backs off if it fails
@@ -108,13 +118,13 @@ public:
     template <typename Functor>
     void perform(const Functor& callback) {
         TimeUnit backoff = initial_backoff_;
-        while (true) {
+        size_t retries = maximum_retries_;
+        while (retries--) {
             auto start = std::chrono::steady_clock::now();
             // If the callback returns true, we're done
             if (callback()) {
                 return;
             }
-
             auto end = std::chrono::steady_clock::now();
             auto time_elapsed = end - start;
             // If we still have time left, then sleep
@@ -132,6 +142,7 @@ private:
     TimeUnit backoff_step_;
     TimeUnit maximum_backoff_;
     BackoffPolicy policy_;
+    size_t maximum_retries_;
 };
 
 } // cppkafka

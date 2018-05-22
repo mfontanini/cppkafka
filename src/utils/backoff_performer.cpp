@@ -28,20 +28,23 @@
  */
 
 #include <algorithm>
+#include <limits>
 #include "utils/backoff_performer.h"
 
 using std::min;
+using std::numeric_limits;
 
 namespace cppkafka {
 
 const BackoffPerformer::TimeUnit BackoffPerformer::DEFAULT_INITIAL_BACKOFF{100};
 const BackoffPerformer::TimeUnit BackoffPerformer::DEFAULT_BACKOFF_STEP{50};
 const BackoffPerformer::TimeUnit BackoffPerformer::DEFAULT_MAXIMUM_BACKOFF{1000};
+const size_t BackoffPerformer::DEFAULT_MAXIMUM_RETRIES{numeric_limits<size_t>::max()};
 
 BackoffPerformer::BackoffPerformer()
 : initial_backoff_(DEFAULT_INITIAL_BACKOFF),
   backoff_step_(DEFAULT_BACKOFF_STEP), maximum_backoff_(DEFAULT_MAXIMUM_BACKOFF),
-  policy_(BackoffPolicy::LINEAR) {
+  policy_(BackoffPolicy::LINEAR), maximum_retries_(DEFAULT_MAXIMUM_RETRIES) {
 
 }
 
@@ -59,6 +62,10 @@ void BackoffPerformer::set_backoff_step(TimeUnit value) {
 
 void BackoffPerformer::set_maximum_backoff(TimeUnit value) {
     maximum_backoff_ = value;
+}
+
+void BackoffPerformer::set_maximum_retries(size_t value) {
+    maximum_retries_ = value == 0 ? 1 : value;
 }
 
 BackoffPerformer::TimeUnit BackoffPerformer::increase_backoff(TimeUnit backoff) {
