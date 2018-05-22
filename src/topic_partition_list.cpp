@@ -28,12 +28,14 @@
  */
 
 #include <iostream>
+#include <string>
 #include "topic_partition_list.h"
 #include "topic_partition.h"
 #include "exceptions.h"
 
 using std::vector;
 using std::ostream;
+using std::string;
 
 namespace cppkafka {
 
@@ -65,6 +67,42 @@ TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions) {
 
 TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle) {
     return TopicPartitionsListPtr(handle, &rd_kafka_topic_partition_list_destroy);
+}
+
+TopicPartitionList make_subset(const TopicPartitionList& partitions,
+                               const vector<string>& topics) {
+    vector<bool> skip(partitions.size(), false);
+    TopicPartitionList subset;
+    for (const auto& topic : topics) {
+        for (size_t i = 0; i < partitions.size(); ++i) {
+            if (!skip[i] && (topic.size() == partitions[i].get_topic().size())) {
+                // compare both strings
+                bool match = equal(topic.begin(), topic.end(), partitions[i].get_topic().begin(),
+                                   [](char c1, char c2)->bool {
+                    return toupper(c1) == toupper(c2);
+                });
+                if (match) {
+                    skip[i] = true;
+                    subset.emplace_back(partitions[i]);
+                }
+            }
+        }
+    }
+    return subset;
+}
+
+TopicPartitionList make_subset(const TopicPartitionList& partitions,
+                               const vector<int>& ids) {
+    TopicPartitionList subset;
+    for (const auto& id : ids) {
+        for (const auto& partition : partitions) {
+            // compare both partition ids
+            if (id == partition.get_partition()) {
+                subset.emplace_back(partition);
+            }
+        }
+    }
+    return subset;
 }
 
 ostream& operator<<(ostream& output, const TopicPartitionList& rhs) {

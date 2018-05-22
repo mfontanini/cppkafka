@@ -54,6 +54,16 @@ CPPKAFKA_API TopicPartitionList convert(const TopicPartitionsListPtr& topic_part
 CPPKAFKA_API TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions);
 CPPKAFKA_API TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
 
+// Extracts a partition list subset belonging to the provided topics (case-insensitive)
+CPPKAFKA_API TopicPartitionList make_subset(const TopicPartitionList& partitions,
+                                            const std::vector<std::string>& topics);
+
+// Extracts a partition list subset belonging to the provided partition ids
+// Note: this assumes that all topic partitions in the original list belong to the same topic
+//       otherwise the partition ids may not be unique
+CPPKAFKA_API TopicPartitionList make_subset(const TopicPartitionList& partitions,
+                                            const std::vector<int>& ids);
+
 CPPKAFKA_API std::ostream& operator<<(std::ostream& output, const TopicPartitionList& rhs);
 
 } // cppkafka

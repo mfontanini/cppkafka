@@ -52,26 +52,6 @@ void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
     static_cast<Consumer*>(opaque)->handle_rebalance(error, list);
 }
 
-TopicPartitionList Consumer::get_matching_partitions(TopicPartitionList partitions,
-                                                     const vector<string>& topics) {
-    TopicPartitionList matches;
-    for (const auto& topic : topics) {
-        for (auto& partition : partitions) {
-            if (topic.size() == partition.get_topic().size()) {
-                // compare both strings
-                bool match = equal(topic.begin(), topic.end(), partition.get_topic().begin(),
-                                   [](char c1, char c2)->bool {
-                    return toupper(c1) == toupper(c2);
-                });
-                if (match) {
-                    matches.emplace_back(move(partition));
-                }
-            }
-        }
-    }
-    return matches;
-}
-
 Consumer::Consumer(Configuration config) 
 : KafkaHandleBase(move(config)) {
     char error_buffer[512];
@@ -153,16 +133,8 @@ void Consumer::pause() {
     pause_partitions(get_assignment());
 }
 
-void Consumer::pause_topics(const vector<string>& topics) {
-    pause_partitions(get_matching_partitions(get_assignment(), topics));
-}
-
 void Consumer::resume() {
     resume_partitions(get_assignment());
-}
-
-void Consumer::resume_topics(const vector<string>& topics) {
-    resume_partitions(get_matching_partitions(get_assignment(), topics));
 }
 
 void Consumer::commit() {
