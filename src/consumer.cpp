@@ -27,6 +27,8 @@
  *
  */
 #include <sstream>
+#include <algorithm>
+#include <cctype>
 #include "consumer.h"
 #include "exceptions.h"
 #include "logging.h"
@@ -39,6 +41,8 @@ using std::move;
 using std::make_tuple;
 using std::ostringstream;
 using std::chrono::milliseconds;
+using std::toupper;
+using std::equal;
 
 namespace cppkafka {
 
@@ -123,6 +127,14 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
 void Consumer::unassign() {
     rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), nullptr);
     check_error(error);
+}
+
+void Consumer::pause() {
+    pause_partitions(get_assignment());
+}
+
+void Consumer::resume() {
+    resume_partitions(get_assignment());
 }
 
 void Consumer::commit() {

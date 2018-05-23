@@ -4,6 +4,8 @@
 #include "cppkafka/topic_partition.h"
 
 using std::ostringstream;
+using std::set;
+using std::string;
 
 using namespace cppkafka;
 
@@ -41,4 +43,45 @@ TEST_CASE("topic partition list to string", "[topic_partition]") {
 
     output << list;
     CHECK(output.str() == "[ foo[-1:#], bar[2:#], foobar[3:4] ]");
+}
+
+TEST_CASE("find matches by topic", "[topic_partition]") {
+    const TopicPartitionList list = {
+        { "foo", 0 },
+        { "bar", 3 },
+        { "fb",  1 },
+        { "foo", 1 },
+        { "fb",  2 },
+        { "other", 1 },
+        { "a",   1 }
+    };
+
+    const TopicPartitionList expected = {
+        { "foo", 0 },  
+        { "fb", 1 },
+        { "foo", 1 },
+        { "fb", 2 },
+    };
+    const TopicPartitionList subset = find_matches(list, set<string>{"foo", "fb"});
+    CHECK(subset == expected);
+}
+
+TEST_CASE("find matches by id", "[topic_partition]") {
+    const TopicPartitionList list = {
+        { "foo", 2 },
+        { "foo", 3 },
+        { "foo", 4 },
+        { "foo", 5 },
+        { "foo", 6 },
+        { "foo", 7 },
+        { "foo", 8 }
+    };
+
+    const TopicPartitionList expected = {
+        { "foo", 2 },
+        { "foo", 5 },
+        { "foo", 8 },
+    };
+    const TopicPartitionList subset = find_matches(list, set<int>{2,5,8});
+    CHECK(subset == expected);
 }
