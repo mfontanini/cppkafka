@@ -34,6 +34,7 @@
 #include "exceptions.h"
 
 using std::vector;
+using std::set;
 using std::ostream;
 using std::string;
 
@@ -69,21 +70,19 @@ TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle) {
     return TopicPartitionsListPtr(handle, &rd_kafka_topic_partition_list_destroy);
 }
 
-TopicPartitionList make_subset(const TopicPartitionList& partitions,
-                               const vector<string>& topics) {
-    vector<bool> skip(partitions.size(), false);
+TopicPartitionList find_matches(const TopicPartitionList& partitions,
+                                const set<string>& topics) {
     TopicPartitionList subset;
-    for (const auto& topic : topics) {
-        for (size_t i = 0; i < partitions.size(); ++i) {
-            if (!skip[i] && (topic.size() == partitions[i].get_topic().size())) {
+    for (const auto& partition : partitions) {
+        for (const auto& topic : topics) {
+            if (topic.size() == partition.get_topic().size()) {
                 // compare both strings
-                bool match = equal(topic.begin(), topic.end(), partitions[i].get_topic().begin(),
+                bool match = equal(topic.begin(), topic.end(), partition.get_topic().begin(),
                                    [](char c1, char c2)->bool {
                     return toupper(c1) == toupper(c2);
                 });
                 if (match) {
-                    skip[i] = true;
-                    subset.emplace_back(partitions[i]);
+                    subset.emplace_back(partition);
                 }
             }
         }
@@ -91,11 +90,11 @@ TopicPartitionList make_subset(const TopicPartitionList& partitions,
     return subset;
 }
 
-TopicPartitionList make_subset(const TopicPartitionList& partitions,
-                               const vector<int>& ids) {
+TopicPartitionList find_matches(const TopicPartitionList& partitions,
+                                const set<int>& ids) {
     TopicPartitionList subset;
-    for (const auto& id : ids) {
-        for (const auto& partition : partitions) {
+    for (const auto& partition : partitions) {
+        for (const auto& id : ids) {
             // compare both partition ids
             if (id == partition.get_partition()) {
                 subset.emplace_back(partition);

@@ -4,6 +4,8 @@
 #include "cppkafka/topic_partition.h"
 
 using std::ostringstream;
+using std::set;
+using std::string;
 
 using namespace cppkafka;
 
@@ -41,4 +43,39 @@ TEST_CASE("topic partition list to string", "[topic_partition]") {
 
     output << list;
     CHECK(output.str() == "[ foo[-1:#], bar[2:#], foobar[3:4] ]");
+}
+
+TEST_CASE("find matches by topic", "[topic_partition]") {
+    TopicPartitionList list;
+    list.push_back({ "foo", 0 });
+    list.push_back({ "bar", 3 });
+    list.push_back({ "fb",  1 });
+    list.push_back({ "foo", 1 });
+    list.push_back({ "fb",  2 });
+    list.push_back({ "other", 1 });
+    list.push_back({ "a",   1 });
+
+    TopicPartitionList subset = find_matches(list, set<string>{"foo", "fb"});
+    REQUIRE(subset.size() == 4);
+    CHECK((subset[0].get_topic() == "foo" && subset[0].get_partition() == 0));
+    CHECK((subset[1].get_topic() == "fb" && subset[1].get_partition() == 1));
+    CHECK((subset[2].get_topic() == "foo" && subset[2].get_partition() == 1));
+    CHECK((subset[3].get_topic() == "fb" && subset[3].get_partition() == 2));
+}
+
+TEST_CASE("find matches by id", "[topic_partition]") {
+    TopicPartitionList list;
+    list.push_back({ "foo", 2 });
+    list.push_back({ "foo", 3 });
+    list.push_back({ "foo", 4 });
+    list.push_back({ "foo", 5 });
+    list.push_back({ "foo", 6 });
+    list.push_back({ "foo", 7 });
+    list.push_back({ "foo", 8 });
+
+    TopicPartitionList subset = find_matches(list, set<int>{2,5,8});
+    REQUIRE(subset.size() == 3);
+    CHECK(subset[0].get_partition() == 2);
+    CHECK(subset[1].get_partition() == 5);
+    CHECK(subset[2].get_partition() == 8);
 }
