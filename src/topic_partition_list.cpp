@@ -94,11 +94,8 @@ TopicPartitionList find_matches(const TopicPartitionList& partitions,
                                 const set<int>& ids) {
     TopicPartitionList subset;
     for (const auto& partition : partitions) {
-        for (const auto& id : ids) {
-            // compare both partition ids
-            if (id == partition.get_partition()) {
-                subset.emplace_back(partition);
-            }
+        if (ids.count(partition.get_partition()) > 0) {
+            subset.emplace_back(partition);
         }
     }
     return subset;
