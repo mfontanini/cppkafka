@@ -46,36 +46,42 @@ TEST_CASE("topic partition list to string", "[topic_partition]") {
 }
 
 TEST_CASE("find matches by topic", "[topic_partition]") {
-    TopicPartitionList list;
-    list.push_back({ "foo", 0 });
-    list.push_back({ "bar", 3 });
-    list.push_back({ "fb",  1 });
-    list.push_back({ "foo", 1 });
-    list.push_back({ "fb",  2 });
-    list.push_back({ "other", 1 });
-    list.push_back({ "a",   1 });
+    const TopicPartitionList list = {
+        { "foo", 0 },
+        { "bar", 3 },
+        { "fb",  1 },
+        { "foo", 1 },
+        { "fb",  2 },
+        { "other", 1 },
+        { "a",   1 }
+    };
 
-    TopicPartitionList subset = find_matches(list, set<string>{"foo", "fb"});
-    REQUIRE(subset.size() == 4);
-    CHECK((subset[0].get_topic() == "foo" && subset[0].get_partition() == 0));
-    CHECK((subset[1].get_topic() == "fb" && subset[1].get_partition() == 1));
-    CHECK((subset[2].get_topic() == "foo" && subset[2].get_partition() == 1));
-    CHECK((subset[3].get_topic() == "fb" && subset[3].get_partition() == 2));
+    const TopicPartitionList expected = {
+        { "foo", 0 },  
+        { "fb", 1 },
+        { "foo", 1 },
+        { "fb", 2 },
+    };
+    const TopicPartitionList subset = find_matches(list, set<string>{"foo", "fb"});
+    CHECK(subset == expected);
 }
 
 TEST_CASE("find matches by id", "[topic_partition]") {
-    TopicPartitionList list;
-    list.push_back({ "foo", 2 });
-    list.push_back({ "foo", 3 });
-    list.push_back({ "foo", 4 });
-    list.push_back({ "foo", 5 });
-    list.push_back({ "foo", 6 });
-    list.push_back({ "foo", 7 });
-    list.push_back({ "foo", 8 });
+    const TopicPartitionList list = {
+        { "foo", 2 },
+        { "foo", 3 },
+        { "foo", 4 },
+        { "foo", 5 },
+        { "foo", 6 },
+        { "foo", 7 },
+        { "foo", 8 }
+    };
 
-    TopicPartitionList subset = find_matches(list, set<int>{2,5,8});
-    REQUIRE(subset.size() == 3);
-    CHECK(subset[0].get_partition() == 2);
-    CHECK(subset[1].get_partition() == 5);
-    CHECK(subset[2].get_partition() == 8);
+    const TopicPartitionList expected = {
+        { "foo", 2 },
+        { "foo", 5 },
+        { "foo", 8 },
+    };
+    const TopicPartitionList subset = find_matches(list, set<int>{2,5,8});
+    CHECK(subset == expected);
 }
