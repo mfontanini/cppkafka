@@ -165,6 +165,10 @@ int KafkaHandleBase::get_out_queue_length() const {
     return rd_kafka_outq_len(handle_.get());
 }
 
+void KafkaHandleBase::yield() const {
+    rd_kafka_yield(handle_.get());
+}
+
 void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
     handle_ = HandlePtr(handle, &rd_kafka_destroy);
 }

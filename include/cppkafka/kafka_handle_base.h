@@ -200,6 +200,13 @@ public:
      * This calls rd_kafka_outq_len
      */
     int get_out_queue_length() const;
+
+    /**
+     * \brief Cancels the current callback dispatcher
+     *
+     * This calls rd_kafka_yield
+     */
+    void yield() const;
 protected:
     KafkaHandleBase(Configuration config);
 
