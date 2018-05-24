@@ -140,7 +140,24 @@ private:
  */
 class CPPKAFKA_API Metadata {
 public:
-    Metadata(const rd_kafka_metadata_t* ptr);
+    /**
+     * \brief Creates a Metadata object that doesn't take ownership of the handle
+     *
+     * \param handle The handle to be used
+     */
+    static Metadata make_non_owning(const rd_kafka_metadata_t* handle);
+
+    /**
+     * \brief Constructs an empty metadata object
+     *
+     * \remark Using any methods except Metadata::get_handle on an empty metadata is undefined behavior
+     */
+    Metadata();
+    
+    /**
+     * Constructor
+     */
+    Metadata(const rd_kafka_metadata_t* handle);
 
     /**
      * Gets the brokers' metadata
@@ -165,8 +182,22 @@ public:
      * \param prefix The prefix to be looked up
      */
     std::vector<TopicMetadata> get_topics_prefixed(const std::string& prefix) const;
+    
+    /**
+     * Indicates whether this metadata is valid (not null)
+     */
+    explicit operator bool() const;
+    
+    /**
+     * Returns the rdkakfa handle
+     */
+    const rd_kafka_metadata_t* get_handle() const;
 private:
     using HandlePtr = std::unique_ptr<const rd_kafka_metadata_t, decltype(&rd_kafka_metadata_destroy)>;
+    
+    struct NonOwningTag { };
+
+    Metadata(const rd_kafka_metadata_t* handle, NonOwningTag);
 
     HandlePtr handle_;
 };

@@ -27,6 +27,7 @@
  *
  */
 
+#include <assert.h>
 #include "metadata.h"
 #include "error.h"
 
@@ -110,12 +111,31 @@ uint16_t BrokerMetadata::get_port() const {
 
 // Metadata
 
-Metadata::Metadata(const rd_kafka_metadata_t* ptr) 
-: handle_(ptr, &rd_kafka_metadata_destroy) {
+void dummy_metadata_destroyer(const rd_kafka_metadata_t*) {
+
+}
+
+Metadata Metadata::make_non_owning(const rd_kafka_metadata_t* handle) {
+    return Metadata(handle, NonOwningTag{});
+}
+
+Metadata::Metadata()
+: handle_(nullptr, nullptr) {
+
+}
+
+Metadata::Metadata(const rd_kafka_metadata_t* handle)
+: handle_(handle, &rd_kafka_metadata_destroy) {
+
+}
+
+Metadata::Metadata(const rd_kafka_metadata_t* handle, NonOwningTag)
+: handle_(handle, &dummy_metadata_destroyer) {
 
 }
 
 vector<BrokerMetadata> Metadata::get_brokers() const {
+    assert(handle_);
     vector<BrokerMetadata> output;
     for (int i = 0; i < handle_->broker_cnt; ++i) {
         const rd_kafka_metadata_broker_t& broker = handle_->brokers[i];
@@ -125,6 +145,7 @@ vector<BrokerMetadata> Metadata::get_brokers() const {
 }
 
 vector<TopicMetadata> Metadata::get_topics() const {
+    assert(handle_);
     vector<TopicMetadata> output;
     for (int i = 0; i < handle_->topic_cnt; ++i) {
         const rd_kafka_metadata_topic_t& topic = handle_->topics[i];
@@ -134,6 +155,7 @@ vector<TopicMetadata> Metadata::get_topics() const {
 }
 
 vector<TopicMetadata> Metadata::get_topics(const unordered_set<string>& topics) const {
+    assert(handle_);
     vector<TopicMetadata> output;
     for (int i = 0; i < handle_->topic_cnt; ++i) {
         const rd_kafka_metadata_topic_t& topic = handle_->topics[i];
@@ -145,6 +167,7 @@ vector<TopicMetadata> Metadata::get_topics(const unordered_set<string>& topics) 
 }
 
 vector<TopicMetadata> Metadata::get_topics_prefixed(const string& prefix) const {
+    assert(handle_);
     vector<TopicMetadata> output;
     for (int i = 0; i < handle_->topic_cnt; ++i) {
         const rd_kafka_metadata_topic_t& topic = handle_->topics[i];
@@ -154,6 +177,15 @@ vector<TopicMetadata> Metadata::get_topics_prefixed(const string& prefix) const 
         }
     }
     return output;
+}
+
+
+Metadata::operator bool() const {
+    return handle_ != nullptr;
+}
+
+const rd_kafka_metadata_t* Metadata::get_handle() const {
+    return handle_.get();
 }
 
 } // cppkafka
