@@ -37,8 +37,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <map>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include <mutex>
 #include <atomic>
 #include <boost/optional.hpp>
 #include "../producer.h"
@@ -224,8 +223,7 @@ private:
     Configuration::DeliveryReportCallback delivery_report_callback_;
     Producer producer_;
     QueueType messages_;
-    mutable boost::mutex exclusive_access_;
-    mutable boost::shared_mutex shared_access_;
+    mutable std::mutex mutex_;
     ProduceFailureCallback produce_failure_callback_;
     ssize_t max_buffer_size_{-1};
     std::atomic_ulong expected_acks_{0};
@@ -263,14 +261,14 @@ void BufferedProducer<BufferType>::produce(const Message& message) {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
-    {
-        boost::shared_lock<boost::shared_mutex> grant(shared_access_);
-        size_t num_messages = messages_.size();
-        while (num_messages--) {
-            produce_message(messages_.front());
-            boost::lock_guard<boost::mutex> require(exclusive_access_);
-            messages_.pop();
+    size_t num_messages = messages_.size();
+    while (num_messages--) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (messages_.empty()) {
+            break; //perhaps clear() was called
         }
+        produce_message(messages_.front());
+        messages_.pop();
     }
     wait_for_acks();
 }
@@ -295,7 +293,7 @@ void BufferedProducer<BufferType>::wait_for_acks() {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::clear() {
-    boost::unique_lock<boost::shared_mutex> restrict(shared_access_);
+    std::lock_guard<std::mutex> lock(mutex_);
     QueueType tmp;
     std::swap(tmp, messages_);
 }
@@ -322,9 +320,8 @@ template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
     {
-        boost::shared_lock<boost::shared_mutex> grant(shared_access_);
-        boost::lock_guard<boost::mutex> require(exclusive_access_);
-        messages_.push(std::forward<BuilderType>(builder));
+        std::lock_guard<std::mutex> lock(mutex_);
+        messages_.push(std::move(builder));
     }
     if ((max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
         flush();

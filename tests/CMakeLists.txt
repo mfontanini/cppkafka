@@ -8,7 +8,7 @@ add_custom_target(tests)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(cppkafka-test EXCLUDE_FROM_ALL test_utils.cpp)
-target_link_libraries(cppkafka-test cppkafka ${RDKAFKA_LIBRARY} ${Boost_LIBRARIES} pthread)
+target_link_libraries(cppkafka-test cppkafka ${RDKAFKA_LIBRARY} pthread)
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 
