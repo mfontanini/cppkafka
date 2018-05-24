@@ -1,6 +1,6 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
 include_directories(SYSTEM ${CATCH_INCLUDE})
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${RDKAFKA_INCLUDE_DIR})
+include_directories(SYSTEM ${RDKAFKA_INCLUDE_DIR})
 
 set(KAFKA_TEST_INSTANCE "kafka-vm:9092" 
     CACHE STRING "The kafka instance to which to connect to run tests")
@@ -8,7 +8,7 @@ add_custom_target(tests)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(cppkafka-test EXCLUDE_FROM_ALL test_utils.cpp)
-target_link_libraries(cppkafka-test cppkafka ${RDKAFKA_LIBRARY} pthread)
+target_link_libraries(cppkafka-test cppkafka ${RDKAFKA_LIBRARY} ${Boost_LIBRARIES} pthread)
 
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 

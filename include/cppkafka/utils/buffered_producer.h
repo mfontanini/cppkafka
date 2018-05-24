@@ -37,6 +37,9 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <map>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <atomic>
 #include <boost/optional.hpp>
 #include "../producer.h"
 #include "../message.h"
@@ -159,11 +162,27 @@ public:
     ssize_t get_max_buffer_size() const;
     
     /**
-     * \brief Get the number of messages in the buffer
+     * \brief Get the number of unsent messages in the buffer
      *
      * \return The number of messages
      */
     size_t get_buffer_size() const;
+    
+    /**
+     * \brief Returns the total number of messages ack-ed by the broker
+     *
+     * \return The total number of messages since the beginning or since the last roll-over
+     *
+     * \remark Call get_rollover_count() to get the number of times the counter has rolled over
+     */
+    size_t get_total_messages_acked() const;
+    
+    /**
+     * \brief Roll-over counter for get_total_messages_acked
+     *
+     * \return The number of rolls
+     */
+    uint16_t get_rollover_count() const;
 
     /**
      * Gets the Producer object
@@ -190,6 +209,7 @@ public:
      * \param callback The callback to be set
      */
     void set_produce_failure_callback(ProduceFailureCallback callback);
+    
 private:
     using QueueType = std::queue<Builder>;
 
@@ -204,10 +224,13 @@ private:
     Configuration::DeliveryReportCallback delivery_report_callback_;
     Producer producer_;
     QueueType messages_;
+    mutable boost::mutex exclusive_access_;
+    mutable boost::shared_mutex shared_access_;
     ProduceFailureCallback produce_failure_callback_;
-    size_t expected_acks_{0};
-    size_t messages_acked_{0};
     ssize_t max_buffer_size_{-1};
+    std::atomic_ulong expected_acks_{0};
+    std::atomic_ullong total_messages_acked_{0};
+    std::atomic_ushort rollover_counter_{0};
 };
 
 template <typename BufferType>
@@ -230,7 +253,6 @@ void BufferedProducer<BufferType>::add_message(Builder builder) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
     produce_message(builder);
-    expected_acks_++;
 }
 
 template <typename BufferType>
@@ -241,16 +263,21 @@ void BufferedProducer<BufferType>::produce(const Message& message) {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
-    while (!messages_.empty()) {
-        produce_message(messages_.front());
-        messages_.pop();
+    {
+        boost::shared_lock<boost::shared_mutex> grant(shared_access_);
+        size_t num_messages = messages_.size();
+        while (num_messages--) {
+            produce_message(messages_.front());
+            boost::lock_guard<boost::mutex> require(exclusive_access_);
+            messages_.pop();
+        }
     }
     wait_for_acks();
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::wait_for_acks() {
-    while (messages_acked_ < expected_acks_) {
+    while (expected_acks_ > 0) {
         try {
             producer_.flush();
         }
@@ -264,16 +291,13 @@ void BufferedProducer<BufferType>::wait_for_acks() {
             }
         }
     }
-    expected_acks_ = 0;
-    messages_acked_ = 0;
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::clear() {
+    boost::unique_lock<boost::shared_mutex> restrict(shared_access_);
     QueueType tmp;
     std::swap(tmp, messages_);
-    expected_acks_ = 0;
-    messages_acked_ = 0;
 }
 
 template <typename BufferType>
@@ -297,8 +321,11 @@ size_t BufferedProducer<BufferType>::get_buffer_size() const {
 template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
-    expected_acks_++;
-    messages_.push(std::forward<BuilderType>(builder));
+    {
+        boost::shared_lock<boost::shared_mutex> grant(shared_access_);
+        boost::lock_guard<boost::mutex> require(exclusive_access_);
+        messages_.push(std::forward<BuilderType>(builder));
+    }
     if ((max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
         flush();
     }
@@ -312,6 +339,21 @@ Producer& BufferedProducer<BufferType>::get_producer() {
 template <typename BufferType>
 const Producer& BufferedProducer<BufferType>::get_producer() const {
     return producer_;
+}
+
+template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_buffer_size() const {
+    return messages_.size();
+}
+
+template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_total_messages_acked() const {
+    return total_messages_acked_;
+}
+
+template <typename BufferType>
+uint16_t BufferedProducer<BufferType>::get_rollover_count() const {
+    return rollover_counter_;
 }
 
 template <typename BufferType>
@@ -345,6 +387,8 @@ void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
             }
         }
     }
+    // Sent successfully
+    ++expected_acks_;
 }
 
 template <typename BufferType>
@@ -357,10 +401,15 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
+    // Decrement the expected acks
+    --expected_acks_;
+    assert(expected_acks_ != (unsigned long)-1); // Prevent underflow
+    
     // Call the user-supplied delivery report callback if any
     if (delivery_report_callback_) {
         delivery_report_callback_(producer_, message);
     }
+    
     // We should produce this message again if it has an error and we either don't have a
     // produce failure callback or we have one but it returns true
     bool should_produce = message.get_error() &&
@@ -369,9 +418,12 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         produce_message(message);
         return;
     }
-    // If production was successful or the produce failure callback returned false, then
-    // let's consider it to be acked 
-    messages_acked_++;
+    
+    // Increment the total successful transmissions
+    ++total_messages_acked_;
+    if (total_messages_acked_ == 0) {
+        ++rollover_counter_;
+    }
 }
 
 } // cppkafka

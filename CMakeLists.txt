@@ -24,8 +24,18 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 # Build output checks
+option(CPPKAFKA_CMAKE_VERBOSE "Generate verbose output." OFF)
 option(CPPKAFKA_BUILD_SHARED "Build cppkafka as a shared library." ON)
 option(CPPKAFKA_DISABLE_TESTS "Disable build of cppkafka tests." OFF)
+option(CPPKAFKA_DISABLE_EXAMPLES "Disable build of cppkafka examples." OFF)
+option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
+option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
+
+# Disable output from find_package macro
+if (NOT CPPKAFKA_CMAKE_VERBOSE)
+    set(FIND_PACKAGE_QUIET QUIET)
+endif()
+
 if(CPPKAFKA_BUILD_SHARED)
     message(STATUS "Build will generate a shared library. "
             "Use CPPKAFKA_BUILD_SHARED=0 to perform a static build")
@@ -37,16 +47,36 @@ else()
 endif()
 
 # Look for Boost (just need boost.optional headers here)
-find_package(Boost REQUIRED)
-find_package(RdKafka REQUIRED)
+find_package(Boost REQUIRED ${FIND_PACKAGE_QUIET})
+find_package(RdKafka REQUIRED ${FIND_PACKAGE_QUIET})
+
+if (Boost_FOUND)
+    find_package(Boost COMPONENTS thread program_options ${FIND_PACKAGE_QUIET})
+    set(Boost_USE_STATIC_LIBS ${CPPKAFKA_BOOST_STATIC_LIBS})
+    set(Boost_USE_MULTITHREADED ${CPPKAFKA_BOOST_USE_MULTITHREADED})
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_directories(${Boost_LIBRARY_DIRS})
+    if (CPPKAFKA_CMAKE_VERBOSE)
+        message(STATUS "Boost include dir: ${Boost_INCLUDE_DIRS}")
+        message(STATUS "Boost library dir: ${Boost_LIBRARY_DIRS}")
+        message(STATUS "Boost use static libs: ${Boost_USE_STATIC_LIBS}")
+        message(STATUS "Boost is multi-threaded: ${CPPKAFKA_BOOST_USE_MULTITHREADED}")
+        message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
+    endif()
+endif()
 
 add_subdirectory(src)
 add_subdirectory(include)
 
-add_subdirectory(examples)
+# Examples target
+if (NOT CPPKAFKA_DISABLE_EXAMPLES AND Boost_PROGRAM_OPTIONS_FOUND)
+    add_subdirectory(examples)
+else()
+    message(STATUS "Disabling examples")
+endif()
 
 # Add a target to generate API documentation using Doxygen
-find_package(Doxygen QUIET)
+find_package(Doxygen ${FIND_PACKAGE_QUIET})
 if(DOXYGEN_FOUND)
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in 
@@ -61,16 +91,17 @@ if(DOXYGEN_FOUND)
     )
 endif(DOXYGEN_FOUND)
 
-if(NOT CPPKAFKA_DISABLE_TESTS)
+if(NOT CPPKAFKA_DISABLE_TESTS AND Boost_THREAD_FOUND)
     set(CATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/Catch2)
     if(EXISTS ${CATCH_ROOT}/CMakeLists.txt)
         set(CATCH_INCLUDE ${CATCH_ROOT}/single_include)
-
         enable_testing()
         add_subdirectory(tests)
     else()
         message(STATUS "Disabling tests because submodule Catch2 isn't checked out")
     endif()
+else()
+    message(STATUS "Disabling tests")
 endif()
 
 if(NOT TARGET uninstall)
