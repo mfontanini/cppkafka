@@ -82,6 +82,7 @@ public:
      * The policy to use for the payload. The default policy is COPY_PAYLOAD
      */
     enum class PayloadPolicy {
+        PASSTHROUGH_PAYLOAD = 0,            ///< Rdkafka will not copy nor free the payload.
         COPY_PAYLOAD = RD_KAFKA_MSG_F_COPY, ///< Means RD_KAFKA_MSG_F_COPY
         FREE_PAYLOAD = RD_KAFKA_MSG_F_FREE  ///< Means RD_KAFKA_MSG_F_FREE
     };

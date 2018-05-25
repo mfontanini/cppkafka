@@ -31,7 +31,7 @@
 #define CPPKAFKA_BUFFERED_PRODUCER_H
 
 #include <string>
-#include <queue>
+#include <list>
 #include <cstdint>
 #include <algorithm>
 #include <unordered_set>
@@ -55,10 +55,12 @@ namespace cppkafka {
  * produced messages (either in a buffer or non buffered way) are acknowledged by the kafka
  * brokers.
  *
- * When producing messages, this class will handle cases where the producer's queue is full so it\
+ * When producing messages, this class will handle cases where the producer's queue is full so it
  * will poll until the production is successful.
  *
- * This class is not thread safe.
+ * \remark This class is thread safe
+ *
+ * \warning The application *MUST NOT* change the payload policy on the underlying Producer object.
  */
 template <typename BufferType>
 class CPPKAFKA_API BufferedProducer {
@@ -69,9 +71,14 @@ public:
     using Builder = ConcreteMessageBuilder<BufferType>;
 
     /**
-     * Callback to indicate a message failed to be produced.
+     * Callback to indicate a message failed to be produced by the broker
      */
     using ProduceFailureCallback = std::function<bool(const Message&)>;
+    
+    /**
+     * Callback to indicate a message failed to be flushed
+     */
+    using FlushFailureCallback = std::function<bool(const Builder&, Error error)>;
 
     /**
      * \brief Constructs a buffered producer using the provided configuration
@@ -108,6 +115,8 @@ public:
      * wait for it to be acknowledged.
      *
      * \param builder The builder that contains the message to be produced
+     *
+     * \remark This method throws cppkafka::HandleException on failure
      */
     void produce(const MessageBuilder& builder);
     
@@ -118,6 +127,8 @@ public:
      * wait for it to be acknowledged.
      *
      * \param message The message to be produced
+     *
+     * \remark This method throws cppkafka::HandleException on failure
      */
     void produce(const Message& message);
 
@@ -168,20 +179,11 @@ public:
     size_t get_buffer_size() const;
     
     /**
-     * \brief Returns the total number of messages ack-ed by the broker
+     * \brief Returns the total number of messages ack-ed by the broker since the beginning
      *
-     * \return The total number of messages since the beginning or since the last roll-over
-     *
-     * \remark Call get_rollover_count() to get the number of times the counter has rolled over
+     * \return The number of messages
      */
     size_t get_total_messages_acked() const;
-    
-    /**
-     * \brief Roll-over counter for get_total_messages_acked
-     *
-     * \return The number of rolls
-     */
-    uint16_t get_rollover_count() const;
 
     /**
      * Gets the Producer object
@@ -206,46 +208,67 @@ public:
      * false. Note that if the callback return false, then the message will be discarded.
      *
      * \param callback The callback to be set
+     *
+     * \remark It is *highly* recommended to set this callback as your message may be produced
+     *         indefinitely if there's a remote error.
+     *
+     * \warning Do not call any method on the BufferedProducer while inside this callback.
      */
     void set_produce_failure_callback(ProduceFailureCallback callback);
     
+    /**
+     * \brief Sets the local message produce failure callback
+     *
+     * This callback will be called when local message production fails during a flush() operation.
+     * Failure errors are typically payload too large, unknown topic or unknown partition.
+     * Note that if the callback returns false, the message will be dropped from the buffer,
+     * otherwise it will be re-enqueued for later retry.
+     *
+     * \param callback
+     *
+     * \warning Do not call any method on the BufferedProducer while inside this callback
+     */
+    void set_flush_failure_callback(FlushFailureCallback callback);
+    
 private:
-    using QueueType = std::queue<Builder>;
+    using QueueType = std::list<Builder>;
+    enum class MessagePriority { Low, High };
 
     template <typename BuilderType>
-    void do_add_message(BuilderType&& builder);
+    void do_add_message(BuilderType&& builder, MessagePriority priority, bool do_flush);
     template <typename MessageType>
     void produce_message(const MessageType& message);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
-
     
+    // Members
     Configuration::DeliveryReportCallback delivery_report_callback_;
     Producer producer_;
     QueueType messages_;
     mutable std::mutex mutex_;
     ProduceFailureCallback produce_failure_callback_;
+    FlushFailureCallback flush_failure_callback_;
     ssize_t max_buffer_size_{-1};
     std::atomic_ulong expected_acks_{0};
     std::atomic_ullong total_messages_acked_{0};
-    std::atomic_ushort rollover_counter_{0};
 };
 
 template <typename BufferType>
 BufferedProducer<BufferType>::BufferedProducer(Configuration config)
 : delivery_report_callback_(config.get_delivery_report_callback()),
   producer_(prepare_configuration(std::move(config))) {
-
+    // Allow re-queuing failed messages
+    producer_.set_payload_policy(Producer::PayloadPolicy::PASSTHROUGH_PAYLOAD);
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
-    do_add_message(builder);
+    do_add_message(builder, MessagePriority::Low, true);
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(Builder builder) {
-    do_add_message(move(builder));
+    do_add_message(move(builder), MessagePriority::Low, true);
 }
 
 template <typename BufferType>
@@ -256,19 +279,27 @@ void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const Message& message) {
     produce_message(message);
-    expected_acks_++;
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
-    size_t num_messages = messages_.size();
-    while (num_messages--) {
+    QueueType flush_queue; // flush from temporary queue
+    {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (messages_.empty()) {
-            break; //perhaps clear() was called
+        std::swap(messages_, flush_queue);
+    }
+    while (!flush_queue.empty()) {
+        try {
+            produce_message(flush_queue.front());
         }
-        produce_message(messages_.front());
-        messages_.pop();
+        catch (const HandleException& ex) {
+            if (flush_failure_callback_ &&
+                flush_failure_callback_(flush_queue.front(), ex.get_error())) {
+                // retry again later
+                do_add_message(std::move(flush_queue.front()), MessagePriority::Low, false);
+            }
+        }
+        flush_queue.pop_front();
     }
     wait_for_acks();
 }
@@ -318,12 +349,19 @@ size_t BufferedProducer<BufferType>::get_buffer_size() const {
 
 template <typename BufferType>
 template <typename BuilderType>
-void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
+void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder,
+                                                  MessagePriority priority,
+                                                  bool do_flush) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        messages_.push(std::move(builder));
+        if (priority == MessagePriority::High) {
+            messages_.emplace_front(std::move(builder));
+        }
+        else {
+            messages_.emplace_back(std::move(builder));
+        }
     }
-    if ((max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
+    if (do_flush && (max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
         flush();
     }
 }
@@ -339,18 +377,8 @@ const Producer& BufferedProducer<BufferType>::get_producer() const {
 }
 
 template <typename BufferType>
-size_t BufferedProducer<BufferType>::get_buffer_size() const {
-    return messages_.size();
-}
-
-template <typename BufferType>
 size_t BufferedProducer<BufferType>::get_total_messages_acked() const {
     return total_messages_acked_;
-}
-
-template <typename BufferType>
-uint16_t BufferedProducer<BufferType>::get_rollover_count() const {
-    return rollover_counter_;
 }
 
 template <typename BufferType>
@@ -365,17 +393,22 @@ void BufferedProducer<BufferType>::set_produce_failure_callback(ProduceFailureCa
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::set_flush_failure_callback(FlushFailureCallback callback) {
+    flush_failure_callback_ = std::move(callback);
+}
+
+template <typename BufferType>
 template <typename MessageType>
 void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
-    bool sent = false;
-    while (!sent) {
+    while (true) {
         try {
             producer_.produce(message);
-            sent = true;
+            // Sent successfully
+            ++expected_acks_;
+            break;
         }
         catch (const HandleException& ex) {
-            const Error error = ex.get_error();
-            if (error == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
+            if (ex.get_error() == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
                 // If the output queue is full, then just poll
                 producer_.poll();
             }
@@ -384,8 +417,6 @@ void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
             }
         }
     }
-    // Sent successfully
-    ++expected_acks_;
 }
 
 template <typename BufferType>
@@ -412,14 +443,12 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     bool should_produce = message.get_error() &&
                           (!produce_failure_callback_ || produce_failure_callback_(message));
     if (should_produce) {
-        produce_message(message);
-        return;
+        // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
+        do_add_message(Builder(message), MessagePriority::High, false);
     }
-    
-    // Increment the total successful transmissions
-    ++total_messages_acked_;
-    if (total_messages_acked_ == 0) {
-        ++rollover_counter_;
+    else {
+        // Increment the total successful transmissions
+        ++total_messages_acked_;
     }
 }
 
