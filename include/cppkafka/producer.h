@@ -43,6 +43,7 @@ namespace cppkafka {
 class Topic;
 class Buffer;
 class TopicConfiguration;
+class Message;
 
 /**
  * \brief Producer class
@@ -86,39 +87,44 @@ public:
     };
 
     /**
-     * Constructs a producer using the given configuration
+     * \brief Constructs a producer using the given configuration
      *
      * \param config The configuration to use
      */
     Producer(Configuration config);
 
     /**
-     * Sets the payload policy
+     * \brief Sets the payload policy
      *
      * \param policy The payload policy to be used
      */
     void set_payload_policy(PayloadPolicy policy);
 
     /**
-     * Returns the current payload policy
+     * \brief Returns the current payload policy
      */
     PayloadPolicy get_payload_policy() const;
 
     /**
-     * Produces a message
+     * \brief Produces a message
      *
-     * \param topic The topic to write the message to
-     * \param partition The partition to write the message to
-     * \param payload The message payload
+     * \param builder The builder class used to compose a message
      */
     void produce(const MessageBuilder& builder);
+    
+    /**
+     * \brief Produces a message
+     *
+     * \param message The message to be produced
+     */
+    void produce(const Message& message);
 
     /**
      * \brief Polls on this handle
      *
      * This translates into a call to rd_kafka_poll.
      *
-     * The timeout used on this call is the one configured via Producer::set_timeout.
+     * \remark The timeout used on this call is the one configured via Producer::set_timeout.
      */
     int poll();
 
@@ -136,7 +142,7 @@ public:
      *
      * This translates into a call to rd_kafka_flush.
      *
-     * The timeout used on this call is the one configured via Producer::set_timeout.
+     * \remark The timeout used on this call is the one configured via Producer::set_timeout.
      */
     void flush();
 

@@ -30,10 +30,10 @@
 #include <errno.h>
 #include "producer.h"
 #include "exceptions.h"
+#include "message.h"
 
 using std::move;
 using std::string;
-
 using std::chrono::milliseconds;
 
 namespace cppkafka {
@@ -73,6 +73,23 @@ void Producer::produce(const MessageBuilder& builder) {
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
                                     RD_KAFKA_V_OPAQUE(builder.user_data()),
+                                    RD_KAFKA_V_END);
+    check_error(result);
+}
+
+void Producer::produce(const Message& message) {
+    const Buffer& payload = message.get_payload();
+    const Buffer& key = message.get_key();
+    const int policy = static_cast<int>(message_payload_policy_);
+    int64_t duration = message.get_timestamp() ? message.get_timestamp().get().get_timestamp().count() : 0;
+    auto result = rd_kafka_producev(get_handle(),
+                                    RD_KAFKA_V_TOPIC(message.get_topic().data()),
+                                    RD_KAFKA_V_PARTITION(message.get_partition()),
+                                    RD_KAFKA_V_MSGFLAGS(policy),
+                                    RD_KAFKA_V_TIMESTAMP(duration),
+                                    RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
+                                    RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
+                                    RD_KAFKA_V_OPAQUE(message.get_user_data()),
                                     RD_KAFKA_V_END);
     check_error(result);
 }

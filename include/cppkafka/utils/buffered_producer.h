@@ -108,6 +108,16 @@ public:
      * \param builder The builder that contains the message to be produced
      */
     void produce(const MessageBuilder& builder);
+    
+    /**
+     * \brief Produces a message without buffering it
+     *
+     * The message will still be tracked so that a call to flush or wait_for_acks will actually
+     * wait for it to be acknowledged.
+     *
+     * \param message The message to be produced
+     */
+    void produce(const Message& message);
 
     /**
      * \brief Flushes the buffered messages.
@@ -126,6 +136,34 @@ public:
      * Clears any buffered messages
      */
     void clear();
+    
+    /**
+     * \brief Sets the maximum amount of messages to be enqueued in the buffer.
+     *
+     * After 'max_buffer_size' is reached, flush() will be called automatically.
+     *
+     * \param size The max size of the internal buffer. Allowed values are:
+     *             -1 : Unlimited buffer size. Must be flushed manually (default value)
+     *              0 : Don't buffer anything. add_message() behaves like produce()
+     *            > 0 : Max number of messages before flush() is called.
+     *
+     * \remark add_message() will block when 'max_buffer_size' is reached due to flush()
+     */
+    void set_max_buffer_size(ssize_t max_buffer_size);
+    
+    /**
+     * \brief Return the maximum allowed buffer size.
+     *
+     * \return The max buffer size. A value of -1 indicates an unbounded buffer.
+     */
+    ssize_t get_max_buffer_size() const;
+    
+    /**
+     * \brief Get the number of messages in the buffer
+     *
+     * \return The number of messages
+     */
+    size_t get_buffer_size() const;
 
     /**
      * Gets the Producer object
@@ -157,20 +195,25 @@ private:
 
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder);
-    void produce_message(const MessageBuilder& message);
+    template <typename MessageType>
+    void produce_message(const MessageType& message);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
 
+    
+    Configuration::DeliveryReportCallback delivery_report_callback_;
     Producer producer_;
     QueueType messages_;
     ProduceFailureCallback produce_failure_callback_;
     size_t expected_acks_{0};
     size_t messages_acked_{0};
+    ssize_t max_buffer_size_{-1};
 };
 
 template <typename BufferType>
 BufferedProducer<BufferType>::BufferedProducer(Configuration config)
-: producer_(prepare_configuration(std::move(config))) {
+: delivery_report_callback_(config.get_delivery_report_callback()),
+  producer_(prepare_configuration(std::move(config))) {
 
 }
 
@@ -191,12 +234,17 @@ void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::produce(const Message& message) {
+    produce_message(message);
+    expected_acks_++;
+}
+
+template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
     while (!messages_.empty()) {
         produce_message(messages_.front());
         messages_.pop();
     }
-
     wait_for_acks();
 }
 
@@ -229,10 +277,31 @@ void BufferedProducer<BufferType>::clear() {
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::set_max_buffer_size(ssize_t max_buffer_size) {
+    if (max_buffer_size < -1) {
+        throw Exception("Invalid buffer size.");
+    }
+    max_buffer_size_ = max_buffer_size;
+}
+
+template <typename BufferType>
+ssize_t BufferedProducer<BufferType>::get_max_buffer_size() const {
+    return max_buffer_size_;
+}
+
+template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_buffer_size() const {
+    return messages_.size();
+}
+
+template <typename BufferType>
 template <typename BuilderType>
 void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder) {
     expected_acks_++;
-    messages_.push(std::move(builder));
+    messages_.push(std::forward<BuilderType>(builder));
+    if ((max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
+        flush();
+    }
 }
 
 template <typename BufferType>
@@ -257,11 +326,12 @@ void BufferedProducer<BufferType>::set_produce_failure_callback(ProduceFailureCa
 }
 
 template <typename BufferType>
-void BufferedProducer<BufferType>::produce_message(const MessageBuilder& builder) {
+template <typename MessageType>
+void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
     bool sent = false;
     while (!sent) {
         try {
-            producer_.produce(builder);
+            producer_.produce(message);
             sent = true;
         }
         catch (const HandleException& ex) {
@@ -287,22 +357,16 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
-    // We should produce this message again if it has an error and we either don't have a 
+    // Call the user-supplied delivery report callback if any
+    if (delivery_report_callback_) {
+        delivery_report_callback_(producer_, message);
+    }
+    // We should produce this message again if it has an error and we either don't have a
     // produce failure callback or we have one but it returns true
     bool should_produce = message.get_error() &&
                           (!produce_failure_callback_ || produce_failure_callback_(message));
     if (should_produce) {
-        MessageBuilder builder(message.get_topic());
-        const auto& key = message.get_key();
-        const auto& payload = message.get_payload();
-        builder.partition(message.get_partition())
-               .key(Buffer(key.get_data(), key.get_size()))
-               .payload(Buffer(payload.get_data(), payload.get_size()))
-               .user_data(message.get_user_data());
-        if (message.get_timestamp()) {
-            builder.timestamp(message.get_timestamp()->get_timestamp());
-        }
-        produce_message(builder);
+        produce_message(message);
         return;
     }
     // If production was successful or the produce failure callback returned false, then

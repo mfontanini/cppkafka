@@ -101,6 +101,38 @@ TEST_CASE("simple production", "[producer]") {
         REQUIRE(!!message.get_timestamp() == true);
         CHECK(message.get_timestamp()->get_timestamp() == timestamp);
     }
+    
+    SECTION("message without message builder") {
+        const string payload = "Goodbye cruel world!";
+        const string key = "replay key";
+        const milliseconds timestamp{15};
+        Producer producer(config);
+        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition)
+                                                     .key(key)
+                                                     .payload(payload)
+                                                     .timestamp(timestamp));
+        runner.try_join();
+        ConsumerRunner runner2(consumer, 1, 1);
+        
+        const auto& replay_messages = runner.get_messages();
+        REQUIRE(replay_messages.size() == 1);
+        const auto& replay_message = replay_messages[0];
+        
+        //produce the same message again
+        producer.produce(replay_message);
+        runner2.try_join();
+        
+        const auto& messages = runner2.get_messages();
+        REQUIRE(messages.size() == 1);
+        const auto& message = messages[0];
+        CHECK(message.get_payload() == payload);
+        CHECK(message.get_key() == key);
+        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_partition() == partition);
+        CHECK(!!message.get_error() == false);
+        REQUIRE(!!message.get_timestamp() == true);
+        CHECK(message.get_timestamp()->get_timestamp() == timestamp);
+    }
 
     SECTION("callbacks") {
         // Now create a producer and produce a message
@@ -239,4 +271,35 @@ TEST_CASE("buffered producer", "[producer]") {
     for (const auto& message : messages) {
         CHECK(message.get_payload() == payload);
     }
+}
+
+TEST_CASE("buffered producer with limited buffer", "[producer]") {
+    int partition = 0;
+    int num_messages = 4;
+    
+    // Create a consumer and assign this topic/partition
+    Consumer consumer(make_consumer_config());
+    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    ConsumerRunner runner(consumer, 3, 1);
+
+    // Now create a buffered producer and produce two messages
+    BufferedProducer<string> producer(make_producer_config());
+    const string payload = "Hello world! 2";
+    const string key = "such key";
+    REQUIRE(producer.get_buffer_size() == 0);
+    REQUIRE(producer.get_max_buffer_size() == -1);
+    
+    // Limit the size of the internal buffer
+    producer.set_max_buffer_size(num_messages-1);
+    while (num_messages--) {
+        producer.add_message(MessageBuilder(KAFKA_TOPIC).partition(partition).key(key).payload(payload));
+    }
+    REQUIRE(producer.get_buffer_size() == 1);
+    
+    // Finish the runner
+    runner.try_join();
+
+    // Validate messages received
+    const auto& messages = runner.get_messages();
+    REQUIRE(messages.size() == producer.get_max_buffer_size());
 }
