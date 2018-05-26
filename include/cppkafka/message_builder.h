@@ -53,9 +53,6 @@ public:
     
     /**
      * Construct a BasicMessageBuilder from a Message object
-     *
-     * \remark The application must guarantee the lifetime of the Message exceeds that of this
-     *         BasicMessageBuilder as this class does not take ownership of any Message buffers
      */
     BasicMessageBuilder(const Message& message);
 
@@ -191,6 +188,8 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
 : topic_(message.get_topic()),
   key_(Buffer(message.get_key().get_data(), message.get_key().get_size())),
   payload_(Buffer(message.get_payload().get_data(), message.get_payload().get_size())),
+  timestamp_(message.get_timestamp() ? message.get_timestamp().get().get_timestamp() :
+                                       std::chrono::milliseconds(0)),
   user_data_(message.get_user_data())
 {
 

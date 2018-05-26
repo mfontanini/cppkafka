@@ -31,7 +31,7 @@
 #define CPPKAFKA_BUFFERED_PRODUCER_H
 
 #include <string>
-#include <list>
+#include <deque>
 #include <cstdint>
 #include <algorithm>
 #include <unordered_set>
@@ -52,15 +52,24 @@ namespace cppkafka {
  * to produce them just as you would using the Producer class.
  *
  * When calling either flush or wait_for_acks, the buffered producer will block until all
- * produced messages (either in a buffer or non buffered way) are acknowledged by the kafka
- * brokers.
+ * produced messages (either buffered or sent directly) are acknowledged by the kafka brokers.
  *
  * When producing messages, this class will handle cases where the producer's queue is full so it
  * will poll until the production is successful.
  *
  * \remark This class is thread safe
  *
- * \warning The application *MUST NOT* change the payload policy on the underlying Producer object.
+ * \warning
+ * Delivery Report Callback: This class makes internal use of this function and will overwrite anything
+ * the user has supplied as part of the configuration options. Instead user should call
+ * set_produce_success_callback() and set_produce_failure_callback() respectively.
+ *
+ * Payload Policy: For payload-owning BufferTypes such as std::string or std::vector<char> the default
+ * policy is set to Producer::PayloadPolicy::COPY_PAYLOAD. For the specific non-payload owning type
+ * cppkafka::Buffer the policy is Producer::PayloadPolicy::PASSTHROUGH_PAYLOAD. In this case, librdkafka
+ * shall not make any internal copies of the message and it is the application's responsability to free
+ * the messages *after* the ProduceSuccessCallback has reported a successful delivery to avoid memory
+ * corruptions.
  */
 template <typename BufferType>
 class CPPKAFKA_API BufferedProducer {
@@ -69,6 +78,11 @@ public:
      * Concrete builder
      */
     using Builder = ConcreteMessageBuilder<BufferType>;
+    
+    /**
+     * Callback to indicate a message was delivered to the broker
+     */
+    using ProduceSuccessCallback = std::function<void(const Message&)>;
 
     /**
      * Callback to indicate a message failed to be produced by the broker
@@ -137,6 +151,10 @@ public:
      *
      * This will send all messages and keep waiting until all of them are acknowledged (this is
      * done by calling wait_for_acks).
+     *
+     * \remark Although it is possible to call flush from multiple threads concurrently, better
+     *         performance is achieved when called from the same thread or when serialized
+     *         with respect to other threads.
      */
     void flush();
 
@@ -217,6 +235,15 @@ public:
     void set_produce_failure_callback(ProduceFailureCallback callback);
     
     /**
+     * \brief Sets the successful delivery callback
+     *
+     * The user can use this function to cleanup any application-owned message buffers.
+     *
+     * \param callback The callback to be set
+     */
+    void set_produce_success_callback(ProduceSuccessCallback callback);
+    
+    /**
      * \brief Sets the local message produce failure callback
      *
      * This callback will be called when local message production fails during a flush() operation.
@@ -231,7 +258,7 @@ public:
     void set_flush_failure_callback(FlushFailureCallback callback);
     
 private:
-    using QueueType = std::list<Builder>;
+    using QueueType = std::deque<Builder>;
     enum class MessagePriority { Low, High };
 
     template <typename BuilderType>
@@ -242,10 +269,10 @@ private:
     void on_delivery_report(const Message& message);
     
     // Members
-    Configuration::DeliveryReportCallback delivery_report_callback_;
     Producer producer_;
     QueueType messages_;
     mutable std::mutex mutex_;
+    ProduceSuccessCallback produce_success_callback_;
     ProduceFailureCallback produce_failure_callback_;
     FlushFailureCallback flush_failure_callback_;
     ssize_t max_buffer_size_{-1};
@@ -254,11 +281,19 @@ private:
 };
 
 template <typename BufferType>
+Producer::PayloadPolicy get_default_payload_policy() {
+    return Producer::PayloadPolicy::COPY_PAYLOAD;
+}
+
+template <> inline
+Producer::PayloadPolicy get_default_payload_policy<Buffer>() {
+    return Producer::PayloadPolicy::PASSTHROUGH_PAYLOAD;
+}
+
+template <typename BufferType>
 BufferedProducer<BufferType>::BufferedProducer(Configuration config)
-: delivery_report_callback_(config.get_delivery_report_callback()),
-  producer_(prepare_configuration(std::move(config))) {
-    // Allow re-queuing failed messages
-    producer_.set_payload_policy(Producer::PayloadPolicy::PASSTHROUGH_PAYLOAD);
+: producer_(prepare_configuration(std::move(config))) {
+    producer_.set_payload_policy(get_default_payload_policy<BufferType>());
 }
 
 template <typename BufferType>
@@ -393,6 +428,11 @@ void BufferedProducer<BufferType>::set_produce_failure_callback(ProduceFailureCa
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::set_produce_success_callback(ProduceSuccessCallback callback) {
+    produce_success_callback_ = std::move(callback);
+}
+
+template <typename BufferType>
 void BufferedProducer<BufferType>::set_flush_failure_callback(FlushFailureCallback callback) {
     flush_failure_callback_ = std::move(callback);
 }
@@ -433,11 +473,6 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     --expected_acks_;
     assert(expected_acks_ != (unsigned long)-1); // Prevent underflow
     
-    // Call the user-supplied delivery report callback if any
-    if (delivery_report_callback_) {
-        delivery_report_callback_(producer_, message);
-    }
-    
     // We should produce this message again if it has an error and we either don't have a
     // produce failure callback or we have one but it returns true
     bool should_produce = message.get_error() &&
@@ -447,6 +482,10 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         do_add_message(Builder(message), MessagePriority::High, false);
     }
     else {
+        // Successful delivery
+        if (produce_success_callback_) {
+            produce_success_callback_(message);
+        }
         // Increment the total successful transmissions
         ++total_messages_acked_;
     }
