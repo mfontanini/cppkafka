@@ -57,15 +57,25 @@ namespace cppkafka {
  * When producing messages, this class will handle cases where the producer's queue is full so it
  * will poll until the production is successful.
  *
- * \remark This class is thread safe
+ * \remark This class is thread safe.
  *
- * \warning
- * Delivery Report Callback: This class makes internal use of this function and will overwrite anything
- * the user has supplied as part of the configuration options. Instead user should call
- * set_produce_success_callback() and set_produce_failure_callback() respectively.
+ * \remark Releasing buffers: For high-performance applications preferring a zero-copy approach
+ * (using PayloadPolicy::PASSTHROUGH_PAYLOAD - see warning below) it is very important to know when
+ * to safely release owned message buffers. One way is to perform individual cleanup when
+ * ProduceSuccessCallback is called. If the application produces messages in batches or has a
+ * bursty behavior another way is to check when flush operations have fully completed with
+ * get_buffer_size()==0 && get_flushes_in_progress()==0. Note that get_pending_acks()==0
+ * is not always a guarantee as there is very small window when flush() starts where
+ * get_buffer_size()==0 && get_pending_acks()==0 but messages have not yet been sent to the
+ * remote broker. For applications producing messages w/o buffering, get_pending_acks()==0
+ * is sufficient.
  *
- * Payload Policy: For payload-owning BufferTypes such as std::string or std::vector<char> the default
- * policy is set to Producer::PayloadPolicy::COPY_PAYLOAD. For the specific non-payload owning type
+ * \warning Delivery Report Callback: This class makes internal use of this function and will
+ * overwrite anything the user has supplied as part of the configuration options. Instead user
+ * should call set_produce_success_callback() and set_produce_failure_callback() respectively.
+ *
+ * \warning Payload Policy: For payload-owning BufferTypes such as std::string or std::vector<char>
+ * the default policy is set to Producer::PayloadPolicy::COPY_PAYLOAD. For the specific non-payload owning type
  * cppkafka::Buffer the policy is Producer::PayloadPolicy::PASSTHROUGH_PAYLOAD. In this case, librdkafka
  * shall not make any internal copies of the message and it is the application's responsability to free
  * the messages *after* the ProduceSuccessCallback has reported a successful delivery to avoid memory
@@ -197,11 +207,28 @@ public:
     size_t get_buffer_size() const;
     
     /**
-     * \brief Returns the total number of messages ack-ed by the broker since the beginning
+     * \brief Get the number of messages not yet acked by the broker
      *
      * \return The number of messages
      */
-    size_t get_total_messages_acked() const;
+    size_t get_pending_acks() const;
+    
+    /**
+     * \brief Get the total number of messages successfully produced since the beginning
+     *
+     * \return The number of messages
+     */
+    size_t get_total_messages_produced() const;
+    
+    /**
+     * \brief Get the total outstanding flush operations in progress
+     *
+     * Since flush can be called from multiple threads concurrently, this counter indicates
+     * how many operations are curretnly in progress.
+     *
+     * \return The number of outstanding flush operations.
+     */
+    size_t get_flushes_in_progress() const;
 
     /**
      * Gets the Producer object
@@ -260,6 +287,13 @@ public:
 private:
     using QueueType = std::deque<Builder>;
     enum class MessagePriority { Low, High };
+    
+    template <typename T>
+    struct CounterGuard{
+        CounterGuard(std::atomic<T>& counter) : counter_(counter) { ++counter_; }
+        ~CounterGuard() { --counter_; }
+        std::atomic<T>& counter_;
+    };
 
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder, MessagePriority priority, bool do_flush);
@@ -276,8 +310,9 @@ private:
     ProduceFailureCallback produce_failure_callback_;
     FlushFailureCallback flush_failure_callback_;
     ssize_t max_buffer_size_{-1};
-    std::atomic_ulong expected_acks_{0};
-    std::atomic_ullong total_messages_acked_{0};
+    std::atomic<size_t> pending_acks_{0};
+    std::atomic<size_t> flushes_in_progress_{0};
+    std::atomic<size_t> total_messages_produced_{0};
 };
 
 template <typename BufferType>
@@ -318,6 +353,7 @@ void BufferedProducer<BufferType>::produce(const Message& message) {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
+    CounterGuard<size_t> counter_guard(flushes_in_progress_);
     QueueType flush_queue; // flush from temporary queue
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -341,7 +377,7 @@ void BufferedProducer<BufferType>::flush() {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::wait_for_acks() {
-    while (expected_acks_ > 0) {
+    while (pending_acks_ > 0) {
         try {
             producer_.flush();
         }
@@ -412,8 +448,18 @@ const Producer& BufferedProducer<BufferType>::get_producer() const {
 }
 
 template <typename BufferType>
-size_t BufferedProducer<BufferType>::get_total_messages_acked() const {
-    return total_messages_acked_;
+size_t BufferedProducer<BufferType>::get_pending_acks() const {
+    return pending_acks_;
+}
+
+template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_total_messages_produced() const {
+    return total_messages_produced_;
+}
+
+template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_flushes_in_progress() const {
+    return flushes_in_progress_;
 }
 
 template <typename BufferType>
@@ -444,7 +490,7 @@ void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
         try {
             producer_.produce(message);
             // Sent successfully
-            ++expected_acks_;
+            ++pending_acks_;
             break;
         }
         catch (const HandleException& ex) {
@@ -470,8 +516,8 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     // Decrement the expected acks
-    --expected_acks_;
-    assert(expected_acks_ != (unsigned long)-1); // Prevent underflow
+    --pending_acks_;
+    assert(pending_acks_ != (size_t)-1); // Prevent underflow
     
     // We should produce this message again if it has an error and we either don't have a
     // produce failure callback or we have one but it returns true
@@ -487,7 +533,7 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
             produce_success_callback_(message);
         }
         // Increment the total successful transmissions
-        ++total_messages_acked_;
+        ++total_messages_produced_;
     }
 }
 

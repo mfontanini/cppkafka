@@ -369,7 +369,9 @@ TEST_CASE("multi-threaded buffered producer", "[producer][buffered_producer]") {
     }
     const auto& messages = runner.get_messages();
     REQUIRE(messages.size() == num_messages);
-    REQUIRE(producer.get_total_messages_acked() == num_messages);
+    REQUIRE(producer.get_flushes_in_progress() == 0);
+    REQUIRE(producer.get_pending_acks() == 0);
+    REQUIRE(producer.get_total_messages_produced() == num_messages);
     REQUIRE(producer.get_buffer_size() == 0);
 }
 
@@ -390,6 +392,8 @@ TEST_CASE("clear multi-threaded buffered producer", "[producer][buffered_produce
         thread.join();
     }
     
-    REQUIRE(producer.get_total_messages_acked() == 0);
+    REQUIRE(producer.get_total_messages_produced() == 0);
+    REQUIRE(producer.get_flushes_in_progress() == 0);
+    REQUIRE(producer.get_pending_acks() == 0);
     REQUIRE(producer.get_buffer_size() < num_messages);
 }
