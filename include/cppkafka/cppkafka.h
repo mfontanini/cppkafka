@@ -31,6 +31,7 @@
 #define CPPKAFKA_H
 
 #include <cppkafka/buffer.h>
+#include <cppkafka/callback_invoker.h>
 #include <cppkafka/clonable_ptr.h>
 #include <cppkafka/configuration.h>
 #include <cppkafka/configuration_base.h>

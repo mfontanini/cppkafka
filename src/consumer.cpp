@@ -34,6 +34,7 @@
 #include "logging.h"
 #include "configuration.h"
 #include "topic_partition_list.h"
+#include "callback_invoker.h"
 
 using std::vector;
 using std::string;
@@ -292,21 +293,18 @@ void Consumer::commit(const TopicPartitionList* topic_partitions, bool async) {
 void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
                                 TopicPartitionList& topic_partitions) {
     if (error == RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS) {
-        if (assignment_callback_) {
-            assignment_callback_(topic_partitions);
-        }
+        static const string callback_name("assignment");
+        CallbackInvoker<void(TopicPartitionList&)>(callback_name, assignment_callback_, this)(topic_partitions);
         assign(topic_partitions);
     }
     else if (error == RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS) {
-        if (revocation_callback_) {
-            revocation_callback_(topic_partitions);
-        }
+        static const string callback_name("revocation");
+        CallbackInvoker<void(const TopicPartitionList&)>(callback_name, revocation_callback_, this)(topic_partitions);
         unassign();
     }
     else {
-        if (rebalance_error_callback_) {
-            rebalance_error_callback_(error);
-        }
+        static const string callback_name("rebalance error");
+        CallbackInvoker<void(Error)>(callback_name, rebalance_error_callback_, this)(error);
         unassign();
     }
 }

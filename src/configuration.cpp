@@ -50,39 +50,39 @@ namespace cppkafka {
 // Callback proxies
 
 void delivery_report_callback_proxy(rd_kafka_t*, const rd_kafka_message_t* msg, void *opaque) {
+    static const string callback_name("delivery report");
     Producer* handle = static_cast<Producer*>(opaque);
     Message message = Message::make_non_owning((rd_kafka_message_t*)msg);
-    const auto& callback = handle->get_configuration().get_delivery_report_callback();
-    if (callback) {
-        callback(*handle, message);
-    }
+    CallbackInvoker<void(Producer&, const Message&)>
+        (callback_name, handle->get_configuration().get_delivery_report_callback(), handle)
+        (*handle, message);
 }
 
 void offset_commit_callback_proxy(rd_kafka_t*, rd_kafka_resp_err_t err,
                                   rd_kafka_topic_partition_list_t *offsets, void *opaque) {
+    static const string callback_name("offset commit");
     Consumer* handle = static_cast<Consumer*>(opaque);
     TopicPartitionList list = offsets ? convert(offsets) : TopicPartitionList{};
-    const auto& callback = handle->get_configuration().get_offset_commit_callback();
-    if (callback) {
-        callback(*handle, err, list);
-    }
+    CallbackInvoker<void(Consumer&, Error, const TopicPartitionList&)>
+        (callback_name, handle->get_configuration().get_offset_commit_callback(), handle)
+        (*handle, err, list);
 }
 
 void error_callback_proxy(rd_kafka_t*, int err, const char *reason, void *opaque) {
+    static const string callback_name("error");
     KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
-    const auto& callback = handle->get_configuration().get_error_callback();
-    if (callback) {
-        callback(*handle, err, reason);
-    }
+    CallbackInvoker<void(KafkaHandleBase&, int, const std::string&)>
+        (callback_name, handle->get_configuration().get_error_callback(), handle)
+        (*handle, err, reason);
 }
 
 void throttle_callback_proxy(rd_kafka_t*, const char* broker_name,
                               int32_t broker_id, int throttle_time_ms, void *opaque) {
+    static const string callback_name("throttle");
     KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
-    const auto& callback = handle->get_configuration().get_throttle_callback();
-    if (callback) {
-        callback(*handle, broker_name, broker_id, milliseconds(throttle_time_ms));
-    }
+     CallbackInvoker<void(KafkaHandleBase&, const std::string&, int32_t, std::chrono::milliseconds)>
+         (callback_name, handle->get_configuration().get_throttle_callback(), handle)
+         (*handle, broker_name, broker_id, milliseconds(throttle_time_ms));
 }
 
 void log_callback_proxy(const rd_kafka_t* h, int level,
@@ -95,23 +95,23 @@ void log_callback_proxy(const rd_kafka_t* h, int level,
 }
 
 int stats_callback_proxy(rd_kafka_t*, char *json, size_t json_len, void *opaque) {
+    static const string callback_name("statistics");
     KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
-    const auto& callback = handle->get_configuration().get_stats_callback();
-    if (callback) {
-        callback(*handle, string(json, json + json_len));
-    }
+    CallbackInvoker<void(KafkaHandleBase&, const std::string&)>
+        (callback_name, handle->get_configuration().get_stats_callback(), handle)
+        (*handle, string(json, json + json_len));
     return 0;
 }
 
 int socket_callback_proxy(int domain, int type, int protocol, void* opaque) {
+    static const string callback_name("socket");
     KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
-    const auto& callback = handle->get_configuration().get_socket_callback();
-    if (callback) {
-        return callback(domain, type, protocol);
+    if (handle->get_configuration().get_socket_callback()) {
+        return CallbackInvoker<int(int, int, int)>
+            (callback_name, handle->get_configuration().get_socket_callback(), handle)
+            (domain, type, protocol);
     }
-    else {
-        return -1;
-    }
+    return -1;
 }
 
 // Configuration

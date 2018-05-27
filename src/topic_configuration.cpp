@@ -33,6 +33,7 @@
 #include "exceptions.h"
 #include "topic.h"
 #include "buffer.h"
+#include "callback_invoker.h"
 
 using std::string;
 using std::map;
@@ -47,9 +48,12 @@ int32_t partitioner_callback_proxy(const rd_kafka_topic_t* handle, const void *k
     const TopicConfiguration* config = static_cast<TopicConfiguration*>(topic_opaque);
     const auto& callback = config->get_partitioner_callback();
     if (callback) {
+        static const string callback_name("topic partitioner");
         Topic topic = Topic::make_non_owning(const_cast<rd_kafka_topic_t*>(handle));
         Buffer key(static_cast<const char*>(key_ptr), key_size);
-        return callback(topic, key, partition_count);
+        return CallbackInvoker<int32_t(const Topic&, const Buffer&, int32_t)>
+            (callback_name, callback, nullptr)
+            (topic, key, partition_count);
     }
     else {
         return rd_kafka_msg_partitioner_consistent_random(handle, key_ptr, key_size, 

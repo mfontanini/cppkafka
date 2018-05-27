@@ -38,6 +38,7 @@
 #include "queue.h"
 #include "macros.h"
 #include "error.h"
+#include "callback_invoker.h"
 
 namespace cppkafka {
 

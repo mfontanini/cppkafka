@@ -515,23 +515,23 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
+    static const std::string ds_callback_name("delivery success");
+    static const std::string pf_callback_name("produce failure");
     // Decrement the expected acks
     --pending_acks_;
     assert(pending_acks_ != (size_t)-1); // Prevent underflow
-    
     // We should produce this message again if it has an error and we either don't have a
     // produce failure callback or we have one but it returns true
     bool should_produce = message.get_error() &&
-                          (!produce_failure_callback_ || produce_failure_callback_(message));
+                          CallbackInvoker<bool(const Message&)>
+                              (pf_callback_name, produce_failure_callback_, &producer_)(message);
     if (should_produce) {
         // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
         do_add_message(Builder(message), MessagePriority::High, false);
     }
     else {
         // Successful delivery
-        if (produce_success_callback_) {
-            produce_success_callback_(message);
-        }
+        CallbackInvoker<void(const Message&)>(ds_callback_name, produce_success_callback_, &producer_)(message);
         // Increment the total successful transmissions
         ++total_messages_produced_;
     }
