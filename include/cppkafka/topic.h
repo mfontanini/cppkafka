@@ -82,6 +82,13 @@ public:
      * \param partition The partition to check
      */
     bool is_partition_available(int partition) const;
+    
+    /**
+     * Indicates whether this topic is valid (not null)
+     */
+    explicit operator bool() const {
+        return handle_ != nullptr;
+    }
 
     /**
      * Returns the rdkakfa handle
