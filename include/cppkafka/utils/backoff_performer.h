@@ -57,11 +57,26 @@ public:
     };
 
     /**
-     * Constructs an instance of backoff perform
+     * Constructs an instance of backoff performer
      * 
      * By default, the linear backoff policy is used
      */
     BackoffPerformer();
+    
+    /**
+     * \brief Constructs an instance of backoff performer
+     *
+     * \param initial_backoff The initial backoff interval
+     * \param backoff_step The backoff step interval
+     * \param maximum_backoff The maximum backoff interval
+     * \param policy The backoff policy
+     * \param maximum_retries The max number of retries
+     */
+    BackoffPerformer(TimeUnit initial_backoff,
+                     TimeUnit backoff_step,
+                     TimeUnit maximum_backoff,
+                     BackoffPolicy policy,
+                     size_t maximum_retries);
 
     /**
      * \brief Sets the backoff policy

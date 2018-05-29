@@ -39,6 +39,17 @@ BackoffCommitter::BackoffCommitter(Consumer& consumer)
 
 }
 
+BackoffCommitter::BackoffCommitter(Consumer& consumer,
+                                   TimeUnit initial_backoff,
+                                   TimeUnit backoff_step,
+                                   TimeUnit maximum_backoff,
+                                   BackoffPolicy policy,
+                                   size_t maximum_retries)
+: BackoffPerformer(initial_backoff, backoff_step, maximum_backoff, policy, maximum_retries),
+  consumer_(consumer) {
+  
+}
+
 void BackoffCommitter::set_error_callback(ErrorCallback callback) {
     callback_ = move(callback);
 }
@@ -53,6 +64,10 @@ void BackoffCommitter::commit(const TopicPartitionList& topic_partitions) {
     perform([&] { 
         return do_commit(topic_partitions);
     });
+}
+
+Consumer& BackoffCommitter::get_consumer() {
+    return consumer_;
 }
 
 } // cppkafka

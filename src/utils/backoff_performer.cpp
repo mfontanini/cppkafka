@@ -48,6 +48,16 @@ BackoffPerformer::BackoffPerformer()
 
 }
 
+BackoffPerformer::BackoffPerformer(TimeUnit initial_backoff,
+                                   TimeUnit backoff_step,
+                                   TimeUnit maximum_backoff,
+                                   BackoffPolicy policy,
+                                   size_t maximum_retries)
+: initial_backoff_(initial_backoff),
+  backoff_step_(backoff_step), maximum_backoff_(maximum_backoff),
+  policy_(policy), maximum_retries_(maximum_retries) {
+}
+
 void BackoffPerformer::set_backoff_policy(BackoffPolicy policy) {
     policy_ = policy;
 }

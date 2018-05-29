@@ -75,7 +75,7 @@ public:
     /**
      * \brief The error callback.
      * 
-     * Whenever an error occurs comitting an offset, this callback will be executed using
+     * Whenever an error occurs committing an offset, this callback will be executed using
      * the generated error. While the function returns true, then this is offset will be
      * committed again until it either succeeds or the function returns false.
      */
@@ -89,6 +89,18 @@ public:
      * \param consumer The consumer to use for committing offsets
      */
     BackoffCommitter(Consumer& consumer);
+    
+    /**
+     * \brief Constructs an instance using specified values
+     *
+     * \sa BackoffPerformer::BackoffPerformer
+     */
+    BackoffCommitter(Consumer& consumer,
+                     TimeUnit initial_backoff,
+                     TimeUnit backoff_step,
+                     TimeUnit maximum_backoff,
+                     BackoffPolicy policy,
+                     size_t maximum_retries);
 
     /**
      * \brief Sets the error callback
@@ -97,8 +109,7 @@ public:
      * \param callback The callback to be set
      */
     void set_error_callback(ErrorCallback callback);
-
-
+    
     /**
      * \brief Commits the given message synchronously
      *
@@ -118,6 +129,13 @@ public:
      * \param topic_partitions The topic/partition list to be committed
      */
     void commit(const TopicPartitionList& topic_partitions);
+    
+    /**
+     * \brief Get the internal Consumer object
+     *
+     * \return A reference to the Consumer
+     */
+    Consumer& get_consumer();
 private:
     // Return true to abort and false to continue committing
     template <typename T>
