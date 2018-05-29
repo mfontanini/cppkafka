@@ -1,6 +1,6 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
 include_directories(SYSTEM ${CATCH_INCLUDE})
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${RDKAFKA_INCLUDE_DIR})
+include_directories(SYSTEM ${RDKAFKA_INCLUDE_DIR})
 
 set(KAFKA_TEST_INSTANCE "kafka-vm:9092" 
     CACHE STRING "The kafka instance to which to connect to run tests")

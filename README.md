@@ -55,25 +55,32 @@ In order to compile _cppkafka_ you need:
 * _CMake_
 * A compiler with good C++11 support (e.g. gcc >= 4.8). This was tested successfully on
 _g++ 4.8.3_. 
-* The boost library. _cppkafka_ only requires boost.optional, which is a header only library,
-so this doesn't add any additional runtime dependencies.
+* The boost library.
 
 Now, in order to build, just run:
 
 ```Shell
 mkdir build
 cd build
-cmake ..
+cmake <OPTIONS> ..
 make
 ```
 
 ## CMake options
 
-If you have installed _librdkafka_ on a non standard directory, you can use the
-`RDKAFKA_ROOT_DIR` cmake parameter when configuring the project:
+The following cmake options can be specified:
+* `RDKAFKA_ROOT_DIR` : Specify a different librdkafka install directory.
+* `BOOST_ROOT` : Specify a different Boost install directory.
+* `CPPKAFKA_CMAKE_VERBOSE` : Generate verbose output. Default is `OFF`.
+* `CPPKAFKA_BUILD_SHARED` : Build cppkafka as a shared library. Default is `ON`.
+* `CPPKAFKA_DISABLE_TESTS` : Disable build of cppkafka tests. Default is  `OFF`.
+* `CPPKAFKA_DISABLE_EXAMPLES` : Disable build of cppkafka examples. Default is `OFF`.
+* `CPPKAFKA_BOOST_STATIC_LIBS` : Link with Boost static libraries. Default is `ON`.
+* `CPPKAFKA_BOOST_USE_MULTITHREADED` : Use Boost multi-threaded libraries. Default is `ON`.
 
+Example:
 ```Shell
-cmake .. -DRDKAFKA_ROOT_DIR=/some/other/dir
+cmake -DRDKAFKA_ROOT_DIR=/some/other/dir -DCPPKAFKA_BUILD_SHARED=OFF ...
 ```
 
 Note that the `RDKAFKA_ROOT_DIR` must contain the following structure:
@@ -84,13 +91,6 @@ ${RDKAFKA_ROOT_DIR}/
                    + include/librdkafka/rdkafka.h
                    |
                    + lib/librdkafka.a
-```
-
-By default, a shared library will be built. If you want to perform a static build,
-use the `CPPKAFKA_BUILD_SHARED` parameter:
-
-```Shell
-cmake .. -DCPPKAFKA_BUILD_SHARED=0
 ```
 
 # Using
@@ -108,4 +108,3 @@ _Doxygen_ to be installed. The documentation will be written in html format at
 
 Make sure to check the [wiki](https://github.com/mfontanini/cppkafka/wiki) which includes
 some documentation about the project and some of its features.
-

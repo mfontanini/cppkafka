@@ -34,6 +34,7 @@
 #include "buffer.h"
 #include "topic.h"
 #include "macros.h"
+#include "message.h"
 
 namespace cppkafka {
 
@@ -49,6 +50,11 @@ public:
      * \param topic The topic into which this message would be produced
      */
     BasicMessageBuilder(std::string topic);
+    
+    /**
+     * Construct a BasicMessageBuilder from a Message object
+     */
+    BasicMessageBuilder(const Message& message);
 
     /**
      * \brief Construct a message builder from another one that uses a different buffer type
@@ -175,6 +181,18 @@ private:
 template <typename T, typename C>
 BasicMessageBuilder<T, C>::BasicMessageBuilder(std::string topic)
 : topic_(std::move(topic)) {
+}
+
+template <typename T, typename C>
+BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
+: topic_(message.get_topic()),
+  key_(Buffer(message.get_key().get_data(), message.get_key().get_size())),
+  payload_(Buffer(message.get_payload().get_data(), message.get_payload().get_size())),
+  timestamp_(message.get_timestamp() ? message.get_timestamp().get().get_timestamp() :
+                                       std::chrono::milliseconds(0)),
+  user_data_(message.get_user_data())
+{
+
 }
 
 template <typename T, typename C>

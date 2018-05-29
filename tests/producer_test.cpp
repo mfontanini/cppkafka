@@ -12,17 +12,19 @@
 using std::string;
 using std::to_string;
 using std::set;
+using std::vector;
 using std::tie;
 using std::move;
 using std::thread;
+namespace this_thread = std::this_thread;
 using std::mutex;
 using std::unique_lock;
 using std::lock_guard;
 using std::condition_variable;
-
 using std::chrono::system_clock;
 using std::chrono::seconds;
 using std::chrono::milliseconds;
+using std::ref;
 
 using namespace cppkafka;
 
@@ -46,6 +48,44 @@ static Configuration make_consumer_config() {
         { "api.version.request", true }
     };
     return config;
+}
+
+void producer_run(BufferedProducer<string>& producer,
+                  int& exit_flag, condition_variable& clear,
+                  int num_messages,
+                  int partition) {
+    MessageBuilder builder(KAFKA_TOPIC);
+    string key("wassup?");
+    string payload("nothing much!");
+    
+    builder.partition(partition).key(key).payload(payload);
+    for (int i = 0; i < num_messages; ++i) {
+        if (i == num_messages/2) {
+            clear.notify_one();
+        }
+        producer.add_message(builder);
+        this_thread::sleep_for(milliseconds(10));
+    }
+    exit_flag = 1;
+}
+
+void flusher_run(BufferedProducer<string>& producer,
+                 int& exit_flag,
+                 int num_flush) {
+    while (!exit_flag) {
+        if (producer.get_buffer_size() >= (size_t)num_flush) {
+            producer.flush();
+        }
+    }
+    producer.flush();
+}
+
+void clear_run(BufferedProducer<string>& producer,
+               condition_variable& clear) {
+    mutex m;
+    unique_lock<mutex> lock(m);
+    clear.wait(lock);
+    producer.clear();
 }
 
 TEST_CASE("simple production", "[producer]") {
@@ -234,7 +274,7 @@ TEST_CASE("multiple messages", "[producer]") {
     }
 }
 
-TEST_CASE("buffered producer", "[producer]") {
+TEST_CASE("buffered producer", "[producer][buffered_producer]") {
     int partition = 0;
 
     // Create a consumer and assign this topic/partition
@@ -302,4 +342,58 @@ TEST_CASE("buffered producer with limited buffer", "[producer]") {
     // Validate messages received
     const auto& messages = runner.get_messages();
     REQUIRE(messages.size() == producer.get_max_buffer_size());
+}
+
+TEST_CASE("multi-threaded buffered producer", "[producer][buffered_producer]") {
+    int partition = 0;
+    vector<thread> threads;
+    int num_messages = 50;
+    int num_flush = 10;
+    int exit_flag = 0;
+    condition_variable clear;
+
+    // Create a consumer and assign this topic/partition
+    Consumer consumer(make_consumer_config());
+    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    ConsumerRunner runner(consumer, num_messages, 1);
+    
+    BufferedProducer<string> producer(make_producer_config());
+    
+    threads.push_back(thread(producer_run, ref(producer), ref(exit_flag), ref(clear), num_messages, partition));
+    threads.push_back(thread(flusher_run, ref(producer), ref(exit_flag), num_flush));
+    
+    // Wait for completion
+    runner.try_join();
+    for (auto&& thread : threads) {
+        thread.join();
+    }
+    const auto& messages = runner.get_messages();
+    REQUIRE(messages.size() == num_messages);
+    REQUIRE(producer.get_flushes_in_progress() == 0);
+    REQUIRE(producer.get_pending_acks() == 0);
+    REQUIRE(producer.get_total_messages_produced() == num_messages);
+    REQUIRE(producer.get_buffer_size() == 0);
+}
+
+TEST_CASE("clear multi-threaded buffered producer", "[producer][buffered_producer]") {
+    int partition = 0;
+    vector<thread> threads;
+    int num_messages = 50;
+    int exit_flag = 0;
+    condition_variable clear;
+    
+    BufferedProducer<string> producer(make_producer_config());
+    
+    threads.push_back(thread(producer_run, ref(producer), ref(exit_flag), ref(clear), num_messages, partition));
+    threads.push_back(thread(clear_run, ref(producer), ref(clear)));
+    
+    // Wait for completion
+    for (auto&& thread : threads) {
+        thread.join();
+    }
+    
+    REQUIRE(producer.get_total_messages_produced() == 0);
+    REQUIRE(producer.get_flushes_in_progress() == 0);
+    REQUIRE(producer.get_pending_acks() == 0);
+    REQUIRE(producer.get_buffer_size() < num_messages);
 }
