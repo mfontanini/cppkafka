@@ -136,6 +136,8 @@ private:
     std::vector<GroupMemberInformation> members_;
 };
 
+using GroupInformationList = std::vector<GroupInformation>;
+
 } // cppkafka
 
 #endif // CPPKAFKA_GROUP_INFORMATION_H

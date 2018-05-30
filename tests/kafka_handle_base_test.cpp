@@ -14,8 +14,6 @@ using std::string;
 
 using namespace cppkafka;
 
-static const string KAFKA_TOPIC = "cppkafka_test1";
-
 Configuration make_config() {
     Configuration config;
     config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
@@ -45,6 +43,9 @@ uint16_t get_kafka_port() {
 }
 
 TEST_CASE("metadata", "[handle_base]") {
+    if (KAFKA_TOPICS.size() < 2) {
+        return; //skip test
+    }
     Producer producer({});
     producer.add_brokers(KAFKA_TEST_INSTANCE);
     Metadata metadata = producer.get_metadata();
@@ -59,7 +60,7 @@ TEST_CASE("metadata", "[handle_base]") {
     }
 
     SECTION("topics") {
-        unordered_set<string> topic_names = { "cppkafka_test1", "cppkafka_test2" };
+        unordered_set<string> topic_names = { KAFKA_TOPICS[0], KAFKA_TOPICS[1] };
         size_t found_topics = 0;
 
         const vector<TopicMetadata>& topics = metadata.get_topics();
@@ -68,8 +69,9 @@ TEST_CASE("metadata", "[handle_base]") {
         for (const auto& topic : topics) {
             if (topic_names.count(topic.get_name()) == 1) {
                 const vector<PartitionMetadata>& partitions = topic.get_partitions();
-                REQUIRE(partitions.size() == 3);
-                set<int32_t> expected_ids = { 0, 1, 2 };
+                REQUIRE(partitions.size() == KAFKA_NUM_PARTITIONS);
+                set<int32_t> expected_ids;
+                for (int i = 0; i < KAFKA_NUM_PARTITIONS; expected_ids.emplace(i++));
                 for (const PartitionMetadata& partition : partitions) {
                     REQUIRE(expected_ids.erase(partition.get_id()) == 1);
                     for (int32_t replica : partition.get_replicas()) {
@@ -90,8 +92,8 @@ TEST_CASE("metadata", "[handle_base]") {
         CHECK(metadata.get_topics_prefixed("cppkafka_").size() == topic_names.size());
 
         // Now get the whole metadata only for this topic
-        Topic topic = producer.get_topic(KAFKA_TOPIC);
-        CHECK(producer.get_metadata(topic).get_name() == KAFKA_TOPIC);
+        Topic topic = producer.get_topic(KAFKA_TOPICS[0]);
+        CHECK(producer.get_metadata(topic).get_name() == KAFKA_TOPICS[0]);
     }
 }
 
@@ -106,7 +108,7 @@ TEST_CASE("consumer groups", "[handle_base]") {
 
     // Build consumer
     Consumer consumer(config);
-    consumer.subscribe({ KAFKA_TOPIC });
+    consumer.subscribe({ KAFKA_TOPICS[0] });
     ConsumerRunner runner(consumer, 0, 3);
     runner.try_join();
 
@@ -120,11 +122,8 @@ TEST_CASE("consumer groups", "[handle_base]") {
 
     MemberAssignmentInformation assignment = member.get_member_assignment();
     CHECK(assignment.get_version() == 0);
-    TopicPartitionList expected_topic_partitions = {
-        { KAFKA_TOPIC, 0 },
-        { KAFKA_TOPIC, 1 },
-        { KAFKA_TOPIC, 2 }
-    };
+    TopicPartitionList expected_topic_partitions;
+    for (int i = 0; i < KAFKA_NUM_PARTITIONS; expected_topic_partitions.emplace_back(KAFKA_TOPICS[0], i++));
     TopicPartitionList topic_partitions = assignment.get_topic_partitions();
     sort(topic_partitions.begin(), topic_partitions.end());
     CHECK(topic_partitions == expected_topic_partitions);

@@ -15,6 +15,9 @@ using Catch::TestCaseStats;
 using Catch::Totals;
 using Catch::Session;
 
+std::vector<std::string> KAFKA_TOPICS = {"cppkafka_test1", "cppkafka_test2"};
+int KAFKA_NUM_PARTITIONS = 3;
+
 namespace cppkafka {
 
 class InstantTestReporter : public ConsoleReporter {

@@ -29,8 +29,6 @@ using std::chrono::system_clock;
 
 using namespace cppkafka;
 
-const string KAFKA_TOPIC = "cppkafka_test1";
-
 static Configuration make_producer_config() {
     Configuration config;
     config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
@@ -54,31 +52,32 @@ TEST_CASE("message consumption", "[consumer]") {
     consumer.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment = topic_partitions;
     });
-    consumer.subscribe({ KAFKA_TOPIC });
-    ConsumerRunner runner(consumer, 1, 3);
+    consumer.subscribe({ KAFKA_TOPICS[0] });
+    ConsumerRunner runner(consumer, 1, KAFKA_NUM_PARTITIONS);
 
     // Produce a message just so we stop the consumer
     Producer producer(make_producer_config());
     string payload = "Hello world!";
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     runner.try_join();
 
-    // All 3 partitions should be ours
-    REQUIRE(assignment.size() == 3);
-    set<int> partitions = { 0, 1, 2 }; 
+    // All partitions should be ours
+    REQUIRE(assignment.size() == KAFKA_NUM_PARTITIONS);
+    set<int> partitions;
+    for (int i = 0; i < KAFKA_NUM_PARTITIONS; partitions.emplace(i++));
     for (const auto& topic_partition : assignment) {
-        CHECK(topic_partition.get_topic() == KAFKA_TOPIC);
+        CHECK(topic_partition.get_topic() == KAFKA_TOPICS[0]);
         CHECK(partitions.erase(topic_partition.get_partition()) == true);
     }
     REQUIRE(runner.get_messages().size() == 1);
-    CHECK(consumer.get_subscription() == vector<string>{ KAFKA_TOPIC });
+    CHECK(consumer.get_subscription() == vector<string>{ KAFKA_TOPICS[0] });
 
     assignment = consumer.get_assignment();
-    CHECK(assignment.size() == 3);
+    CHECK(assignment.size() == KAFKA_NUM_PARTITIONS);
 
     int64_t low;
     int64_t high;
-    tie(low, high) = consumer.get_offsets({ KAFKA_TOPIC, partition });
+    tie(low, high) = consumer.get_offsets({ KAFKA_TOPICS[0], partition });
     CHECK(high > low);
     CHECK(runner.get_messages().back().get_offset() + 1 == high);
 }
@@ -97,15 +96,15 @@ TEST_CASE("consumer rebalance", "[consumer]") {
     consumer1.set_revocation_callback([&](const TopicPartitionList&) {
         revocation_called = true;
     });
-    consumer1.subscribe({ KAFKA_TOPIC });
-    ConsumerRunner runner1(consumer1, 1, 3);
+    consumer1.subscribe({ KAFKA_TOPICS[0] });
+    ConsumerRunner runner1(consumer1, 1, KAFKA_NUM_PARTITIONS);
 
     // Create a second consumer and subscribe to the topic
     Consumer consumer2(make_consumer_config());
     consumer2.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment2 = topic_partitions;
     });
-    consumer2.subscribe({ KAFKA_TOPIC });
+    consumer2.subscribe({ KAFKA_TOPICS[0] });
     ConsumerRunner runner2(consumer2, 1, 1);
 
     CHECK(revocation_called == true);
@@ -113,19 +112,20 @@ TEST_CASE("consumer rebalance", "[consumer]") {
     // Produce a message just so we stop the consumer
     Producer producer(make_producer_config());
     string payload = "Hello world!";
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     runner1.try_join();
     runner2.try_join();
 
-    // All 3 partitions should be assigned
-    CHECK(assignment1.size() + assignment2.size() == 3);
-    set<int> partitions = { 0, 1, 2 }; 
+    // All partitions should be assigned
+    CHECK(assignment1.size() + assignment2.size() == KAFKA_NUM_PARTITIONS);
+    set<int> partitions;
+    for (int i = 0; i < KAFKA_NUM_PARTITIONS; partitions.emplace(i++));
     for (const auto& topic_partition : assignment1) {
-        CHECK(topic_partition.get_topic() == KAFKA_TOPIC);
+        CHECK(topic_partition.get_topic() == KAFKA_TOPICS[0]);
         CHECK(partitions.erase(topic_partition.get_partition()) == true);
     }
     for (const auto& topic_partition : assignment2) {
-        CHECK(topic_partition.get_topic() == KAFKA_TOPIC);
+        CHECK(topic_partition.get_topic() == KAFKA_TOPICS[0]);
         CHECK(partitions.erase(topic_partition.get_partition()) == true);
     }
     CHECK(runner1.get_messages().size() + runner2.get_messages().size() == 1);
@@ -143,18 +143,18 @@ TEST_CASE("consumer offset commit", "[consumer]") {
         offset_commit_called = true;
         CHECK(!!error == false);
         REQUIRE(topic_partitions.size() == 1);
-        CHECK(topic_partitions[0].get_topic() == KAFKA_TOPIC);
+        CHECK(topic_partitions[0].get_topic() == KAFKA_TOPICS[0]);
         CHECK(topic_partitions[0].get_partition() == 0);
         CHECK(topic_partitions[0].get_offset() == message_offset + 1);
     });
     Consumer consumer(config);
-    consumer.assign({ { KAFKA_TOPIC, 0 } });
+    consumer.assign({ { KAFKA_TOPICS[0], 0 } });
     ConsumerRunner runner(consumer, 1, 1);
 
     // Produce a message just so we stop the consumer
     Producer producer(make_producer_config());
     string payload = "Hello world!";
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     runner.try_join();
 
     REQUIRE(runner.get_messages().size() == 1);
@@ -173,7 +173,7 @@ TEST_CASE("consumer throttle", "[consumer]") {
     // Create a consumer and subscribe to the topic
     Configuration config = make_consumer_config("offset_commit");
     Consumer consumer(config);
-    consumer.assign({ { KAFKA_TOPIC, 0 } });
+    consumer.assign({ { KAFKA_TOPICS[0], 0 } });
 
     {
         ConsumerRunner runner(consumer, 0, 1);
@@ -183,7 +183,7 @@ TEST_CASE("consumer throttle", "[consumer]") {
     // Produce a message just so we stop the consumer
     BufferedProducer<string> producer(make_producer_config());
     string payload = "Hello world!";
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     producer.flush();
 
     size_t callback_executed_count = 0;
@@ -213,7 +213,7 @@ TEST_CASE("consume batch", "[consumer]") {
     // Create a consumer and subscribe to the topic
     Configuration config = make_consumer_config("test");
     Consumer consumer(config);
-    consumer.assign({ { KAFKA_TOPIC, 0 } });
+    consumer.assign({ { KAFKA_TOPICS[0], 0 } });
 
     {
         ConsumerRunner runner(consumer, 0, 1);
@@ -224,14 +224,14 @@ TEST_CASE("consume batch", "[consumer]") {
     BufferedProducer<string> producer(make_producer_config());
     string payload = "Hello world!";
     // Produce it twice
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     producer.flush();
 
-    vector<Message> all_messages;
+    MessageList all_messages;
     int i = 0;
     while (i < 5 && all_messages.size() != 2) {
-        vector<Message> messages = consumer.poll_batch(2);
+        MessageList messages = consumer.poll_batch(2);
         all_messages.insert(all_messages.end(), make_move_iterator(messages.begin()),
                             make_move_iterator(messages.end()));
         ++i;

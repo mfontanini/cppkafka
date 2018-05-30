@@ -28,8 +28,6 @@ using std::ref;
 
 using namespace cppkafka;
 
-static const string KAFKA_TOPIC = "cppkafka_test1";
-
 static Configuration make_producer_config() {
     Configuration config = {
         { "metadata.broker.list", KAFKA_TEST_INSTANCE },
@@ -54,7 +52,7 @@ void producer_run(BufferedProducer<string>& producer,
                   int& exit_flag, condition_variable& clear,
                   int num_messages,
                   int partition) {
-    MessageBuilder builder(KAFKA_TOPIC);
+    MessageBuilder builder(KAFKA_TOPICS[0]);
     string key("wassup?");
     string payload("nothing much!");
     
@@ -93,7 +91,7 @@ TEST_CASE("simple production", "[producer]") {
 
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    consumer.assign({ TopicPartition(KAFKA_TOPICS[0], partition) });
     ConsumerRunner runner(consumer, 1, 1);
 
     Configuration config = make_producer_config();
@@ -101,7 +99,7 @@ TEST_CASE("simple production", "[producer]") {
         // Now create a producer and produce a message
         const string payload = "Hello world! 1";
         Producer producer(config);
-        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
         runner.try_join();
 
         const auto& messages = runner.get_messages();
@@ -109,13 +107,13 @@ TEST_CASE("simple production", "[producer]") {
         const auto& message = messages[0];
         CHECK(message.get_payload() == payload);
         CHECK(!!message.get_key() == false);
-        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
         CHECK(message.get_partition() == partition);
         CHECK(!!message.get_error() == false);
 
         int64_t low;
         int64_t high;
-        tie(low, high) = producer.query_offsets({ KAFKA_TOPIC, partition });
+        tie(low, high) = producer.query_offsets({ KAFKA_TOPICS[0], partition });
         CHECK(high > low);
     }
 
@@ -124,7 +122,7 @@ TEST_CASE("simple production", "[producer]") {
         const string key = "such key";
         const milliseconds timestamp{15};
         Producer producer(config);
-        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition)
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition)
                                                      .key(key)
                                                      .payload(payload)
                                                      .timestamp(timestamp));
@@ -135,7 +133,7 @@ TEST_CASE("simple production", "[producer]") {
         const auto& message = messages[0];
         CHECK(message.get_payload() == payload);
         CHECK(message.get_key() == key);
-        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
         CHECK(message.get_partition() == partition);
         CHECK(!!message.get_error() == false);
         REQUIRE(!!message.get_timestamp() == true);
@@ -147,7 +145,7 @@ TEST_CASE("simple production", "[producer]") {
         const string key = "replay key";
         const milliseconds timestamp{15};
         Producer producer(config);
-        producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition)
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition)
                                                      .key(key)
                                                      .payload(payload)
                                                      .timestamp(timestamp));
@@ -167,7 +165,7 @@ TEST_CASE("simple production", "[producer]") {
         const auto& message = messages[0];
         CHECK(message.get_payload() == payload);
         CHECK(message.get_key() == key);
-        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
         CHECK(message.get_partition() == partition);
         CHECK(!!message.get_error() == false);
         REQUIRE(!!message.get_timestamp() == true);
@@ -188,14 +186,14 @@ TEST_CASE("simple production", "[producer]") {
         topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
                                                   int32_t partition_count) {
             CHECK(msg_key == key);
-            CHECK(partition_count == 3);
-            CHECK(topic.get_name() == KAFKA_TOPIC);
+            CHECK(partition_count == KAFKA_NUM_PARTITIONS);
+            CHECK(topic.get_name() == KAFKA_TOPICS[0]);
             return 0;
         });
         config.set_default_topic_configuration(topic_config);
 
         Producer producer(config);
-        producer.produce(MessageBuilder(KAFKA_TOPIC).key(key).payload(payload));
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).key(key).payload(payload));
         while (producer.get_out_queue_length() > 0) {
             producer.poll();
         }
@@ -206,7 +204,7 @@ TEST_CASE("simple production", "[producer]") {
         const auto& message = messages[0];
         CHECK(message.get_payload() == payload);
         CHECK(message.get_key() == key);
-        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
         CHECK(message.get_partition() == partition);
         CHECK(!!message.get_error() == false);
         CHECK(delivery_report_called == true);
@@ -222,15 +220,15 @@ TEST_CASE("simple production", "[producer]") {
         topic_config.set_partitioner_callback([&](const Topic& topic, const Buffer& msg_key,
                                                   int32_t partition_count) {
             CHECK(msg_key == key);
-            CHECK(partition_count == 3);
-            CHECK(topic.get_name() == KAFKA_TOPIC);
+            CHECK(partition_count == KAFKA_NUM_PARTITIONS);
+            CHECK(topic.get_name() == KAFKA_TOPICS[0]);
             callback_called = true;
             return 0;
         });
         config.set_default_topic_configuration(topic_config);
         Producer producer(config);
 
-        producer.produce(MessageBuilder(KAFKA_TOPIC).key(key).payload(payload));
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).key(key).payload(payload));
         producer.poll();
         runner.try_join();
 
@@ -244,13 +242,12 @@ TEST_CASE("simple production", "[producer]") {
 
 TEST_CASE("multiple messages", "[producer]") {
     size_t message_count = 10;
-    int partitions = 3;
     set<string> payloads;
 
     // Create a consumer and subscribe to this topic
     Consumer consumer(make_consumer_config());
-    consumer.subscribe({ KAFKA_TOPIC });
-    ConsumerRunner runner(consumer, message_count, partitions);
+    consumer.subscribe({ KAFKA_TOPICS[0] });
+    ConsumerRunner runner(consumer, message_count, KAFKA_NUM_PARTITIONS);
 
     // Now create a producer and produce a message
     Producer producer(make_producer_config());
@@ -258,19 +255,19 @@ TEST_CASE("multiple messages", "[producer]") {
     for (size_t i = 0; i < message_count; ++i) {
         const string payload = payload_base + to_string(i);
         payloads.insert(payload);
-        producer.produce(MessageBuilder(KAFKA_TOPIC).payload(payload));
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).payload(payload));
     }
     runner.try_join();
 
     const auto& messages = runner.get_messages();
     REQUIRE(messages.size() == message_count);
     for (const auto& message : messages) {
-        CHECK(message.get_topic() == KAFKA_TOPIC);
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
         CHECK(payloads.erase(message.get_payload()) == 1);
         CHECK(!!message.get_error() == false);
         CHECK(!!message.get_key() == false);
         CHECK(message.get_partition() >= 0);
-        CHECK(message.get_partition() < 3);
+        CHECK(message.get_partition() < KAFKA_NUM_PARTITIONS);
     }
 }
 
@@ -279,22 +276,22 @@ TEST_CASE("buffered producer", "[producer][buffered_producer]") {
 
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    consumer.assign({ TopicPartition(KAFKA_TOPICS[0], partition) });
     ConsumerRunner runner(consumer, 3, 1);
 
     // Now create a buffered producer and produce two messages
     BufferedProducer<string> producer(make_producer_config());
     const string payload = "Hello world! 2";
     const string key = "such key";
-    producer.add_message(MessageBuilder(KAFKA_TOPIC).partition(partition)
+    producer.add_message(MessageBuilder(KAFKA_TOPICS[0]).partition(partition)
                                                     .key(key)
                                                     .payload(payload));
-    producer.add_message(producer.make_builder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.add_message(producer.make_builder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     producer.flush();
-    producer.produce(MessageBuilder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     producer.wait_for_acks();
     // Add another one but then clear it
-    producer.add_message(producer.make_builder(KAFKA_TOPIC).partition(partition).payload(payload));
+    producer.add_message(producer.make_builder(KAFKA_TOPICS[0]).partition(partition).payload(payload));
     producer.clear();
     runner.try_join();
 
@@ -302,7 +299,7 @@ TEST_CASE("buffered producer", "[producer][buffered_producer]") {
     REQUIRE(messages.size() == 3);
     const auto& message = messages[0];
     CHECK(message.get_key() == key);
-    CHECK(message.get_topic() == KAFKA_TOPIC);
+    CHECK(message.get_topic() == KAFKA_TOPICS[0]);
     CHECK(message.get_partition() == partition);
     CHECK(!!message.get_error() == false);
 
@@ -319,7 +316,7 @@ TEST_CASE("buffered producer with limited buffer", "[producer]") {
     
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    consumer.assign({ TopicPartition(KAFKA_TOPICS[0], partition) });
     ConsumerRunner runner(consumer, 3, 1);
 
     // Now create a buffered producer and produce two messages
@@ -332,7 +329,7 @@ TEST_CASE("buffered producer with limited buffer", "[producer]") {
     // Limit the size of the internal buffer
     producer.set_max_buffer_size(num_messages-1);
     while (num_messages--) {
-        producer.add_message(MessageBuilder(KAFKA_TOPIC).partition(partition).key(key).payload(payload));
+        producer.add_message(MessageBuilder(KAFKA_TOPICS[0]).partition(partition).key(key).payload(payload));
     }
     REQUIRE(producer.get_buffer_size() == 1);
     
@@ -354,7 +351,7 @@ TEST_CASE("multi-threaded buffered producer", "[producer][buffered_producer]") {
 
     // Create a consumer and assign this topic/partition
     Consumer consumer(make_consumer_config());
-    consumer.assign({ TopicPartition(KAFKA_TOPIC, partition) });
+    consumer.assign({ TopicPartition(KAFKA_TOPICS[0], partition) });
     ConsumerRunner runner(consumer, num_messages, 1);
     
     BufferedProducer<string> producer(make_producer_config());

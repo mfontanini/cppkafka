@@ -39,6 +39,7 @@
 #include <tuple>
 #include <chrono>
 #include <librdkafka/rdkafka.h>
+#include "group_information.h"
 #include "topic_partition.h"
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
@@ -78,7 +79,7 @@ public:
     /**
      * \brief Resumes consumption/production from the given topic/partition list
      *
-     * This translates into a call to  rd_kafka_resume_partitions
+     * This translates into a call to rd_kafka_resume_partitions
      *
      * \param topic_partitions The topic/partition list to resume consuming/producing from/to
      */
@@ -108,11 +109,15 @@ public:
      * This translates into a call to rd_kafka_query_watermark_offsets
      * 
      * \param topic_partition The topic/partition to be queried
+     *
+     * \return A pair of watermark offsets {low, high}
      */ 
     OffsetTuple query_offsets(const TopicPartition& topic_partition) const;
 
     /**
-     * Gets the rdkafka handle
+     * \brief Gets the rdkafka handle
+     *
+     * \return The rdkafka handle
      */
     rd_kafka_t* get_handle() const;
 
@@ -123,7 +128,9 @@ public:
      * configuration provided in the Configuration object for this consumer/producer handle, 
      * if any.
      *
-     * \param name The name of the topic to be created 
+     * \param name The name of the topic to be created
+     *
+     * \return A topic
      */
     Topic get_topic(const std::string& name);
 
@@ -134,15 +141,19 @@ public:
      *
      * \param name The name of the topic to be created 
      * \param config The configuration to be used for the new topic
+     *
+     * \return A topic
      */
     Topic get_topic(const std::string& name, TopicConfiguration config);
 
     /**
      * \brief Gets metadata for brokers, topics, partitions, etc
      *
+     * This translates into a call to rd_kafka_metadata
+     *
      * \param all_topics Whether to fetch metadata about all topics or only locally known ones
      *
-     * This translates into a call to rd_kafka_metadata
+     * \return The metadata
      */
     Metadata get_metadata(bool all_topics = true) const;
 
@@ -153,20 +164,26 @@ public:
      * This translates into a call to rd_kafka_metadata
      *
      * \param topic The topic to fetch information for
+     *
+     * \return The topic metadata
      */
     TopicMetadata get_metadata(const Topic& topic) const;
 
     /**
-     * Gets the consumer group information
+     * \brief Gets the consumer group information
      *
      * \param name The name of the consumer group to look up
+     *
+     * \return The group information
      */
     GroupInformation get_consumer_group(const std::string& name);
 
     /**
-     * Gets all consumer groups
+     * \brief Gets all consumer groups
+     *
+     * \return A list of consumer groups
      */
-    std::vector<GroupInformation> get_consumer_groups();
+    GroupInformationList get_consumer_groups();
 
     /**
      * \brief Gets topic/partition offsets based on timestamps
@@ -174,23 +191,31 @@ public:
      * This translates into a call to rd_kafka_offsets_for_times
      *
      * \param queries A map from topic/partition to the timestamp to be used
+     *
+     * \return A topic partition list
      */
     TopicPartitionList get_offsets_for_times(const TopicPartitionsTimestampsMap& queries) const;
 
     /**
-     * Returns the kafka handle name
+     * \brief Get the kafka handle name
+     *
+     * \return The handle name
      */
     std::string get_name() const;
 
     /**
-     * Gets the configured timeout.
+     * \brief Gets the configured timeout.
+     *
+     * \return The configured timeout
      *
      * \sa KafkaHandleBase::set_timeout
      */
     std::chrono::milliseconds get_timeout() const;
 
     /**
-     * Gets the handle's configuration
+     * \brief Gets the handle's configuration
+     *
+     * \return A reference to the configuration object
      */ 
     const Configuration& get_configuration() const;
 
@@ -198,6 +223,8 @@ public:
      * \brief Gets the length of the out queue 
      *
      * This calls rd_kafka_outq_len
+     *
+     * \return The length of the queue
      */
     int get_out_queue_length() const;
 
@@ -221,7 +248,7 @@ private:
 
     Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
     Metadata get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const;
-    std::vector<GroupInformation> fetch_consumer_groups(const char* name);
+    GroupInformationList fetch_consumer_groups(const char* name);
     void save_topic_config(const std::string& topic_name, TopicConfiguration config);
 
     std::chrono::milliseconds timeout_ms_;

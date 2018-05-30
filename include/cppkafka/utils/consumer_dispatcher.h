@@ -238,7 +238,7 @@ private:
     }
 
     // Finds the first functor that accepts the parameters in a tuple and returns it. If no
-    // such functor is found, a static asertion will occur
+    // such functor is found, a static assertion will occur
     template <typename Tuple, typename... Functors>
     const typename find_type<Tuple, Functors...>::type&
     find_matching_functor(const Functors&... functors) {

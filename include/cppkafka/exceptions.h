@@ -122,6 +122,18 @@ private:
     Error error_;
 };
 
+/**
+ * Queue exception for rd_kafka_queue_t errors
+ */
+class CPPKAFKA_API QueueException : public Exception {
+public:
+    QueueException(Error error);
+
+    Error get_error() const;
+private:
+    Error error_;
+};
+
 } // cppkafka
 
 #endif // CPPKAFKA_EXCEPTIONS_H

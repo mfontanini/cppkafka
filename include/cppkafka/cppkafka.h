@@ -46,6 +46,7 @@
 #include <cppkafka/message_builder.h>
 #include <cppkafka/metadata.h>
 #include <cppkafka/producer.h>
+#include <cppkafka/queue.h>
 #include <cppkafka/topic.h>
 #include <cppkafka/topic_configuration.h>
 #include <cppkafka/topic_partition.h>
@@ -55,5 +56,8 @@
 #include <cppkafka/utils/buffered_producer.h>
 #include <cppkafka/utils/compacted_topic_processor.h>
 #include <cppkafka/utils/consumer_dispatcher.h>
+#include <cppkafka/utils/poll_interface.h>
+#include <cppkafka/utils/poll_strategy_base.h>
+#include <cppkafka/utils/roundrobin_poll_strategy.h>
 
 #endif

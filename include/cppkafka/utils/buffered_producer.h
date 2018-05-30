@@ -179,6 +179,13 @@ public:
     void clear();
     
     /**
+     * \brief Get the number of messages in the buffer
+     *
+     * \return The number of messages
+     */
+    size_t get_buffer_size() const;
+    
+    /**
      * \brief Sets the maximum amount of messages to be enqueued in the buffer.
      *
      * After 'max_buffer_size' is reached, flush() will be called automatically.
@@ -198,13 +205,6 @@ public:
      * \return The max buffer size. A value of -1 indicates an unbounded buffer.
      */
     ssize_t get_max_buffer_size() const;
-    
-    /**
-     * \brief Get the number of unsent messages in the buffer
-     *
-     * \return The number of messages
-     */
-    size_t get_buffer_size() const;
     
     /**
      * \brief Get the number of messages not yet acked by the broker
@@ -401,6 +401,11 @@ void BufferedProducer<BufferType>::clear() {
 }
 
 template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_buffer_size() const {
+    return messages_.size();
+}
+
+template <typename BufferType>
 void BufferedProducer<BufferType>::set_max_buffer_size(ssize_t max_buffer_size) {
     if (max_buffer_size < -1) {
         throw Exception("Invalid buffer size.");
@@ -411,11 +416,6 @@ void BufferedProducer<BufferType>::set_max_buffer_size(ssize_t max_buffer_size) 
 template <typename BufferType>
 ssize_t BufferedProducer<BufferType>::get_max_buffer_size() const {
     return max_buffer_size_;
-}
-
-template <typename BufferType>
-size_t BufferedProducer<BufferType>::get_buffer_size() const {
-    return messages_.size();
 }
 
 template <typename BufferType>

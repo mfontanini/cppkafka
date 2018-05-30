@@ -57,10 +57,9 @@ Message::Message(rd_kafka_message_t* handle, NonOwningTag)
 }
 
 Message::Message(HandlePtr handle) 
-: handle_(move(handle)), 
-  payload_((const Buffer::DataType*)handle_->payload, handle_->len),
-  key_((const Buffer::DataType*)handle_->key, handle_->key_len) {
-
+: handle_(move(handle)),
+  payload_(handle_ ? Buffer((const Buffer::DataType*)handle_->payload, handle_->len) : Buffer()),
+  key_(handle_ ? Buffer((const Buffer::DataType*)handle_->key, handle_->key_len) : Buffer()) {
 }
 
 // MessageTimestamp
