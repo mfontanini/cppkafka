@@ -364,9 +364,9 @@ void BufferedProducer<BufferType>::flush() {
             produce_message(flush_queue.front());
         }
         catch (const HandleException& ex) {
-            if (flush_failure_callback_ &&
-                flush_failure_callback_(flush_queue.front(), ex.get_error())) {
-                // retry again later
+            // If we have a flush failure callback and it returns true, we retry producing this message later
+            CallbackInvoker<FlushFailureCallback> callback("flush failure", flush_failure_callback_, &producer_);
+            if (callback && callback(flush_queue.front(), ex.get_error())) {
                 do_add_message(std::move(flush_queue.front()), MessagePriority::Low, false);
             }
         }
@@ -515,23 +515,22 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
-    static const std::string ds_callback_name("delivery success");
-    static const std::string pf_callback_name("produce failure");
     // Decrement the expected acks
     --pending_acks_;
     assert(pending_acks_ != (size_t)-1); // Prevent underflow
-    // We should produce this message again if it has an error and we either don't have a
-    // produce failure callback or we have one but it returns true
-    bool should_produce = message.get_error() &&
-                          CallbackInvoker<bool(const Message&)>
-                              (pf_callback_name, produce_failure_callback_, &producer_)(message);
-    if (should_produce) {
-        // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
-        do_add_message(Builder(message), MessagePriority::High, false);
+    
+    if (message.get_error()) {
+        // We should produce this message again if we don't have a produce failure callback
+        // or we have one but it returns true
+        CallbackInvoker<ProduceFailureCallback> callback("produce failure", produce_failure_callback_, &producer_);
+        if (!callback || callback(message)) {
+            // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
+            do_add_message(Builder(message), MessagePriority::High, false);
+        }
     }
     else {
         // Successful delivery
-        CallbackInvoker<void(const Message&)>(ds_callback_name, produce_success_callback_, &producer_)(message);
+        CallbackInvoker<ProduceSuccessCallback>("delivery success", produce_success_callback_, &producer_)(message);
         // Increment the total successful transmissions
         ++total_messages_produced_;
     }

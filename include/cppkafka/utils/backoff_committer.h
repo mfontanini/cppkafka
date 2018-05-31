@@ -128,7 +128,6 @@ private:
             return true;
         }
         catch (const HandleException& ex) {
-            static const std::string callback_name("backoff committer");
             // If there were actually no offsets to commit, return. Retrying won't solve
             // anything here
             if (ex.get_error() == RD_KAFKA_RESP_ERR__NO_OFFSET) {
@@ -136,7 +135,8 @@ private:
             }
             // If there's a callback and it returns false for this message, abort.
             // Otherwise keep committing.
-            return !CallbackInvoker<bool(Error)>(callback_name, callback_, &consumer_)(ex.get_error());
+            CallbackInvoker<ErrorCallback> callback("backoff committer", callback_, &consumer_);
+            return callback && !callback(ex.get_error());
         }
     }
 

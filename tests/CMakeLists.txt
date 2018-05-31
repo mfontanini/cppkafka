@@ -23,6 +23,6 @@ add_executable(
     # Main file
     test_main.cpp
 )
-target_link_libraries(cppkafka_tests cppkafka ${RDKAFKA_LIBRARY} pthread)
+target_link_libraries(cppkafka_tests cppkafka ${RDKAFKA_LIBRARY} pthread rt ssl crypto dl z)
 add_dependencies(tests cppkafka_tests)
 add_test(cppkafka cppkafka_tests)

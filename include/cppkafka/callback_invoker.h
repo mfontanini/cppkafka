@@ -37,19 +37,9 @@
 
 namespace cppkafka {
 
-// Success values
-template <typename T>
-T success_value() { return T(); }
-
-template<> inline
-void success_value<void>() {};
-
-template<> inline
-bool success_value<bool>() { return true; }
-
 // Error values
 template <typename T>
-T error_value() { return T(); }
+T error_value() { return T{}; }
 
 template<> inline
 void error_value<void>() {};
@@ -60,34 +50,40 @@ bool error_value<bool>() { return false; }
 template<> inline
 int error_value<int>() { return -1; }
 
-// CallbackInvoker
-template <typename RetType, typename ...Args>
-class CallbackInvoker;
-
-template <typename RetType, typename ...Args>
-class CallbackInvoker<RetType(Args...)>
+/**
+ * \brief Wraps an std::function object and runs it while preventing all exceptions from escaping
+ * \tparam Func An std::function object
+ */
+template <typename Func>
+class CallbackInvoker
 {
 public:
-    using Func = std::function<RetType(Args...)>;
+    using RetType = typename Func::result_type;
     using LogCallback = std::function<void(KafkaHandleBase& handle,
                                            int level,
                                            const std::string& facility,
                                            const std::string& message)>;
-    CallbackInvoker(const std::string& callback_name,
+    CallbackInvoker(const char* callback_name,
                     const Func& callback,
                     KafkaHandleBase* handle)
     : callback_name_(callback_name),
       callback_(callback),
       handle_(handle) {
     }
-    RetType operator()(Args... args) const {
+    
+    explicit operator bool() const {
+        return (bool)callback_;
+    }
+    
+    template <typename ...Args>
+    RetType operator()(Args&&... args) const {
         static const char* library_name = "cppkafka";
         std::ostringstream error_msg;
         try {
             if (callback_) {
                 return callback_(std::forward<Args>(args)...);
             }
-            return success_value<RetType>();
+            return error_value<RetType>();
         }
         catch (const std::exception& ex) {
             if (handle_) {
@@ -112,14 +108,16 @@ public:
                 catch (...) {} // sink everything
             }
             else {
-                rd_kafka_log_print(handle_->get_handle(), static_cast<int>(LogLevel::LOG_ERR),
-                                   library_name, error_msg.str().c_str());
+                rd_kafka_log_print(handle_->get_handle(),
+                                   static_cast<int>(LogLevel::LOG_ERR),
+                                   library_name,
+                                   error_msg.str().c_str());
             }
         }
         return error_value<RetType>();
     }
 private:
-    const std::string& callback_name_;
+    const char* callback_name_;
     const Func& callback_;
     KafkaHandleBase* handle_;
 };
