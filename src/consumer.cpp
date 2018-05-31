@@ -34,7 +34,7 @@
 #include "logging.h"
 #include "configuration.h"
 #include "topic_partition_list.h"
-#include "callback_invoker.h"
+#include "detail/callback_invoker.h"
 
 using std::vector;
 using std::string;

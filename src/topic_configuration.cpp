@@ -33,7 +33,7 @@
 #include "exceptions.h"
 #include "topic.h"
 #include "buffer.h"
-#include "callback_invoker.h"
+#include "detail/callback_invoker.h"
 
 using std::string;
 using std::map;

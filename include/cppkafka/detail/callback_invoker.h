@@ -32,8 +32,8 @@
 
 #include <sstream>
 #include <assert.h>
-#include "logging.h"
-#include "kafka_handle_base.h"
+#include "../logging.h"
+#include "../kafka_handle_base.h"
 
 namespace cppkafka {
 
