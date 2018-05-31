@@ -133,7 +133,7 @@ public:
     void add_message(Builder builder);
 
     /**
-     * \brief Produces a message without buffering it
+     * \brief Produces a message asynchronously without buffering it
      *
      * The message will still be tracked so that a call to flush or wait_for_acks will actually
      * wait for it to be acknowledged.
@@ -145,7 +145,7 @@ public:
     void produce(const MessageBuilder& builder);
     
     /**
-     * \brief Produces a message without buffering it
+     * \brief Produces a message asynchronously without buffering it
      *
      * The message will still be tracked so that a call to flush or wait_for_acks will actually
      * wait for it to be acknowledged.
@@ -155,6 +155,24 @@ public:
      * \remark This method throws cppkafka::HandleException on failure
      */
     void produce(const Message& message);
+    
+    /**
+     * \brief Produces a message without buffering it and blocks until an ack is received
+     *
+     * \param builder The builder that contains the message to be produced
+     *
+     * \remark This method throws cppkafka::HandleException on failure
+     */
+    void sync_produce(const MessageBuilder& builder);
+    
+    /**
+     * \brief Produces a message without buffering it and blocks until an ack is received
+     *
+     * \param message The message to be produced
+     *
+     * \remark This method throws cppkafka::HandleException on failure
+     */
+    void sync_produce(const Message& message);
 
     /**
      * \brief Flushes the buffered messages.
@@ -352,6 +370,18 @@ void BufferedProducer<BufferType>::produce(const Message& message) {
 }
 
 template <typename BufferType>
+void BufferedProducer<BufferType>::sync_produce(const MessageBuilder& builder) {
+    produce_message(builder);
+    wait_for_acks();
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::sync_produce(const Message& message) {
+    produce_message(message);
+    wait_for_acks();
+}
+
+template <typename BufferType>
 void BufferedProducer<BufferType>::flush() {
     CounterGuard<size_t> counter_guard(flushes_in_progress_);
     QueueType flush_queue; // flush from temporary queue
@@ -515,10 +545,6 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
-    // Decrement the expected acks
-    --pending_acks_;
-    assert(pending_acks_ != (size_t)-1); // Prevent underflow
-    
     if (message.get_error()) {
         // We should produce this message again if we don't have a produce failure callback
         // or we have one but it returns true
@@ -534,6 +560,9 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         // Increment the total successful transmissions
         ++total_messages_produced_;
     }
+    // Decrement the expected acks
+    --pending_acks_;
+    assert(pending_acks_ != (size_t)-1); // Prevent underflow
 }
 
 } // cppkafka

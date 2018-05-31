@@ -89,18 +89,6 @@ public:
      * \param consumer The consumer to use for committing offsets
      */
     BackoffCommitter(Consumer& consumer);
-    
-    /**
-     * \brief Constructs an instance using specified values
-     *
-     * \sa BackoffPerformer::BackoffPerformer
-     */
-    BackoffCommitter(Consumer& consumer,
-                     TimeUnit initial_backoff,
-                     TimeUnit backoff_step,
-                     TimeUnit maximum_backoff,
-                     BackoffPolicy policy,
-                     size_t maximum_retries);
 
     /**
      * \brief Sets the error callback
