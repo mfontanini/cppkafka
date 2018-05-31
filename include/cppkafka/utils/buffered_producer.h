@@ -155,24 +155,6 @@ public:
      * \remark This method throws cppkafka::HandleException on failure
      */
     void produce(const Message& message);
-    
-    /**
-     * \brief Produces a message without buffering it and blocks until an ack is received
-     *
-     * \param builder The builder that contains the message to be produced
-     *
-     * \remark This method throws cppkafka::HandleException on failure
-     */
-    void sync_produce(const MessageBuilder& builder);
-    
-    /**
-     * \brief Produces a message without buffering it and blocks until an ack is received
-     *
-     * \param message The message to be produced
-     *
-     * \remark This method throws cppkafka::HandleException on failure
-     */
-    void sync_produce(const Message& message);
 
     /**
      * \brief Flushes the buffered messages.
@@ -367,18 +349,6 @@ void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const Message& message) {
     produce_message(message);
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::sync_produce(const MessageBuilder& builder) {
-    produce_message(builder);
-    wait_for_acks();
-}
-
-template <typename BufferType>
-void BufferedProducer<BufferType>::sync_produce(const Message& message) {
-    produce_message(message);
-    wait_for_acks();
 }
 
 template <typename BufferType>
