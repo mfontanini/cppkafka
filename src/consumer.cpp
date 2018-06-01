@@ -34,6 +34,7 @@
 #include "logging.h"
 #include "configuration.h"
 #include "topic_partition_list.h"
+#include "detail/callback_invoker.h"
 
 using std::vector;
 using std::string;
@@ -79,12 +80,12 @@ Consumer::~Consumer() {
         close();
     }
     catch (const Exception& ex) {
-        constexpr const char* library_name = "cppkafka";
+        const char* library_name = "cppkafka";
         ostringstream error_msg;
         error_msg << "Failed to close consumer [" << get_name() << "]: " << ex.what();
-        const auto& callback = get_configuration().get_log_callback();
-        if (callback) {
-            callback(*this, static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str());
+        CallbackInvoker<Configuration::LogCallback> logger("log", get_configuration().get_log_callback(), nullptr);
+        if (logger) {
+            logger(*this, static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str());
         }
         else {
             rd_kafka_log_print(get_handle(), static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str().c_str());
@@ -292,21 +293,15 @@ void Consumer::commit(const TopicPartitionList* topic_partitions, bool async) {
 void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
                                 TopicPartitionList& topic_partitions) {
     if (error == RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS) {
-        if (assignment_callback_) {
-            assignment_callback_(topic_partitions);
-        }
+        CallbackInvoker<AssignmentCallback>("assignment", assignment_callback_, this)(topic_partitions);
         assign(topic_partitions);
     }
     else if (error == RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS) {
-        if (revocation_callback_) {
-            revocation_callback_(topic_partitions);
-        }
+        CallbackInvoker<RevocationCallback>("revocation", revocation_callback_, this)(topic_partitions);
         unassign();
     }
     else {
-        if (rebalance_error_callback_) {
-            rebalance_error_callback_(error);
-        }
+        CallbackInvoker<RebalanceErrorCallback>("rebalance error", rebalance_error_callback_, this)(error);
         unassign();
     }
 }

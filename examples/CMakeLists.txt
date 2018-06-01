@@ -1,4 +1,4 @@
-link_libraries(cppkafka ${RDKAFKA_LIBRARY} ${Boost_LIBRARIES} pthread)
+link_libraries(cppkafka ${RDKAFKA_LIBRARY} ${Boost_LIBRARIES} pthread rt ssl crypto dl z)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 include_directories(SYSTEM ${RDKAFKA_INCLUDE_DIR})
 

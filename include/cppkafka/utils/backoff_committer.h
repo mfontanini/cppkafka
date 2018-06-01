@@ -33,6 +33,7 @@
 #include <chrono>
 #include <functional>
 #include <thread>
+#include <string>
 #include "../consumer.h"
 #include "backoff_performer.h"
 
@@ -118,6 +119,7 @@ public:
      */
     void commit(const TopicPartitionList& topic_partitions);
 private:
+    // Return true to abort and false to continue committing
     template <typename T>
     bool do_commit(const T& object) {
         try {
@@ -131,13 +133,11 @@ private:
             if (ex.get_error() == RD_KAFKA_RESP_ERR__NO_OFFSET) {
                 return true;
             }
-            // If there's a callback and it returns false for this message, abort
-            if (callback_ && !callback_(ex.get_error())) {
-                return true;
-            }
+            // If there's a callback and it returns false for this message, abort.
+            // Otherwise keep committing.
+            CallbackInvoker<ErrorCallback> callback("backoff committer", callback_, &consumer_);
+            return callback && !callback(ex.get_error());
         }
-        // In any other case, we failed. Keep committing
-        return false;
     }
 
     Consumer& consumer_;
