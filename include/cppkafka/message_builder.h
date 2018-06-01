@@ -166,6 +166,13 @@ public:
      * Gets the message's user data pointer
      */
     void* user_data() const;
+    
+    /**
+     * Private data accessor (internal use only)
+     */
+    Message::InternalPtr internal() const;
+    Concrete& internal(Message::InternalPtr internal);
+    
 private:
     void construct_buffer(BufferType& lhs, const BufferType& rhs);
     Concrete& get_concrete();
@@ -176,11 +183,13 @@ private:
     BufferType payload_;
     std::chrono::milliseconds timestamp_{0};
     void* user_data_;
+    Message::InternalPtr internal_;
 };
 
 template <typename T, typename C>
 BasicMessageBuilder<T, C>::BasicMessageBuilder(std::string topic)
-: topic_(std::move(topic)) {
+: topic_(std::move(topic)),
+  user_data_(nullptr) {
 }
 
 template <typename T, typename C>
@@ -190,16 +199,16 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
   payload_(Buffer(message.get_payload().get_data(), message.get_payload().get_size())),
   timestamp_(message.get_timestamp() ? message.get_timestamp().get().get_timestamp() :
                                        std::chrono::milliseconds(0)),
-  user_data_(message.get_user_data())
-{
-
+  user_data_(message.get_user_data()),
+  internal_(message.internal()) {
 }
 
 template <typename T, typename C>
 template <typename U, typename V>
 BasicMessageBuilder<T, C>::BasicMessageBuilder(const BasicMessageBuilder<U, V>& rhs)
 : topic_(rhs.topic()), partition_(rhs.partition()), timestamp_(rhs.timestamp()),
-  user_data_(rhs.user_data()) {
+  user_data_(rhs.user_data()),
+  internal_(rhs.internal()) {
     get_concrete().construct_buffer(key_, rhs.key());
     get_concrete().construct_buffer(payload_, rhs.payload());
 }
@@ -290,6 +299,17 @@ std::chrono::milliseconds BasicMessageBuilder<T, C>::timestamp() const {
 template <typename T, typename C>
 void* BasicMessageBuilder<T, C>::user_data() const {
     return user_data_;
+}
+
+template <typename T, typename C>
+Message::InternalPtr BasicMessageBuilder<T, C>::internal() const {
+    return internal_;
+}
+
+template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::internal(Message::InternalPtr internal) {
+    internal_ = internal;
+    return get_concrete();
 }
 
 template <typename T, typename C>

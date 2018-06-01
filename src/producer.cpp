@@ -28,13 +28,15 @@
  */
 
 #include <errno.h>
+#include <memory>
 #include "producer.h"
 #include "exceptions.h"
-#include "message.h"
+#include "message_internal.h"
 
 using std::move;
 using std::string;
 using std::chrono::milliseconds;
+using std::unique_ptr;
 
 namespace cppkafka {
 
@@ -65,6 +67,7 @@ void Producer::produce(const MessageBuilder& builder) {
     const Buffer& payload = builder.payload();
     const Buffer& key = builder.key();
     const int policy = static_cast<int>(message_payload_policy_);
+    unique_ptr<MessageInternal> internal_data(new MessageInternal(builder.user_data(), builder.internal()));
     auto result = rd_kafka_producev(get_handle(),
                                     RD_KAFKA_V_TOPIC(builder.topic().data()),
                                     RD_KAFKA_V_PARTITION(builder.partition()),
@@ -72,9 +75,10 @@ void Producer::produce(const MessageBuilder& builder) {
                                     RD_KAFKA_V_TIMESTAMP(builder.timestamp().count()),
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
-                                    RD_KAFKA_V_OPAQUE(builder.user_data()),
+                                    RD_KAFKA_V_OPAQUE(internal_data.get()),
                                     RD_KAFKA_V_END);
     check_error(result);
+    internal_data.release(); //data has been passed-on to rdkafka so we release ownership
 }
 
 void Producer::produce(const Message& message) {
@@ -82,6 +86,7 @@ void Producer::produce(const Message& message) {
     const Buffer& key = message.get_key();
     const int policy = static_cast<int>(message_payload_policy_);
     int64_t duration = message.get_timestamp() ? message.get_timestamp().get().get_timestamp().count() : 0;
+    unique_ptr<MessageInternal> internal_data(new MessageInternal(message.get_user_data(), message.internal()));
     auto result = rd_kafka_producev(get_handle(),
                                     RD_KAFKA_V_TOPIC(message.get_topic().data()),
                                     RD_KAFKA_V_PARTITION(message.get_partition()),
@@ -89,9 +94,10 @@ void Producer::produce(const Message& message) {
                                     RD_KAFKA_V_TIMESTAMP(duration),
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
-                                    RD_KAFKA_V_OPAQUE(message.get_user_data()),
+                                    RD_KAFKA_V_OPAQUE(internal_data.get()),
                                     RD_KAFKA_V_END);
     check_error(result);
+    internal_data.release(); //data has been passed-on to rdkafka so we release ownership
 }
 
 int Producer::poll() {

@@ -43,6 +43,7 @@
 namespace cppkafka {
 
 class MessageTimestamp;
+struct Internal;
 
 /**
  * \brief Thin wrapper over a rdkafka message handle
@@ -56,6 +57,8 @@ class MessageTimestamp;
  */
 class CPPKAFKA_API Message {
 public:
+    friend class MessageInternal;
+    using InternalPtr = std::shared_ptr<Internal>;
     /**
      * Constructs a message that won't take ownership of the given pointer
      */
@@ -134,14 +137,13 @@ public:
     }
 
     /**
-     * \brief Gets the private data.
+     * \brief Gets the private user data.
      *
      * This should only be used on messages produced by a Producer that were set a private data
      * attribute 
      */
     void* get_user_data() const {
-        assert(handle_);
-        return handle_->_private;
+        return user_data_;
     }
 
     /**
@@ -164,6 +166,13 @@ public:
     rd_kafka_message_t* get_handle() const {
         return handle_.get();
     }
+    
+    /**
+     * Internal private const data accessor (internal use only)
+     */
+    InternalPtr internal() const {
+        return internal_;
+    }
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_message_t, decltype(&rd_kafka_message_destroy)>;
 
@@ -171,10 +180,13 @@ private:
 
     Message(rd_kafka_message_t* handle, NonOwningTag);
     Message(HandlePtr handle);
+    void load_internal(void* user_data, InternalPtr internal);
 
     HandlePtr handle_;
     Buffer payload_;
     Buffer key_;
+    void* user_data_;
+    InternalPtr internal_;
 };
 
 using MessageList = std::vector<Message>;

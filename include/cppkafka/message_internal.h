@@ -27,61 +27,46 @@
  *
  */
 
-#include "message.h"
+#ifndef CPPKAFKA_MESSAGE_INTERNAL_H
+#define CPPKAFKA_MESSAGE_INTERNAL_H
 
-using std::chrono::milliseconds;
+#include <memory>
+#include "message.h"
 
 namespace cppkafka {
 
-void dummy_deleter(rd_kafka_message_t*) {
+struct Internal {
+    virtual ~Internal() = default;
+};
+using InternalPtr = std::shared_ptr<Internal>;
+
+/**
+ * \brief Private message data structure
+ */
+class MessageInternal {
+    friend class Producer;
+    
+public:
+    static std::unique_ptr<MessageInternal> load(Message& message) {
+        if (message.get_user_data()) {
+            // Unpack internal data
+            std::unique_ptr<MessageInternal> internal_data(static_cast<MessageInternal*>(message.get_user_data()));
+            message.load_internal(internal_data->user_data_, internal_data->internal_);
+            return internal_data;
+        }
+        return nullptr;
+    }
+    
+private:
+    MessageInternal(void* user_data, std::shared_ptr<Internal> internal)
+    : user_data_(user_data),
+      internal_(internal) {
+    }
+    
+    void*          user_data_;
+    InternalPtr    internal_;
+};
 
 }
 
-Message Message::make_non_owning(rd_kafka_message_t* handle) {
-    return Message(handle, NonOwningTag());
-}
-
-Message::Message()
-: handle_(nullptr, nullptr),
-  user_data_(nullptr) {
-
-}
-
-Message::Message(rd_kafka_message_t* handle) 
-: Message(HandlePtr(handle, &rd_kafka_message_destroy)) {
-
-}
-
-Message::Message(rd_kafka_message_t* handle, NonOwningTag)
-: Message(HandlePtr(handle, &dummy_deleter)) {
-
-}
-
-Message::Message(HandlePtr handle)
-: handle_(move(handle)),
-  payload_(handle_ ? Buffer((const Buffer::DataType*)handle_->payload, handle_->len) : Buffer()),
-  key_(handle_ ? Buffer((const Buffer::DataType*)handle_->key, handle_->key_len) : Buffer()),
-  user_data_(handle_ ? handle_->_private : nullptr) {
-}
-
-void Message::load_internal(void* user_data, InternalPtr internal) {
-    user_data_ = user_data;
-    internal_ = internal;
-}
-
-// MessageTimestamp
-
-MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
-: timestamp_(timestamp), type_(type) {
-
-}
-
-milliseconds MessageTimestamp::get_timestamp() const {
-    return timestamp_;
-}
-
-MessageTimestamp::TimestampType MessageTimestamp::get_type() const {
-    return type_;
-}
-
-} // cppkafka
+#endif //CPPKAFKA_MESSAGE_INTERNAL_H
