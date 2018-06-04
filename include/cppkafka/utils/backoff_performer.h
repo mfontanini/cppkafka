@@ -57,7 +57,7 @@ public:
     };
 
     /**
-     * Constructs an instance of backoff perform
+     * Constructs an instance of backoff performer
      * 
      * By default, the linear backoff policy is used
      */

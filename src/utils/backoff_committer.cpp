@@ -55,4 +55,8 @@ void BackoffCommitter::commit(const TopicPartitionList& topic_partitions) {
     });
 }
 
+Consumer& BackoffCommitter::get_consumer() {
+    return consumer_;
+}
+
 } // cppkafka
