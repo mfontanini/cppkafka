@@ -31,12 +31,14 @@
 #define CPPKAFKA_PRODUCER_H
 
 #include <memory>
+#include <tuple>
 #include "kafka_handle_base.h"
 #include "configuration.h"
 #include "buffer.h"
 #include "topic.h"
 #include "macros.h"
 #include "message_builder.h"
+#include "message_internal.h"
 
 namespace cppkafka {
 
@@ -78,6 +80,7 @@ class Message;
  */
 class CPPKAFKA_API Producer : public KafkaHandleBase {
 public:
+    friend MessageInternal;
     /**
      * The policy to use for the payload. The default policy is COPY_PAYLOAD
      */
@@ -156,7 +159,11 @@ public:
      */
     void flush(std::chrono::milliseconds timeout);
 private:
+    using LoadResult = std::tuple<void*, std::unique_ptr<MessageInternal>>;
+    LoadResult load_internal(void* user_data, InternalPtr internal);
+    
     PayloadPolicy message_payload_policy_;
+    bool has_internal_data_;
 };
 
 } // cppkafka

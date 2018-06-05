@@ -52,7 +52,7 @@ namespace cppkafka {
 void delivery_report_callback_proxy(rd_kafka_t*, const rd_kafka_message_t* msg, void *opaque) {
     Producer* handle = static_cast<Producer*>(opaque);
     Message message = Message::make_non_owning((rd_kafka_message_t*)msg);
-    unique_ptr<MessageInternal> internal_data(MessageInternal::load(message));
+    unique_ptr<MessageInternal> internal_data(MessageInternal::load(*handle, message));
     CallbackInvoker<Configuration::DeliveryReportCallback>
         ("delivery report", handle->get_configuration().get_delivery_report_callback(), handle)
         (*handle, message);

@@ -44,6 +44,7 @@
 #include <cppkafka/macros.h>
 #include <cppkafka/message.h>
 #include <cppkafka/message_builder.h>
+#include <cppkafka/message_internal.h>
 #include <cppkafka/metadata.h>
 #include <cppkafka/producer.h>
 #include <cppkafka/queue.h>

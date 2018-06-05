@@ -362,6 +362,21 @@ private:
         std::promise<bool> should_retry_;
         size_t num_retries_;
     };
+    using TrackerPtr = std::shared_ptr<Tracker>;
+    
+    template <typename BuilderType>
+    TrackerPtr add_tracker(BuilderType& builder) {
+        if (!has_internal_data_ && (max_number_retries_ > 0)) {
+            has_internal_data_ = true; //enable once
+        }
+        if (has_internal_data_) {
+            // Add message tracker
+            TrackerPtr tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
+            builder.internal(tracker);
+            return tracker;
+        }
+        return nullptr;
+    }
 
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder, MessagePriority priority, bool do_flush);
@@ -385,7 +400,8 @@ private:
     std::atomic<size_t> flushes_in_progress_{0};
     std::atomic<size_t> total_messages_produced_{0};
     std::atomic<size_t> total_messages_dropped_{0};
-    int max_number_retries_{5};
+    int max_number_retries_{0};
+    bool has_internal_data_{false};
 #ifdef KAFKA_TEST_INSTANCE
     TestParameters* test_params_;
 #endif
@@ -412,40 +428,40 @@ BufferedProducer<BufferType>::BufferedProducer(Configuration config)
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
-    // Add message tracker
-    std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
-    const_cast<MessageBuilder&>(builder).internal(tracker);
+    add_tracker(const_cast<MessageBuilder&>(builder));
     do_add_message(builder, MessagePriority::Low, true);
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(Builder builder) {
-    // Add message tracker
-    std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
-    const_cast<Builder&>(builder).internal(tracker);
+    add_tracker(builder);
     do_add_message(move(builder), MessagePriority::Low, true);
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
-    // Add message tracker
-    std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
-    const_cast<MessageBuilder&>(builder).internal(tracker);
+    add_tracker(const_cast<MessageBuilder&>(builder));
     async_produce(builder, true);
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::sync_produce(const MessageBuilder& builder) {
-    // Add message tracker
-    std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
-    const_cast<MessageBuilder&>(builder).internal(tracker);
-    std::future<bool> should_retry;
-    do {
-        should_retry = tracker->get_new_future();
+    TrackerPtr tracker = add_tracker(const_cast<MessageBuilder&>(builder));
+    if (tracker) {
+        // produce until we succeed or we reach max retry limit
+        std::future<bool> should_retry;
+        do {
+            should_retry = tracker->get_new_future();
+            produce_message(builder);
+            wait_for_acks();
+        }
+        while (should_retry.get());
+    }
+    else {
+        // produce once
         produce_message(builder);
         wait_for_acks();
     }
-    while (should_retry.get());
 }
 
 template <typename BufferType>
@@ -634,8 +650,8 @@ void BufferedProducer<BufferType>::async_produce(MessageType&& message, bool thr
         // If we have a flush failure callback and it returns true, we retry producing this message later
         CallbackInvoker<FlushFailureCallback> callback("flush failure", flush_failure_callback_, &producer_);
         if (!callback || callback(std::forward<MessageType>(message), ex.get_error())) {
-            std::shared_ptr<Tracker> tracker = std::static_pointer_cast<Tracker>(message.internal());
-            if (tracker->num_retries_ > 0) {
+            TrackerPtr tracker = std::static_pointer_cast<Tracker>(message.internal());
+            if (tracker && tracker->num_retries_ > 0) {
                 --tracker->num_retries_;
                 do_add_message(std::forward<MessageType>(message), MessagePriority::High, false);
                 return;
@@ -660,7 +676,7 @@ template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     //Get tracker data
     TestParameters* test_params = get_test_parameters();
-    std::shared_ptr<Tracker> tracker = std::static_pointer_cast<Tracker>(message.internal());
+    TrackerPtr tracker = std::static_pointer_cast<Tracker>(message.internal());
     bool should_retry = false;
     if (message.get_error() || (test_params && test_params->force_delivery_error_)) {
         // We should produce this message again if we don't have a produce failure callback
@@ -668,7 +684,7 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         CallbackInvoker<ProduceFailureCallback> callback("produce failure", produce_failure_callback_, &producer_);
         if (!callback || callback(message)) {
             // Check if we have reached the maximum retry limit
-            if (tracker->num_retries_ > 0) {
+            if (tracker && tracker->num_retries_ > 0) {
                 --tracker->num_retries_;
                 if (tracker->sender_ == SenderType::Async) {
                     // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
@@ -691,7 +707,9 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         ++total_messages_produced_;
     }
     // Signal producers
-    tracker->should_retry_.set_value(should_retry);
+    if (tracker) {
+        tracker->should_retry_.set_value(should_retry);
+    }
     // Decrement the expected acks
     --pending_acks_;
     assert(pending_acks_ != (size_t)-1); // Prevent underflow

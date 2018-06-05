@@ -26,35 +26,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#ifndef CPPKAFKA_MESSAGE_INTERNAL_H
-#define CPPKAFKA_MESSAGE_INTERNAL_H
-
-#include <memory>
-#include "message.h"
+#include "message_internal.h"
+#include "producer.h"
 
 namespace cppkafka {
 
-class Producer;
-
-struct Internal {
-    virtual ~Internal() = default;
-};
-using InternalPtr = std::shared_ptr<Internal>;
-
-/**
- * \brief Private message data structure
- */
-class MessageInternal {
-    friend Producer;
-public:
-    static std::unique_ptr<MessageInternal> load(const Producer& producer, Message& message);
-private:
-    MessageInternal(void* user_data, std::shared_ptr<Internal> internal);
-    void*          user_data_;
-    InternalPtr    internal_;
-};
-
+MessageInternal::MessageInternal(void* user_data, std::shared_ptr<Internal> internal)
+: user_data_(user_data),
+  internal_(internal) {
 }
 
-#endif //CPPKAFKA_MESSAGE_INTERNAL_H
+std::unique_ptr<MessageInternal> MessageInternal::load(const Producer& producer, Message& message) {
+    if (producer.has_internal_data_ && message.get_user_data()) {
+        // Unpack internal data
+        std::unique_ptr<MessageInternal> internal_data(static_cast<MessageInternal*>(message.get_user_data()));
+        message.load_internal(internal_data->user_data_, internal_data->internal_);
+        return internal_data;
+    }
+    return nullptr;
+}
+
+}
