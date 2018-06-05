@@ -169,6 +169,13 @@ public:
      * \remark This method throws cppkafka::HandleException on failure
      */
     void produce(const Message& message);
+    
+    /**
+     * \brief Flushes all buffered messages and returns immediately.
+     *
+     * Similar to flush, it will send all messages but will not wait for acks to complete.
+     */
+    void purge();
 
     /**
      * \brief Flushes the buffered messages.
@@ -471,7 +478,7 @@ void BufferedProducer<BufferType>::produce(const Message& message) {
 }
 
 template <typename BufferType>
-void BufferedProducer<BufferType>::flush() {
+void BufferedProducer<BufferType>::purge() {
     CounterGuard<size_t> counter_guard(flushes_in_progress_);
     QueueType flush_queue; // flush from temporary queue
     {
@@ -482,6 +489,11 @@ void BufferedProducer<BufferType>::flush() {
         async_produce(std::move(flush_queue.front()), false);
         flush_queue.pop_front();
     }
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::flush() {
+    purge();
     wait_for_acks();
 }
 
