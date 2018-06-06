@@ -180,7 +180,7 @@ private:
 
     Message(rd_kafka_message_t* handle, NonOwningTag);
     Message(HandlePtr handle);
-    void load_internal(void* user_data, InternalPtr internal);
+    Message& load_internal();
 
     HandlePtr handle_;
     Buffer payload_;

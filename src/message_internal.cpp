@@ -27,23 +27,22 @@
  *
  */
 #include "message_internal.h"
-#include "producer.h"
+#include "message.h"
+#include "message_builder.h"
 
 namespace cppkafka {
 
-MessageInternal::MessageInternal(void* user_data, std::shared_ptr<Internal> internal)
+// MessageInternal
+
+MessageInternal::MessageInternal(void* user_data,
+                                 std::shared_ptr<Internal> internal)
 : user_data_(user_data),
   internal_(internal) {
 }
 
-std::unique_ptr<MessageInternal> MessageInternal::load(const Producer& producer, Message& message) {
-    if (producer.has_internal_data_ && message.get_user_data()) {
-        // Unpack internal data
-        std::unique_ptr<MessageInternal> internal_data(static_cast<MessageInternal*>(message.get_user_data()));
-        message.load_internal(internal_data->user_data_, internal_data->internal_);
-        return internal_data;
-    }
-    return nullptr;
+std::unique_ptr<MessageInternal> MessageInternal::load(Message& message) {
+    return std::unique_ptr<MessageInternal>(message.load_internal().get_handle() ?
+                                            static_cast<MessageInternal*>(message.get_handle()->_private) : nullptr);
 }
 
 }

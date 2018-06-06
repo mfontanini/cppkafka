@@ -28,6 +28,7 @@
  */
 
 #include "message.h"
+#include "message_internal.h"
 
 using std::chrono::milliseconds;
 
@@ -64,9 +65,13 @@ Message::Message(HandlePtr handle)
   user_data_(handle_ ? handle_->_private : nullptr) {
 }
 
-void Message::load_internal(void* user_data, InternalPtr internal) {
-    user_data_ = user_data;
-    internal_ = internal;
+Message& Message::load_internal() {
+    if (user_data_) {
+        MessageInternal* mi = static_cast<MessageInternal*>(user_data_);
+        user_data_ = mi->user_data_;
+        internal_ = mi->internal_;
+    }
+    return *this;
 }
 
 // MessageTimestamp

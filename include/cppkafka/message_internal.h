@@ -31,11 +31,10 @@
 #define CPPKAFKA_MESSAGE_INTERNAL_H
 
 #include <memory>
-#include "message.h"
 
 namespace cppkafka {
 
-class Producer;
+class Message;
 
 struct Internal {
     virtual ~Internal() = default;
@@ -45,14 +44,35 @@ using InternalPtr = std::shared_ptr<Internal>;
 /**
  * \brief Private message data structure
  */
-class MessageInternal {
-    friend Producer;
-public:
-    static std::unique_ptr<MessageInternal> load(const Producer& producer, Message& message);
-private:
+struct MessageInternal {
     MessageInternal(void* user_data, std::shared_ptr<Internal> internal);
+    static std::unique_ptr<MessageInternal> load(Message& message);
     void*          user_data_;
     InternalPtr    internal_;
+};
+
+template <typename BuilderType>
+struct MessageInternalGuard {
+    MessageInternalGuard(BuilderType& builder)
+    : builder_(builder),
+      user_data_(builder.user_data()) {
+        if (builder_.internal()) {
+            // Swap contents with user_data
+            ptr_.reset(new MessageInternal(user_data_, builder_.internal()));
+            builder_.user_data(ptr_.get()); //overwrite user data
+        }
+    }
+    ~MessageInternalGuard() {
+        //Restore user data
+        builder_.user_data(user_data_);
+    }
+    void release() {
+        ptr_.release();
+    }
+private:
+    BuilderType& builder_;
+    std::unique_ptr<MessageInternal> ptr_;
+    void* user_data_;
 };
 
 }

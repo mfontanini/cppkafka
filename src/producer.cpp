@@ -42,8 +42,7 @@ using std::get;
 namespace cppkafka {
 
 Producer::Producer(Configuration config)
-: KafkaHandleBase(move(config)), message_payload_policy_(PayloadPolicy::COPY_PAYLOAD),
-  has_internal_data_(false) {
+: KafkaHandleBase(move(config)), message_payload_policy_(PayloadPolicy::COPY_PAYLOAD) {
     char error_buffer[512];
     auto config_handle = get_configuration().get_handle();
     rd_kafka_conf_set_opaque(config_handle, this);
@@ -69,7 +68,6 @@ void Producer::produce(const MessageBuilder& builder) {
     const Buffer& payload = builder.payload();
     const Buffer& key = builder.key();
     const int policy = static_cast<int>(message_payload_policy_);
-    LoadResult load_result = load_internal(builder.user_data(), builder.internal());
     auto result = rd_kafka_producev(get_handle(),
                                     RD_KAFKA_V_TOPIC(builder.topic().data()),
                                     RD_KAFKA_V_PARTITION(builder.partition()),
@@ -77,10 +75,9 @@ void Producer::produce(const MessageBuilder& builder) {
                                     RD_KAFKA_V_TIMESTAMP(builder.timestamp().count()),
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
-                                    RD_KAFKA_V_OPAQUE(get<0>(load_result)),
+                                    RD_KAFKA_V_OPAQUE(builder.user_data()),
                                     RD_KAFKA_V_END);
     check_error(result);
-    get<1>(load_result).release(); //data has been passed-on to rdkafka so we release ownership
 }
 
 void Producer::produce(const Message& message) {
@@ -88,7 +85,6 @@ void Producer::produce(const Message& message) {
     const Buffer& key = message.get_key();
     const int policy = static_cast<int>(message_payload_policy_);
     int64_t duration = message.get_timestamp() ? message.get_timestamp().get().get_timestamp().count() : 0;
-    LoadResult load_result = load_internal(message.get_user_data(), message.internal());
     auto result = rd_kafka_producev(get_handle(),
                                     RD_KAFKA_V_TOPIC(message.get_topic().data()),
                                     RD_KAFKA_V_PARTITION(message.get_partition()),
@@ -96,10 +92,9 @@ void Producer::produce(const Message& message) {
                                     RD_KAFKA_V_TIMESTAMP(duration),
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
-                                    RD_KAFKA_V_OPAQUE(get<0>(load_result)),
+                                    RD_KAFKA_V_OPAQUE(message.get_user_data()),
                                     RD_KAFKA_V_END);
     check_error(result);
-    get<1>(load_result).release(); //data has been passed-on to rdkafka so we release ownership
 }
 
 int Producer::poll() {
@@ -117,18 +112,6 @@ void Producer::flush() {
 void Producer::flush(milliseconds timeout) {
     auto result = rd_kafka_flush(get_handle(), static_cast<int>(timeout.count()));
     check_error(result);
-}
-
-Producer::LoadResult Producer::load_internal(void* user_data, InternalPtr internal) {
-    unique_ptr<MessageInternal> internal_data;
-    if (!has_internal_data_ && internal) {
-        has_internal_data_ = true; //enable once for this producer
-    }
-    if (has_internal_data_ && get_configuration().get_delivery_report_callback()) {
-        internal_data.reset(new MessageInternal(user_data, internal));
-        user_data = internal_data.get(); //point to the internal data
-    }
-    return LoadResult(user_data, move(internal_data));
 }
 
 } // cppkafka
