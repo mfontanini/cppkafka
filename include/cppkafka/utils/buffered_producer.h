@@ -42,6 +42,7 @@
 #include <boost/optional.hpp>
 #include "../producer.h"
 #include "../message.h"
+#include "../detail/callback_invoker.h"
 
 namespace cppkafka {
 

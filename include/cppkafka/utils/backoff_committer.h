@@ -36,6 +36,7 @@
 #include <string>
 #include "../consumer.h"
 #include "backoff_performer.h"
+#include "../detail/callback_invoker.h"
 
 namespace cppkafka {
 
