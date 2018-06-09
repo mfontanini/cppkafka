@@ -5,7 +5,7 @@
 #include <map>
 #include <condition_variable>
 #include <catch.hpp>
-#include "cppkafka/producer.h"
+#include "cppkafka/utils/buffered_producer.h"
 #include "cppkafka/consumer.h"
 #include "cppkafka/utils/compacted_topic_processor.h"
 #include "test_utils.h"
@@ -69,7 +69,7 @@ TEST_CASE("consumption", "[consumer][compacted]") {
     consumer.poll();
     consumer.poll();
 
-    Producer producer(make_producer_config());
+    BufferedProducer<string> producer(make_producer_config());
 
     struct ElementType {
         string value;
@@ -88,6 +88,7 @@ TEST_CASE("consumption", "[consumer][compacted]") {
     // Now erase the first element
     string deleted_key = "42";
     producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(0).key(deleted_key));
+    producer.flush();
 
     for (size_t i = 0; i < 10; ++i) {
         compacted_consumer.process_event();
