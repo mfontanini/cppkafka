@@ -65,9 +65,13 @@ TEST_CASE("consumption", "[consumer][compacted]") {
         events.push_back(event);
     });
     consumer.subscribe({ KAFKA_TOPICS[0] });
-    consumer.poll();
-    consumer.poll();
-    consumer.poll();
+    set<int> eof_partitions;
+    while (eof_partitions.size() != static_cast<size_t>(KAFKA_NUM_PARTITIONS)) {
+        Message msg = consumer.poll();
+        if (msg && msg.is_eof()) {
+            eof_partitions.insert(msg.get_partition());
+        }
+    }
 
     BufferedProducer<string> producer(make_producer_config());
 
