@@ -19,6 +19,7 @@ make_cppkafka_header()
 # Install headers including the auto-generated cppkafka.h
 file(GLOB INCLUDE_FILES "*.h")
 file(GLOB UTILS_INCLUDE_FILES "utils/*.h")
+file(GLOB DETAIL_INCLUDE_FILES "detail/*.h")
 install(
     FILES ${INCLUDE_FILES}
     DESTINATION include/cppkafka
@@ -27,5 +28,10 @@ install(
 install(
     FILES ${UTILS_INCLUDE_FILES}
     DESTINATION include/cppkafka/utils/
+    COMPONENT Headers
+)
+install(
+    FILES ${DETAIL_INCLUDE_FILES}
+    DESTINATION include/cppkafka/detail/
     COMPONENT Headers
 )
