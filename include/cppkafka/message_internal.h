@@ -36,7 +36,8 @@ namespace cppkafka {
 
 class Message;
 
-struct Internal {
+class Internal {
+public:
     virtual ~Internal() = default;
 };
 using InternalPtr = std::shared_ptr<Internal>;
@@ -44,15 +45,20 @@ using InternalPtr = std::shared_ptr<Internal>;
 /**
  * \brief Private message data structure
  */
-struct MessageInternal {
+class MessageInternal {
+public:
     MessageInternal(void* user_data, std::shared_ptr<Internal> internal);
     static std::unique_ptr<MessageInternal> load(Message& message);
+    void* get_user_data() const;
+    InternalPtr get_internal() const;
+private:
     void*          user_data_;
     InternalPtr    internal_;
 };
 
 template <typename BuilderType>
-struct MessageInternalGuard {
+class MessageInternalGuard {
+public:
     MessageInternalGuard(BuilderType& builder)
     : builder_(builder),
       user_data_(builder.user_data()) {

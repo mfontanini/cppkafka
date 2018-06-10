@@ -348,6 +348,15 @@ public:
     void construct_buffer(Buffer& lhs, const T& rhs) {
         lhs = Buffer(rhs);
     }
+    
+    MessageBuilder clone() const {
+        return std::move(MessageBuilder(topic()).
+                             key(Buffer(key().get_data(), key().get_size())).
+                             payload(Buffer(payload().get_data(), payload().get_size())).
+                             timestamp(timestamp()).
+                             user_data(user_data()).
+                             internal(internal()));
+    }
 };
 
 /**

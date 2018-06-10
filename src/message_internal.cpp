@@ -45,4 +45,12 @@ std::unique_ptr<MessageInternal> MessageInternal::load(Message& message) {
                                             static_cast<MessageInternal*>(message.get_handle()->_private) : nullptr);
 }
 
+void* MessageInternal::get_user_data() const {
+    return user_data_;
+}
+
+InternalPtr MessageInternal::get_internal() const {
+    return internal_;
+}
+
 }

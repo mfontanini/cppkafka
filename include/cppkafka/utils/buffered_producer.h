@@ -366,9 +366,6 @@ private:
     
     template <typename BuilderType>
     TrackerPtr add_tracker(BuilderType& builder) {
-        if (!has_internal_data_ && (max_number_retries_ > 0)) {
-            has_internal_data_ = true; //enable once
-        }
         if (has_internal_data_ && !builder.internal()) {
             // Add message tracker only if it hasn't been added before
             TrackerPtr tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
@@ -426,8 +423,7 @@ BufferedProducer<BufferType>::BufferedProducer(Configuration config)
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
-    add_tracker(const_cast<MessageBuilder&>(builder));
-    do_add_message(builder, MessagePriority::Low, true);
+    add_message(Builder(builder)); //make ConcreteBuilder
 }
 
 template <typename BufferType>
@@ -438,19 +434,26 @@ void BufferedProducer<BufferType>::add_message(Builder builder) {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
-    add_tracker(const_cast<MessageBuilder&>(builder));
-    async_produce(builder, true);
+    if (has_internal_data_) {
+        MessageBuilder builder_copy(builder.clone());
+        add_tracker(builder_copy);
+        async_produce(builder_copy, true);
+    }
+    else {
+        async_produce(builder, true);
+    }
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::sync_produce(const MessageBuilder& builder) {
-    TrackerPtr tracker = add_tracker(const_cast<MessageBuilder&>(builder));
-    if (tracker) {
+    if (has_internal_data_) {
+        MessageBuilder builder_copy(builder.clone());
+        TrackerPtr tracker = add_tracker(builder_copy);
         // produce until we succeed or we reach max retry limit
         std::future<bool> should_retry;
         do {
             should_retry = tracker->get_new_future();
-            produce_message(builder);
+            produce_message(builder_copy);
             wait_for_acks();
         }
         while (should_retry.get());
@@ -576,6 +579,9 @@ size_t BufferedProducer<BufferType>::get_flushes_in_progress() const {
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::set_max_number_retries(size_t max_number_retries) {
+    if (!has_internal_data_ && (max_number_retries > 0)) {
+        has_internal_data_ = true; //enable once
+    }
     max_number_retries_ = max_number_retries;
 }
 
@@ -638,12 +644,12 @@ void BufferedProducer<BufferType>::async_produce(BuilderType&& builder, bool thr
         if (test_params && test_params->force_produce_error_) {
             throw HandleException(Error(RD_KAFKA_RESP_ERR_UNKNOWN));
         }
-        produce_message(std::forward<BuilderType>(builder));
+        produce_message(builder);
     }
     catch (const HandleException& ex) {
         // If we have a flush failure callback and it returns true, we retry producing this message later
         CallbackInvoker<FlushFailureCallback> callback("flush failure", flush_failure_callback_, &producer_);
-        if (!callback || callback(std::forward<BuilderType>(builder), ex.get_error())) {
+        if (!callback || callback(builder, ex.get_error())) {
             TrackerPtr tracker = std::static_pointer_cast<Tracker>(builder.internal());
             if (tracker && tracker->num_retries_ > 0) {
                 --tracker->num_retries_;
@@ -671,7 +677,7 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     //Get tracker data
     TestParameters* test_params = get_test_parameters();
     TrackerPtr tracker = has_internal_data_ ?
-        std::static_pointer_cast<Tracker>(MessageInternal::load(const_cast<Message&>(message))->internal_) : nullptr;
+        std::static_pointer_cast<Tracker>(MessageInternal::load(const_cast<Message&>(message))->get_internal()) : nullptr;
     bool should_retry = false;
     if (message.get_error() || (test_params && test_params->force_delivery_error_)) {
         // We should produce this message again if we don't have a produce failure callback

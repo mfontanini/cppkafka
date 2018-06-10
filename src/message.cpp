@@ -68,8 +68,8 @@ Message::Message(HandlePtr handle)
 Message& Message::load_internal() {
     if (user_data_) {
         MessageInternal* mi = static_cast<MessageInternal*>(user_data_);
-        user_data_ = mi->user_data_;
-        internal_ = mi->internal_;
+        user_data_ = mi->get_user_data();
+        internal_ = mi->get_internal();
     }
     return *this;
 }
