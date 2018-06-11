@@ -341,18 +341,23 @@ TEST_CASE("replay sync messages with errors", "[producer][buffered_producer][syn
     // Create a consumer and subscribe to this topic
     Consumer consumer(make_consumer_config());
     consumer.subscribe({ KAFKA_TOPICS[0] });
-    ConsumerRunner runner(consumer, num_retries+1, KAFKA_NUM_PARTITIONS);
+    ConsumerRunner runner(consumer, 2*(num_retries+1), KAFKA_NUM_PARTITIONS);
 
     // Now create a producer and produce a message
     ErrorProducer<string> producer(make_producer_config(), BufferedProducer<string>::TestParameters{true, false});
     producer.set_produce_failure_callback(dr_failure_callback);
     producer.set_max_number_retries(num_retries);
     string payload = "Hello world";
-    producer.sync_produce(MessageBuilder(KAFKA_TOPICS[0]).payload(payload).user_data(&dr_data[0]));
+    MessageBuilder builder(KAFKA_TOPICS[0]);
+    builder.payload(payload).user_data(&dr_data[0]);
+    
+    //Produce the same message twice
+    producer.sync_produce(builder);
+    producer.sync_produce(builder);
     runner.try_join();
 
     const auto& messages = runner.get_messages();
-    REQUIRE(messages.size() == num_retries+1);
+    REQUIRE(messages.size() == 2*(num_retries+1));
     for (size_t i = 0; i < messages.size(); ++i) {
         const auto& message = messages[i];
         CHECK(message.get_topic() == KAFKA_TOPICS[0]);

@@ -435,9 +435,9 @@ void BufferedProducer<BufferType>::add_message(Builder builder) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
     if (has_internal_data_) {
-        MessageBuilder builder_copy(builder.clone());
-        add_tracker(builder_copy);
-        async_produce(builder_copy, true);
+        MessageBuilder builder_clone(builder.clone());
+        add_tracker(builder_clone);
+        async_produce(builder_clone, true);
     }
     else {
         async_produce(builder, true);
@@ -447,13 +447,13 @@ void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
 template <typename BufferType>
 void BufferedProducer<BufferType>::sync_produce(const MessageBuilder& builder) {
     if (has_internal_data_) {
-        MessageBuilder builder_copy(builder.clone());
-        TrackerPtr tracker = add_tracker(builder_copy);
+        MessageBuilder builder_clone(builder.clone());
+        TrackerPtr tracker = add_tracker(builder_clone);
         // produce until we succeed or we reach max retry limit
         std::future<bool> should_retry;
         do {
             should_retry = tracker->get_new_future();
-            produce_message(builder_copy);
+            produce_message(builder_clone);
             wait_for_acks();
         }
         while (should_retry.get());
