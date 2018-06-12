@@ -28,13 +28,16 @@
  */
 
 #include <errno.h>
+#include <memory>
 #include "producer.h"
 #include "exceptions.h"
-#include "message.h"
+#include "message_internal.h"
 
 using std::move;
 using std::string;
 using std::chrono::milliseconds;
+using std::unique_ptr;
+using std::get;
 
 namespace cppkafka {
 

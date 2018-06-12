@@ -40,10 +40,8 @@ using std::map;
 using std::move;
 using std::vector;
 using std::initializer_list;
-
-using boost::optional;
-
 using std::chrono::milliseconds;
+using boost::optional;
 
 namespace cppkafka {
 

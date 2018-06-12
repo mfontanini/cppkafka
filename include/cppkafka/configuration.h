@@ -145,7 +145,7 @@ public:
     Configuration& set_default_topic_configuration(TopicConfiguration config);
 
     /**
-     * Returns true iff the given property name has been set
+     * Returns true if the given property name has been set
      */
     bool has_property(const std::string& name) const;
 

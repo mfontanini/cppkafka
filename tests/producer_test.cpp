@@ -74,6 +74,7 @@ void flusher_run(BufferedProducer<string>& producer,
         if (producer.get_buffer_size() >= (size_t)num_flush) {
             producer.flush();
         }
+        this_thread::sleep_for(milliseconds(10));
     }
     producer.flush();
 }
@@ -85,6 +86,36 @@ void clear_run(BufferedProducer<string>& producer,
     clear.wait(lock);
     producer.clear();
 }
+
+vector<int> dr_data = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+void dr_callback(const Message& message) {
+    static int i = 0;
+    if (!message || message.is_eof()) return;
+    CHECK(message.get_user_data() == &dr_data[i]);
+    CHECK(*static_cast<int*>(message.get_user_data()) == dr_data[i]);
+    ++i;
+}
+
+bool dr_failure_callback(const Message& message) {
+    if (!message || message.is_eof()) return true;
+    CHECK(message.get_user_data() == &dr_data[0]);
+    CHECK(*static_cast<int*>(message.get_user_data()) == dr_data[0]);
+    return true; //always retry
+}
+
+template <typename B>
+class ErrorProducer : public BufferedProducer<B>
+{
+public:
+    ErrorProducer(Configuration config,
+                  typename BufferedProducer<B>::TestParameters params) :
+        BufferedProducer<B>(config),
+        params_(params) {
+        this->set_test_parameters(&params_);
+    }
+private:
+    typename BufferedProducer<B>::TestParameters params_;
+};
 
 TEST_CASE("simple production", "[producer]") {
     int partition = 0;
@@ -269,6 +300,91 @@ TEST_CASE("multiple messages", "[producer]") {
         CHECK(message.get_partition() >= 0);
         CHECK(message.get_partition() < KAFKA_NUM_PARTITIONS);
     }
+}
+
+TEST_CASE("multiple sync messages", "[producer][buffered_producer][sync]") {
+    size_t message_count = 10;
+    set<string> payloads;
+
+    // Create a consumer and subscribe to this topic
+    Consumer consumer(make_consumer_config());
+    consumer.subscribe({ KAFKA_TOPICS[0] });
+    ConsumerRunner runner(consumer, message_count, KAFKA_NUM_PARTITIONS);
+
+    // Now create a producer and produce a message
+    BufferedProducer<string> producer(make_producer_config());
+    producer.set_produce_success_callback(dr_callback);
+    const string payload_base = "Hello world ";
+    for (size_t i = 0; i < message_count; ++i) {
+        const string payload = payload_base + to_string(i);
+        payloads.insert(payload);
+        producer.sync_produce(MessageBuilder(KAFKA_TOPICS[0]).payload(payload).user_data(&dr_data[i]));
+    }
+    runner.try_join();
+
+    const auto& messages = runner.get_messages();
+    REQUIRE(messages.size() == message_count);
+    for (size_t i = 0; i < messages.size(); ++i) {
+        const auto& message = messages[i];
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
+        CHECK(payloads.erase(message.get_payload()) == 1);
+        CHECK(!!message.get_error() == false);
+        CHECK(!!message.get_key() == false);
+        CHECK(message.get_partition() >= 0);
+        CHECK(message.get_partition() < KAFKA_NUM_PARTITIONS);
+    }
+}
+
+TEST_CASE("replay sync messages with errors", "[producer][buffered_producer][sync]") {
+    size_t num_retries = 4;
+
+    // Create a consumer and subscribe to this topic
+    Consumer consumer(make_consumer_config());
+    consumer.subscribe({ KAFKA_TOPICS[0] });
+    ConsumerRunner runner(consumer, 2*(num_retries+1), KAFKA_NUM_PARTITIONS);
+
+    // Now create a producer and produce a message
+    ErrorProducer<string> producer(make_producer_config(), BufferedProducer<string>::TestParameters{true, false});
+    producer.set_produce_failure_callback(dr_failure_callback);
+    producer.set_max_number_retries(num_retries);
+    string payload = "Hello world";
+    MessageBuilder builder(KAFKA_TOPICS[0]);
+    builder.payload(payload).user_data(&dr_data[0]);
+    
+    //Produce the same message twice
+    producer.sync_produce(builder);
+    producer.sync_produce(builder);
+    runner.try_join();
+
+    const auto& messages = runner.get_messages();
+    REQUIRE(messages.size() == 2*(num_retries+1));
+    for (size_t i = 0; i < messages.size(); ++i) {
+        const auto& message = messages[i];
+        CHECK(message.get_topic() == KAFKA_TOPICS[0]);
+        CHECK(message.get_payload() == payload);
+        CHECK(!!message.get_error() == false);
+        CHECK(!!message.get_key() == false);
+        CHECK(message.get_partition() >= 0);
+        CHECK(message.get_partition() < KAFKA_NUM_PARTITIONS);
+    }
+}
+
+TEST_CASE("replay async messages with errors", "[producer][buffered_producer][async]") {
+    size_t num_retries = 4;
+    int exit_flag = 0;
+
+    // Now create a producer and produce a message
+    ErrorProducer<string> producer(make_producer_config(),
+                                   BufferedProducer<string>::TestParameters{false, true});
+    producer.set_max_number_retries(num_retries);
+    thread flusher_thread(flusher_run, ref(producer), ref(exit_flag), 0);
+    string payload = "Hello world";
+    producer.produce(MessageBuilder(KAFKA_TOPICS[0]).payload(payload));
+    this_thread::sleep_for(milliseconds(2000));
+    exit_flag = 1;
+    flusher_thread.join();
+    REQUIRE(producer.get_total_messages_produced() == 0);
+    CHECK(producer.get_total_messages_dropped() == 1);
 }
 
 TEST_CASE("buffered producer", "[producer][buffered_producer]") {

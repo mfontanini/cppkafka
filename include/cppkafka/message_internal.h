@@ -27,66 +27,60 @@
  *
  */
 
-#include "message.h"
-#include "message_internal.h"
+#ifndef CPPKAFKA_MESSAGE_INTERNAL_H
+#define CPPKAFKA_MESSAGE_INTERNAL_H
 
-using std::chrono::milliseconds;
+#include <memory>
 
 namespace cppkafka {
 
-void dummy_deleter(rd_kafka_message_t*) {
+class Message;
 
-}
+class Internal {
+public:
+    virtual ~Internal() = default;
+};
+using InternalPtr = std::shared_ptr<Internal>;
 
-Message Message::make_non_owning(rd_kafka_message_t* handle) {
-    return Message(handle, NonOwningTag());
-}
+/**
+ * \brief Private message data structure
+ */
+class MessageInternal {
+public:
+    MessageInternal(void* user_data, std::shared_ptr<Internal> internal);
+    static std::unique_ptr<MessageInternal> load(Message& message);
+    void* get_user_data() const;
+    InternalPtr get_internal() const;
+private:
+    void*          user_data_;
+    InternalPtr    internal_;
+};
 
-Message::Message()
-: handle_(nullptr, nullptr),
-  user_data_(nullptr) {
-
-}
-
-Message::Message(rd_kafka_message_t* handle) 
-: Message(HandlePtr(handle, &rd_kafka_message_destroy)) {
-
-}
-
-Message::Message(rd_kafka_message_t* handle, NonOwningTag)
-: Message(HandlePtr(handle, &dummy_deleter)) {
-
-}
-
-Message::Message(HandlePtr handle)
-: handle_(move(handle)),
-  payload_(handle_ ? Buffer((const Buffer::DataType*)handle_->payload, handle_->len) : Buffer()),
-  key_(handle_ ? Buffer((const Buffer::DataType*)handle_->key, handle_->key_len) : Buffer()),
-  user_data_(handle_ ? handle_->_private : nullptr) {
-}
-
-Message& Message::load_internal() {
-    if (user_data_) {
-        MessageInternal* mi = static_cast<MessageInternal*>(user_data_);
-        user_data_ = mi->get_user_data();
-        internal_ = mi->get_internal();
+template <typename BuilderType>
+class MessageInternalGuard {
+public:
+    MessageInternalGuard(BuilderType& builder)
+    : builder_(builder),
+      user_data_(builder.user_data()) {
+        if (builder_.internal()) {
+            // Swap contents with user_data
+            ptr_.reset(new MessageInternal(user_data_, builder_.internal()));
+            builder_.user_data(ptr_.get()); //overwrite user data
+        }
     }
-    return *this;
+    ~MessageInternalGuard() {
+        //Restore user data
+        builder_.user_data(user_data_);
+    }
+    void release() {
+        ptr_.release();
+    }
+private:
+    BuilderType& builder_;
+    std::unique_ptr<MessageInternal> ptr_;
+    void* user_data_;
+};
+
 }
 
-// MessageTimestamp
-
-MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
-: timestamp_(timestamp), type_(type) {
-
-}
-
-milliseconds MessageTimestamp::get_timestamp() const {
-    return timestamp_;
-}
-
-MessageTimestamp::TimestampType MessageTimestamp::get_type() const {
-    return type_;
-}
-
-} // cppkafka
+#endif //CPPKAFKA_MESSAGE_INTERNAL_H

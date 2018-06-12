@@ -26,67 +26,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#include "message.h"
 #include "message_internal.h"
-
-using std::chrono::milliseconds;
+#include "message.h"
+#include "message_builder.h"
 
 namespace cppkafka {
 
-void dummy_deleter(rd_kafka_message_t*) {
+// MessageInternal
 
+MessageInternal::MessageInternal(void* user_data,
+                                 std::shared_ptr<Internal> internal)
+: user_data_(user_data),
+  internal_(internal) {
 }
 
-Message Message::make_non_owning(rd_kafka_message_t* handle) {
-    return Message(handle, NonOwningTag());
+std::unique_ptr<MessageInternal> MessageInternal::load(Message& message) {
+    return std::unique_ptr<MessageInternal>(message.load_internal().get_handle() ?
+                                            static_cast<MessageInternal*>(message.get_handle()->_private) : nullptr);
 }
 
-Message::Message()
-: handle_(nullptr, nullptr),
-  user_data_(nullptr) {
-
+void* MessageInternal::get_user_data() const {
+    return user_data_;
 }
 
-Message::Message(rd_kafka_message_t* handle) 
-: Message(HandlePtr(handle, &rd_kafka_message_destroy)) {
-
+InternalPtr MessageInternal::get_internal() const {
+    return internal_;
 }
 
-Message::Message(rd_kafka_message_t* handle, NonOwningTag)
-: Message(HandlePtr(handle, &dummy_deleter)) {
-
 }
-
-Message::Message(HandlePtr handle)
-: handle_(move(handle)),
-  payload_(handle_ ? Buffer((const Buffer::DataType*)handle_->payload, handle_->len) : Buffer()),
-  key_(handle_ ? Buffer((const Buffer::DataType*)handle_->key, handle_->key_len) : Buffer()),
-  user_data_(handle_ ? handle_->_private : nullptr) {
-}
-
-Message& Message::load_internal() {
-    if (user_data_) {
-        MessageInternal* mi = static_cast<MessageInternal*>(user_data_);
-        user_data_ = mi->get_user_data();
-        internal_ = mi->get_internal();
-    }
-    return *this;
-}
-
-// MessageTimestamp
-
-MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
-: timestamp_(timestamp), type_(type) {
-
-}
-
-milliseconds MessageTimestamp::get_timestamp() const {
-    return timestamp_;
-}
-
-MessageTimestamp::TimestampType MessageTimestamp::get_type() const {
-    return type_;
-}
-
-} // cppkafka

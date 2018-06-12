@@ -39,10 +39,11 @@
 #include <map>
 #include <mutex>
 #include <atomic>
+#include <future>
 #include <boost/optional.hpp>
 #include "../producer.h"
-#include "../message.h"
 #include "../detail/callback_invoker.h"
+#include "../message_internal.h"
 
 namespace cppkafka {
 
@@ -103,7 +104,7 @@ public:
     /**
      * Callback to indicate a message failed to be flushed
      */
-    using FlushFailureCallback = std::function<bool(const Builder&, Error error)>;
+    using FlushFailureCallback = std::function<bool(const MessageBuilder&, Error error)>;
 
     /**
      * \brief Constructs a buffered producer using the provided configuration
@@ -113,7 +114,7 @@ public:
     BufferedProducer(Configuration config);
 
     /**
-     * \brief Adds a message to the producer's buffer. 
+     * \brief Adds a message to the producer's buffer.
      *
      * The message won't be sent until flush is called.
      *
@@ -122,7 +123,7 @@ public:
     void add_message(const MessageBuilder& builder);
 
     /**
-     * \brief Adds a message to the producer's buffer. 
+     * \brief Adds a message to the producer's buffer.
      *
      * The message won't be sent until flush is called.
      *
@@ -144,6 +145,18 @@ public:
      * \remark This method throws cppkafka::HandleException on failure
      */
     void produce(const MessageBuilder& builder);
+    
+    /**
+     * \brief Produces a message synchronously without buffering it
+     *
+     * In case of failure, the message will be replayed until 'max_number_retries' is reached
+     * or until the user ProduceFailureCallback returns false.
+     *
+     * \param builder The builder that contains the message to be produced
+     *
+     * \remark This method throws cppkafka::HandleException on failure
+     */
+    void sync_produce(const MessageBuilder& builder);
     
     /**
      * \brief Produces a message asynchronously without buffering it
@@ -222,6 +235,13 @@ public:
     size_t get_total_messages_produced() const;
     
     /**
+     * \brief Get the total number of messages dropped since the beginning
+     *
+     * \return The number of messages
+     */
+    size_t get_total_messages_dropped() const;
+    
+    /**
      * \brief Get the total outstanding flush operations in progress
      *
      * Since flush can be called from multiple threads concurrently, this counter indicates
@@ -230,6 +250,20 @@ public:
      * \return The number of outstanding flush operations.
      */
     size_t get_flushes_in_progress() const;
+    
+    /**
+     * \brief Sets the maximum number of retries per message until giving up
+     *
+     * Default is 5
+     */
+    void set_max_number_retries(size_t max_number_retries);
+    
+    /**
+     * \brief Gets the max number of retries
+     *
+     * \return The number of retries
+     */
+    size_t get_max_number_retries() const;
 
     /**
      * Gets the Producer object
@@ -285,9 +319,29 @@ public:
      */
     void set_flush_failure_callback(FlushFailureCallback callback);
     
+    struct TestParameters {
+        bool force_delivery_error_;
+        bool force_produce_error_;
+    };
+protected:
+    //For testing purposes only
+#ifdef KAFKA_TEST_INSTANCE
+    void set_test_parameters(TestParameters *test_params) {
+        test_params_ = test_params;
+    }
+    TestParameters* get_test_parameters() {
+        return test_params_;
+    }
+#else
+    TestParameters* get_test_parameters() {
+        return nullptr;
+    }
+#endif
+    
 private:
     using QueueType = std::deque<Builder>;
     enum class MessagePriority { Low, High };
+    enum class SenderType { Sync, Async };
     
     template <typename T>
     struct CounterGuard{
@@ -295,13 +349,39 @@ private:
         ~CounterGuard() { --counter_; }
         std::atomic<T>& counter_;
     };
-
+    
+    struct Tracker : public Internal {
+        Tracker(SenderType sender, size_t num_retries)
+            : sender_(sender), num_retries_(num_retries)
+        {}
+        std::future<bool> get_new_future() {
+            should_retry_ = std::promise<bool>(); //reset shared data
+            return should_retry_.get_future(); //issue new future
+        }
+        SenderType sender_;
+        std::promise<bool> should_retry_;
+        size_t num_retries_;
+    };
+    using TrackerPtr = std::shared_ptr<Tracker>;
+    
+    template <typename BuilderType>
+    TrackerPtr add_tracker(BuilderType& builder) {
+        if (has_internal_data_ && !builder.internal()) {
+            // Add message tracker only if it hasn't been added before
+            TrackerPtr tracker = std::make_shared<Tracker>(SenderType::Async, max_number_retries_);
+            builder.internal(tracker);
+            return tracker;
+        }
+        return nullptr;
+    }
     template <typename BuilderType>
     void do_add_message(BuilderType&& builder, MessagePriority priority, bool do_flush);
-    template <typename MessageType>
-    void produce_message(const MessageType& message);
+    template <typename BuilderType>
+    void produce_message(BuilderType&& builder);
     Configuration prepare_configuration(Configuration config);
     void on_delivery_report(const Message& message);
+    template <typename BuilderType>
+    void async_produce(BuilderType&& message, bool throw_on_error);
     
     // Members
     Producer producer_;
@@ -314,6 +394,12 @@ private:
     std::atomic<size_t> pending_acks_{0};
     std::atomic<size_t> flushes_in_progress_{0};
     std::atomic<size_t> total_messages_produced_{0};
+    std::atomic<size_t> total_messages_dropped_{0};
+    int max_number_retries_{0};
+    bool has_internal_data_{false};
+#ifdef KAFKA_TEST_INSTANCE
+    TestParameters* test_params_;
+#endif
 };
 
 template <typename BufferType>
@@ -330,26 +416,58 @@ template <typename BufferType>
 BufferedProducer<BufferType>::BufferedProducer(Configuration config)
 : producer_(prepare_configuration(std::move(config))) {
     producer_.set_payload_policy(get_default_payload_policy<BufferType>());
+#ifdef KAFKA_TEST_INSTANCE
+    test_params_ = nullptr;
+#endif
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(const MessageBuilder& builder) {
-    do_add_message(builder, MessagePriority::Low, true);
+    add_message(Builder(builder)); //make ConcreteBuilder
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::add_message(Builder builder) {
+    add_tracker(builder);
     do_add_message(move(builder), MessagePriority::Low, true);
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const MessageBuilder& builder) {
-    produce_message(builder);
+    if (has_internal_data_) {
+        MessageBuilder builder_clone(builder.clone());
+        add_tracker(builder_clone);
+        async_produce(builder_clone, true);
+    }
+    else {
+        async_produce(builder, true);
+    }
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::sync_produce(const MessageBuilder& builder) {
+    if (has_internal_data_) {
+        MessageBuilder builder_clone(builder.clone());
+        TrackerPtr tracker = add_tracker(builder_clone);
+        // produce until we succeed or we reach max retry limit
+        std::future<bool> should_retry;
+        do {
+            should_retry = tracker->get_new_future();
+            produce_message(builder_clone);
+            wait_for_acks();
+        }
+        while (should_retry.get());
+    }
+    else {
+        // produce once
+        produce_message(builder);
+        wait_for_acks();
+    }
 }
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::produce(const Message& message) {
-    produce_message(message);
+    async_produce(MessageBuilder(message), true);
 }
 
 template <typename BufferType>
@@ -361,16 +479,7 @@ void BufferedProducer<BufferType>::flush() {
         std::swap(messages_, flush_queue);
     }
     while (!flush_queue.empty()) {
-        try {
-            produce_message(flush_queue.front());
-        }
-        catch (const HandleException& ex) {
-            // If we have a flush failure callback and it returns true, we retry producing this message later
-            CallbackInvoker<FlushFailureCallback> callback("flush failure", flush_failure_callback_, &producer_);
-            if (callback && callback(flush_queue.front(), ex.get_error())) {
-                do_add_message(std::move(flush_queue.front()), MessagePriority::Low, false);
-            }
-        }
+        async_produce(std::move(flush_queue.front()), false);
         flush_queue.pop_front();
     }
     wait_for_acks();
@@ -427,10 +536,10 @@ void BufferedProducer<BufferType>::do_add_message(BuilderType&& builder,
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (priority == MessagePriority::High) {
-            messages_.emplace_front(std::move(builder));
+            messages_.emplace_front(std::forward<BuilderType>(builder));
         }
         else {
-            messages_.emplace_back(std::move(builder));
+            messages_.emplace_back(std::forward<BuilderType>(builder));
         }
     }
     if (do_flush && (max_buffer_size_ >= 0) && (max_buffer_size_ <= (ssize_t)messages_.size())) {
@@ -459,8 +568,26 @@ size_t BufferedProducer<BufferType>::get_total_messages_produced() const {
 }
 
 template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_total_messages_dropped() const {
+    return total_messages_dropped_;
+}
+
+template <typename BufferType>
 size_t BufferedProducer<BufferType>::get_flushes_in_progress() const {
     return flushes_in_progress_;
+}
+
+template <typename BufferType>
+void BufferedProducer<BufferType>::set_max_number_retries(size_t max_number_retries) {
+    if (!has_internal_data_ && (max_number_retries > 0)) {
+        has_internal_data_ = true; //enable once
+    }
+    max_number_retries_ = max_number_retries;
+}
+
+template <typename BufferType>
+size_t BufferedProducer<BufferType>::get_max_number_retries() const {
+    return max_number_retries_;
 }
 
 template <typename BufferType>
@@ -485,11 +612,14 @@ void BufferedProducer<BufferType>::set_flush_failure_callback(FlushFailureCallba
 }
 
 template <typename BufferType>
-template <typename MessageType>
-void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
+template <typename BuilderType>
+void BufferedProducer<BufferType>::produce_message(BuilderType&& builder) {
+    using builder_type = typename std::decay<BuilderType>::type;
     while (true) {
         try {
-            producer_.produce(message);
+            MessageInternalGuard<builder_type> internal_guard(const_cast<builder_type&>(builder));
+            producer_.produce(builder);
+            internal_guard.release();
             // Sent successfully
             ++pending_acks_;
             break;
@@ -507,6 +637,34 @@ void BufferedProducer<BufferType>::produce_message(const MessageType& message) {
 }
 
 template <typename BufferType>
+template <typename BuilderType>
+void BufferedProducer<BufferType>::async_produce(BuilderType&& builder, bool throw_on_error) {
+    try {
+        TestParameters* test_params = get_test_parameters();
+        if (test_params && test_params->force_produce_error_) {
+            throw HandleException(Error(RD_KAFKA_RESP_ERR_UNKNOWN));
+        }
+        produce_message(builder);
+    }
+    catch (const HandleException& ex) {
+        // If we have a flush failure callback and it returns true, we retry producing this message later
+        CallbackInvoker<FlushFailureCallback> callback("flush failure", flush_failure_callback_, &producer_);
+        if (!callback || callback(builder, ex.get_error())) {
+            TrackerPtr tracker = std::static_pointer_cast<Tracker>(builder.internal());
+            if (tracker && tracker->num_retries_ > 0) {
+                --tracker->num_retries_;
+                do_add_message(std::forward<BuilderType>(builder), MessagePriority::High, false);
+                return;
+            }
+        }
+        ++total_messages_dropped_;
+        if (throw_on_error) {
+            throw;
+        }
+    }
+}
+
+template <typename BufferType>
 Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration config) {
     using std::placeholders::_2;
     auto callback = std::bind(&BufferedProducer<BufferType>::on_delivery_report, this, _2);
@@ -516,13 +674,31 @@ Configuration BufferedProducer<BufferType>::prepare_configuration(Configuration 
 
 template <typename BufferType>
 void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
-    if (message.get_error()) {
+    //Get tracker data
+    TestParameters* test_params = get_test_parameters();
+    TrackerPtr tracker = has_internal_data_ ?
+        std::static_pointer_cast<Tracker>(MessageInternal::load(const_cast<Message&>(message))->get_internal()) : nullptr;
+    bool should_retry = false;
+    if (message.get_error() || (test_params && test_params->force_delivery_error_)) {
         // We should produce this message again if we don't have a produce failure callback
         // or we have one but it returns true
         CallbackInvoker<ProduceFailureCallback> callback("produce failure", produce_failure_callback_, &producer_);
         if (!callback || callback(message)) {
-            // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
-            do_add_message(Builder(message), MessagePriority::High, false);
+            // Check if we have reached the maximum retry limit
+            if (tracker && tracker->num_retries_ > 0) {
+                --tracker->num_retries_;
+                if (tracker->sender_ == SenderType::Async) {
+                    // Re-enqueue for later retransmission with higher priority (i.e. front of the queue)
+                    do_add_message(Builder(message), MessagePriority::High, false);
+                }
+                should_retry = true;
+            }
+            else {
+                ++total_messages_dropped_;
+            }
+        }
+        else {
+            ++total_messages_dropped_;
         }
     }
     else {
@@ -530,6 +706,10 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
         CallbackInvoker<ProduceSuccessCallback>("delivery success", produce_success_callback_, &producer_)(message);
         // Increment the total successful transmissions
         ++total_messages_produced_;
+    }
+    // Signal producers
+    if (tracker) {
+        tracker->should_retry_.set_value(should_retry);
     }
     // Decrement the expected acks
     --pending_acks_;
