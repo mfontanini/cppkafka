@@ -66,6 +66,16 @@ TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions) {
     return output;
 }
 
+TopicPartitionList convert(const std::string& topic,
+                           const std::vector<PartitionMetadata>& partition_metadata)
+{
+    TopicPartitionList output;
+    for (const auto& meta : partition_metadata) {
+        output.emplace_back(topic, meta.get_id());
+    }
+    return output;
+}
+
 TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle) {
     return TopicPartitionsListPtr(handle, &rd_kafka_topic_partition_list_destroy);
 }

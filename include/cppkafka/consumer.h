@@ -202,7 +202,7 @@ public:
     /**
      * \brief Resumes all consumption
      */
-     void resume();
+    void resume();
     
     /**
      * \brief Commits the current partition assignment

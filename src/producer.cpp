@@ -114,4 +114,12 @@ void Producer::flush(milliseconds timeout) {
     check_error(result);
 }
 
+void Producer::pause(const std::string& topic) {
+    pause_partitions(convert(topic, get_metadata(get_topic(topic)).get_partitions()));
+}
+
+void Producer::resume(const std::string& topic) {
+    resume_partitions(convert(topic, get_metadata(get_topic(topic)).get_partitions()));
+}
+
 } // cppkafka

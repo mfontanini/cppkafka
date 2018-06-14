@@ -37,6 +37,7 @@
 #include <set>
 #include <librdkafka/rdkafka.h>
 #include "macros.h"
+#include "metadata.h"
 
 namespace cppkafka {
 
@@ -53,6 +54,8 @@ using TopicPartitionList = std::vector<TopicPartition>;
 CPPKAFKA_API TopicPartitionsListPtr convert(const TopicPartitionList& topic_partitions);
 CPPKAFKA_API TopicPartitionList convert(const TopicPartitionsListPtr& topic_partitions);
 CPPKAFKA_API TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions);
+CPPKAFKA_API TopicPartitionList convert(const std::string& topic,
+                                        const std::vector<PartitionMetadata>& partition_metadata);
 CPPKAFKA_API TopicPartitionsListPtr make_handle(rd_kafka_topic_partition_list_t* handle);
 
 // Extracts a partition list subset belonging to the provided topics (case-insensitive)
