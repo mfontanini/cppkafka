@@ -64,11 +64,19 @@ void KafkaHandleBase::pause_partitions(const TopicPartitionList& topic_partition
     check_error(error);
 }
 
+void KafkaHandleBase::pause(const std::string& topic) {
+    pause_partitions(convert(topic, get_metadata(get_topic(topic)).get_partitions()));
+}
+
 void KafkaHandleBase::resume_partitions(const TopicPartitionList& topic_partitions) {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_resume_partitions(get_handle(), 
                                                            topic_list_handle.get());
     check_error(error);
+}
+
+void KafkaHandleBase::resume(const std::string& topic) {
+    resume_partitions(convert(topic, get_metadata(get_topic(topic)).get_partitions()));
 }
 
 void KafkaHandleBase::set_timeout(milliseconds timeout) {

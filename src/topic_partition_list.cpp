@@ -32,6 +32,7 @@
 #include "topic_partition_list.h"
 #include "topic_partition.h"
 #include "exceptions.h"
+#include "metadata.h"
 
 using std::vector;
 using std::set;

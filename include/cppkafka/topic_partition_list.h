@@ -37,11 +37,11 @@
 #include <set>
 #include <librdkafka/rdkafka.h>
 #include "macros.h"
-#include "metadata.h"
 
 namespace cppkafka {
 
 class TopicPartition;
+class PartitionMetadata;
 
 using TopicPartitionsListPtr = std::unique_ptr<rd_kafka_topic_partition_list_t, 
                                                decltype(&rd_kafka_topic_partition_list_destroy)>;

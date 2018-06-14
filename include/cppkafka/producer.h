@@ -78,6 +78,7 @@ class Message;
  */
 class CPPKAFKA_API Producer : public KafkaHandleBase {
 public:
+    using KafkaHandleBase::pause;
     /**
      * The policy to use for the payload. The default policy is COPY_PAYLOAD
      */
@@ -155,20 +156,6 @@ public:
      * \param timeout The timeout used on this call
      */
     void flush(std::chrono::milliseconds timeout);
-    
-    /**
-     * \brief Pauses production for this topic
-     *
-     * \param topic The topic name
-     */
-    void pause(const std::string& topic);
-    
-    /**
-     * \brief Resumes production for this topic
-     *
-     * \param topic The topic name
-     */
-    void resume(const std::string& topic);
 private:
     PayloadPolicy message_payload_policy_;
 };
