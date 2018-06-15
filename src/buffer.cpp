@@ -67,11 +67,11 @@ Buffer::const_iterator Buffer::end() const {
 }
 
 Buffer::operator bool() const {
-    return size_ != 0;
+    return (data_ != nullptr) && (size_ != 0);
 }
 
 Buffer::operator string() const {
-    return string(data_, data_ + size_);
+    return (bool)(*this) ? string(data_, data_ + size_) : string();
 }
 
 ostream& operator<<(ostream& output, const Buffer& rhs) {

@@ -14,16 +14,22 @@ TEST_CASE("conversions", "[buffer]") {
     const string data = "Hello world!";
     const Buffer buffer(data);
     const Buffer empty_buffer;
+    const Buffer null_data((const char*)nullptr, 5);
+    const Buffer null_size(data.c_str(), 0);
 
 
     SECTION("bool conversion") {
         CHECK(!!buffer == true);
         CHECK(!!empty_buffer == false);
+        CHECK(!!null_data == false);
+        CHECK(!!null_size == false);
     }
 
     SECTION("string conversion") {
         CHECK(static_cast<string>(buffer) == data);
         CHECK(static_cast<string>(empty_buffer).empty());
+        CHECK(static_cast<string>(null_data).empty());
+        CHECK(static_cast<string>(null_size).empty());
     }
 
     SECTION("vector conversion") {
