@@ -79,6 +79,19 @@ void flusher_run(BufferedProducer<string>& producer,
     producer.flush();
 }
 
+void async_flusher_run(BufferedProducer<string>& producer,
+                       int& exit_flag,
+                       int num_flush) {
+    while (!exit_flag) {
+        if (producer.get_buffer_size() >= (size_t)num_flush) {
+            producer.async_flush();
+        }
+        this_thread::sleep_for(milliseconds(10));
+    }
+    producer.async_flush();
+    producer.wait_for_acks();
+}
+
 void clear_run(BufferedProducer<string>& producer,
                condition_variable& clear) {
     mutex m;
@@ -377,7 +390,7 @@ TEST_CASE("replay async messages with errors", "[producer][buffered_producer][as
     ErrorProducer<string> producer(make_producer_config(),
                                    BufferedProducer<string>::TestParameters{false, true});
     producer.set_max_number_retries(num_retries);
-    thread flusher_thread(flusher_run, ref(producer), ref(exit_flag), 0);
+    thread flusher_thread(async_flusher_run, ref(producer), ref(exit_flag), 0);
     string payload = "Hello world";
     producer.produce(MessageBuilder(KAFKA_TOPICS[0]).payload(payload));
     this_thread::sleep_for(milliseconds(2000));
