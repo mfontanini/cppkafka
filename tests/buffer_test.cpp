@@ -15,6 +15,9 @@ TEST_CASE("conversions", "[buffer]") {
     const Buffer buffer(data);
     const Buffer empty_buffer;
 
+    SECTION("construction") {
+        CHECK_THROWS_AS(Buffer((const char*)nullptr, 5), Exception);
+    }
 
     SECTION("bool conversion") {
         CHECK(!!buffer == true);
