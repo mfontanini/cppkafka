@@ -35,6 +35,7 @@
 #include <iosfwd>
 #include <algorithm>
 #include "macros.h"
+#include "exceptions.h"
 
 namespace cppkafka {
 
@@ -75,6 +76,9 @@ public:
     Buffer(const T* data, size_t size) 
     : data_(reinterpret_cast<const DataType*>(data)), size_(size) {
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
+        if ((data_ == nullptr) && (size_ > 0)) {
+            throw Exception("Invalid buffer configuration");
+        }
     }
 
     /**
