@@ -61,14 +61,14 @@ void KafkaHandleBase::pause_partitions(const TopicPartitionList& topic_partition
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_pause_partitions(get_handle(), 
                                                           topic_list_handle.get());
-    check_error(error);
+    check_error(error, topic_list_handle.get());
 }
 
 void KafkaHandleBase::resume_partitions(const TopicPartitionList& topic_partitions) {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_resume_partitions(get_handle(), 
                                                            topic_list_handle.get());
-    check_error(error);
+    check_error(error, topic_list_handle.get());
 }
 
 void KafkaHandleBase::set_timeout(milliseconds timeout) {
@@ -145,7 +145,7 @@ KafkaHandleBase::get_offsets_for_times(const TopicPartitionsTimestampsMap& queri
     const int timeout = static_cast<int>(timeout_ms_.count());
     rd_kafka_resp_err_t result = rd_kafka_offsets_for_times(handle_.get(), topic_list_handle.get(),
                                                             timeout);
-    check_error(result);
+    check_error(result, topic_list_handle.get());
     return convert(topic_list_handle);
 }
 
@@ -217,6 +217,21 @@ void KafkaHandleBase::save_topic_config(const string& topic_name, TopicConfigura
 void KafkaHandleBase::check_error(rd_kafka_resp_err_t error) const {
     if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
         throw HandleException(error);
+    }
+}
+
+void KafkaHandleBase::check_error(rd_kafka_resp_err_t error,
+                                  const rd_kafka_topic_partition_list_t* list_ptr) const {
+    if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        throw HandleException(error);
+    }
+    if (list_ptr) {
+        //check if any partition has errors
+        for (int i = 0; i < list_ptr->cnt; ++i) {
+            if (list_ptr->elems[i].err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+                throw HandleException(error);
+            }
+        }
     }
 }
 
