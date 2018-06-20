@@ -62,19 +62,22 @@ class KafkaHandleBase;
 class CPPKAFKA_API Configuration : public ConfigurationBase<Configuration> {
 public:
     using DeliveryReportCallback = std::function<void(Producer& producer, const Message&)>;
-    using OffsetCommitCallback = std::function<void(Consumer& consumer, Error,
+    using OffsetCommitCallback = std::function<void(Consumer& consumer,
+                                                    Error error,
                                                     const TopicPartitionList& topic_partitions)>;
-    using ErrorCallback = std::function<void(KafkaHandleBase& handle, int error,
+    using ErrorCallback = std::function<void(KafkaHandleBase& handle,
+                                             int error,
                                              const std::string& reason)>;
     using ThrottleCallback = std::function<void(KafkaHandleBase& handle,
                                                 const std::string& broker_name,
                                                 int32_t broker_id,
                                                 std::chrono::milliseconds throttle_time)>;
-    using LogCallback = std::function<void(KafkaHandleBase& handle, int level,
+    using LogCallback = std::function<void(KafkaHandleBase& handle,
+                                           int level,
                                            const std::string& facility,
                                            const std::string& message)>;
     using StatsCallback = std::function<void(KafkaHandleBase& handle, const std::string& json)>;
-    using SocketCallback = std::function<int(int domain, int type, int protoco)>;
+    using SocketCallback = std::function<int(int domain, int type, int protocol)>;
 
     using ConfigurationBase<Configuration>::set;
     using ConfigurationBase<Configuration>::get;
