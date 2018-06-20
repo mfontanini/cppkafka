@@ -79,16 +79,19 @@ Consumer::~Consumer() {
         rebalance_error_callback_ = nullptr;
         close();
     }
-    catch (const Exception& ex) {
-        const char* library_name = "cppkafka";
+    catch (const HandleException& ex) {
         ostringstream error_msg;
         error_msg << "Failed to close consumer [" << get_name() << "]: " << ex.what();
-        CallbackInvoker<Configuration::LogCallback> logger("log", get_configuration().get_log_callback(), nullptr);
-        if (logger) {
-            logger(*this, static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str());
+        CallbackInvoker<Configuration::ErrorCallback> error_cb("error", get_configuration().get_error_callback(), this);
+        CallbackInvoker<Configuration::LogCallback> logger_cb("log", get_configuration().get_log_callback(), nullptr);
+        if (error_cb) {
+            error_cb(*this, static_cast<int>(ex.get_error().get_error()), error_msg.str());
+        }
+        else if (logger_cb) {
+            logger_cb(*this, static_cast<int>(LogLevel::LOG_ERR), "cppkafka", error_msg.str());
         }
         else {
-            rd_kafka_log_print(get_handle(), static_cast<int>(LogLevel::LOG_ERR), library_name, error_msg.str().c_str());
+            rd_kafka_log_print(get_handle(), static_cast<int>(LogLevel::LOG_ERR), "cppkafka", error_msg.str().c_str());
         }
     }
 }
