@@ -262,19 +262,33 @@ MessageList Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
 }
 
 Queue Consumer::get_main_queue() const {
+#if RD_KAFKA_VERSION <= 0x000b0500
+    Queue queue(Queue::make_non_owning(rd_kafka_queue_get_main(get_handle())));
+#else
     Queue queue(rd_kafka_queue_get_main(get_handle()));
+#endif
     queue.disable_queue_forwarding();
     return queue;
 }
 
 Queue Consumer::get_consumer_queue() const {
+#if RD_KAFKA_VERSION <= 0x000b0500
+    return Queue::make_non_owning(rd_kafka_queue_get_consumer(get_handle()));
+#else
     return rd_kafka_queue_get_consumer(get_handle());
+#endif
 }
 
 Queue Consumer::get_partition_queue(const TopicPartition& partition) const {
+#if RD_KAFKA_VERSION <= 0x000b0500
+    Queue queue(Queue::make_non_owning(rd_kafka_queue_get_partition(get_handle(),
+                                                                    partition.get_topic().c_str(),
+                                                                    partition.get_partition())));
+#else
     Queue queue(rd_kafka_queue_get_partition(get_handle(),
                                              partition.get_topic().c_str(),
                                              partition.get_partition()));
+#endif
     queue.disable_queue_forwarding();
     return queue;
 }
