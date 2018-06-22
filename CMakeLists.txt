@@ -5,6 +5,7 @@ project(cppkafka)
 set(CPPKAFKA_VERSION_MAJOR 0)
 set(CPPKAFKA_VERSION_MINOR 1)
 set(CPPKAFKA_VERSION "${CPPKAFKA_VERSION_MAJOR}.${CPPKAFKA_VERSION_MINOR}")
+set(RDKAFKA_MIN_VERSION 0x00090400)
 
 if(MSVC)
     # Don't always use Wall, since VC's /Wall is ridiculously verbose.
@@ -30,6 +31,7 @@ option(CPPKAFKA_DISABLE_TESTS "Disable build of cppkafka tests." OFF)
 option(CPPKAFKA_DISABLE_EXAMPLES "Disable build of cppkafka examples." OFF)
 option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
 option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
+option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
 
 # Disable output from find_package macro
 if (NOT CPPKAFKA_CMAKE_VERBOSE)
