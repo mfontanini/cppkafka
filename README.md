@@ -77,13 +77,16 @@ The following cmake options can be specified:
 * `CPPKAFKA_DISABLE_EXAMPLES` : Disable build of cppkafka examples. Default is `OFF`.
 * `CPPKAFKA_BOOST_STATIC_LIBS` : Link with Boost static libraries. Default is `ON`.
 * `CPPKAFKA_BOOST_USE_MULTITHREADED` : Use Boost multi-threaded libraries. Default is `ON`.
+* `CPPKAFKA_RDKAFKA_STATIC_LIB` : Link to Rdkafka static library. Default is `OFF`.
 
 Example:
 ```Shell
 cmake -DRDKAFKA_ROOT_DIR=/some/other/dir -DCPPKAFKA_BUILD_SHARED=OFF ...
 ```
 
-Note that the `RDKAFKA_ROOT_DIR` must contain the following structure:
+The `RDKAFKA_ROOT_DIR` must contain the following structure. If the system
+architecture is 64-bit and both `lib` and `lib64` folders are available, the `lib64`
+folder location will be selected by cmake.
 
 ```Shell
 ${RDKAFKA_ROOT_DIR}/
@@ -91,6 +94,8 @@ ${RDKAFKA_ROOT_DIR}/
                    + include/librdkafka/rdkafka.h
                    |
                    + lib/librdkafka.a
+                   |
+                   + lib64/librdkafka.a (optional)
 ```
 
 # Using

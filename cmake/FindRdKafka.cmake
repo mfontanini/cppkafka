@@ -1,3 +1,18 @@
+# Override default CMAKE_FIND_LIBRARY_SUFFIXES
+if (CPPKAFKA_RDKAFKA_STATIC_LIB)
+    if (MSVC)
+        set(RDKAFKA_SUFFIX lib)
+    else()
+        set(RDKAFKA_SUFFIX a)
+    endif()
+else()
+    if (MSVC)
+        set(RDKAFKA_SUFFIX dll)
+    else()
+        set(RDKAFKA_SUFFIX so)
+    endif()
+endif()
+
 find_path(RDKAFKA_ROOT_DIR
     NAMES include/librdkafka/rdkafka.h
 )
@@ -7,11 +22,17 @@ find_path(RDKAFKA_INCLUDE_DIR
     HINTS ${RDKAFKA_ROOT_DIR}/include
 )
 
-set(HINT_DIR ${RDKAFKA_ROOT_DIR}/lib)
+# Check lib paths
+if (CPPKAFKA_CMAKE_VERBOSE)
+    get_property(FIND_LIBRARY_32 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB32_PATHS)
+    get_property(FIND_LIBRARY_64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+    MESSAGE(STATUS "RDKAFKA search 32-bit library paths: ${FIND_LIBRARY_32}")
+    MESSAGE(STATUS "RDKAFKA search 64-bit library paths: ${FIND_LIBRARY_64}")
+endif()
 
 find_library(RDKAFKA_LIBRARY
-    NAMES rdkafka librdkafka
-    HINTS ${HINT_DIR}
+    NAMES rdkafka.${RDKAFKA_SUFFIX} librdkafka.${RDKAFKA_SUFFIX} rdkafka
+    HINTS ${RDKAFKA_ROOT_DIR}/lib
 )
 
 include(FindPackageHandleStandardArgs)
@@ -20,7 +41,7 @@ find_package_handle_standard_args(RDKAFKA DEFAULT_MSG
     RDKAFKA_INCLUDE_DIR
 )
 
-set(CONTENTS "#include <librdkafka/rdkafka.h>\n #if RD_KAFKA_VERSION >= 0x00090400\n int main() { }\n #endif")
+set(CONTENTS "#include <librdkafka/rdkafka.h>\n #if RD_KAFKA_VERSION >= ${RDKAFKA_MIN_VERSION}\n int main() { }\n #endif")
 set(FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/rdkafka_version_test.c)
 file(WRITE ${FILE_NAME} ${CONTENTS})
 
