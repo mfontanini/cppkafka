@@ -32,6 +32,7 @@
 #include "topic_partition_list.h"
 #include "topic_partition.h"
 #include "exceptions.h"
+#include "metadata.h"
 
 using std::vector;
 using std::set;
@@ -62,6 +63,16 @@ TopicPartitionList convert(rd_kafka_topic_partition_list_t* topic_partitions) {
     for (int i = 0; i < topic_partitions->cnt; ++i) {
         const auto& elem = topic_partitions->elems[i];
         output.emplace_back(elem.topic, elem.partition, elem.offset);
+    }
+    return output;
+}
+
+TopicPartitionList convert(const std::string& topic,
+                           const std::vector<PartitionMetadata>& partition_metadata)
+{
+    TopicPartitionList output;
+    for (const auto& meta : partition_metadata) {
+        output.emplace_back(topic, meta.get_id());
     }
     return output;
 }

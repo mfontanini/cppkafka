@@ -78,6 +78,7 @@ class Message;
  */
 class CPPKAFKA_API Producer : public KafkaHandleBase {
 public:
+    using KafkaHandleBase::pause;
     /**
      * The policy to use for the payload. The default policy is COPY_PAYLOAD
      */

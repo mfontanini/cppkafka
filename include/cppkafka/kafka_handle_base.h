@@ -77,6 +77,13 @@ public:
     void pause_partitions(const TopicPartitionList& topic_partitions);
     
     /**
+     * \brief Pauses consumption/production for this topic
+     *
+     * \param topic The topic name
+     */
+    void pause(const std::string& topic);
+    
+    /**
      * \brief Resumes consumption/production from the given topic/partition list
      *
      * This translates into a call to rd_kafka_resume_partitions
@@ -84,6 +91,13 @@ public:
      * \param topic_partitions The topic/partition list to resume consuming/producing from/to
      */
     void resume_partitions(const TopicPartitionList& topic_partitions);
+    
+    /**
+     * \brief Resumes consumption/production for this topic
+     *
+     * \param topic The topic name
+     */
+    void resume(const std::string& topic);
 
     /**
      * \brief Sets the timeout for operations that require a timeout
