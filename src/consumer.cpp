@@ -47,6 +47,17 @@ using std::equal;
 
 namespace cppkafka {
 
+// See: https://github.com/edenhill/librdkafka/issues/1792
+const int rd_kafka_queue_refcount_bug_version = 0x000b0500;
+Queue get_queue(rd_kafka_queue_t* handle) {
+    if (rd_kafka_version() <= rd_kafka_queue_refcount_bug_version) {
+        return Queue::make_non_owning(handle);
+    }
+    else {
+        return Queue(handle);
+    }
+}
+
 void Consumer::rebalance_proxy(rd_kafka_t*, rd_kafka_resp_err_t error,
                                rd_kafka_topic_partition_list_t *partitions, void *opaque) {
     TopicPartitionList list = convert(partitions);
@@ -262,33 +273,19 @@ MessageList Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
 }
 
 Queue Consumer::get_main_queue() const {
-#if RD_KAFKA_VERSION <= 0x000b0500
-    Queue queue(Queue::make_non_owning(rd_kafka_queue_get_main(get_handle())));
-#else
-    Queue queue(rd_kafka_queue_get_main(get_handle()));
-#endif
+    Queue queue(get_queue(rd_kafka_queue_get_main(get_handle())));
     queue.disable_queue_forwarding();
     return queue;
 }
 
 Queue Consumer::get_consumer_queue() const {
-#if RD_KAFKA_VERSION <= 0x000b0500
-    return Queue::make_non_owning(rd_kafka_queue_get_consumer(get_handle()));
-#else
-    return rd_kafka_queue_get_consumer(get_handle());
-#endif
+    return get_queue(rd_kafka_queue_get_consumer(get_handle()));
 }
 
 Queue Consumer::get_partition_queue(const TopicPartition& partition) const {
-#if RD_KAFKA_VERSION <= 0x000b0500
-    Queue queue(Queue::make_non_owning(rd_kafka_queue_get_partition(get_handle(),
-                                                                    partition.get_topic().c_str(),
-                                                                    partition.get_partition())));
-#else
-    Queue queue(rd_kafka_queue_get_partition(get_handle(),
-                                             partition.get_topic().c_str(),
-                                             partition.get_partition()));
-#endif
+    Queue queue(get_queue(rd_kafka_queue_get_partition(get_handle(),
+                                                       partition.get_topic().c_str(),
+                                                       partition.get_partition())));
     queue.disable_queue_forwarding();
     return queue;
 }
