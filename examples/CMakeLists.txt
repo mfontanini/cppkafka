@@ -9,6 +9,7 @@ macro(create_example example_name)
 endmacro()
 
 create_example(kafka_producer)
+create_example(kafka_buffered_producer)
 create_example(kafka_consumer)
 create_example(kafka_consumer_dispatcher)
 create_example(metadata)
