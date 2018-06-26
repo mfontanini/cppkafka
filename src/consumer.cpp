@@ -121,11 +121,16 @@ void Consumer::unsubscribe() {
 }
 
 void Consumer::assign(const TopicPartitionList& topic_partitions) {
-    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
-    // If the list is empty, then we need to use a null pointer
-    auto handle = topic_partitions.empty() ? nullptr : topic_list_handle.get();
-    rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), handle);
-    check_error(error);
+    rd_kafka_resp_err_t error;
+    if (topic_partitions.empty()) {
+        error = rd_kafka_assign(get_handle(), nullptr);
+        check_error(error);
+    }
+    else {
+        TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+        error = rd_kafka_assign(get_handle(), topic_list_handle.get());
+        check_error(error, topic_list_handle.get());
+    }
 }
 
 void Consumer::unassign() {
@@ -181,7 +186,7 @@ Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) cons
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), topic_list_handle.get(),
                                                    static_cast<int>(get_timeout().count()));
-    check_error(error);
+    check_error(error, topic_list_handle.get());
     return convert(topic_list_handle);
 }
 
@@ -189,7 +194,7 @@ TopicPartitionList
 Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_position(get_handle(), topic_list_handle.get());
-    check_error(error);
+    check_error(error, topic_list_handle.get());
     return convert(topic_list_handle);
 }
 
@@ -287,10 +292,15 @@ void Consumer::commit(const Message& msg, bool async) {
 
 void Consumer::commit(const TopicPartitionList* topic_partitions, bool async) {
     rd_kafka_resp_err_t error;
-    error = rd_kafka_commit(get_handle(),
-                            !topic_partitions ? nullptr : convert(*topic_partitions).get(),
-                            async ? 1 : 0);
-    check_error(error);
+    if (topic_partitions == nullptr) {
+        error = rd_kafka_commit(get_handle(), nullptr, async ? 1 : 0);
+        check_error(error);
+    }
+    else {
+        TopicPartitionsListPtr topic_list_handle = convert(*topic_partitions);
+        error = rd_kafka_commit(get_handle(), topic_list_handle.get(), async ? 1 : 0);
+        check_error(error, topic_list_handle.get());
+    }
 }
 
 void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
