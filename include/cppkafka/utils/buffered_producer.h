@@ -99,7 +99,10 @@ public:
     using ProduceSuccessCallback = std::function<void(const Message&)>;
 
     /**
-     * Callback to indicate a message failed to be produced by the broker
+     * Callback to indicate a message failed to be produced by the broker.
+     *
+     * The returned bool indicates whether the BufferedProducer should try to produce
+     * the message again after each failure.
      */
     using ProduceFailureCallback = std::function<bool(const Message&)>;
     
