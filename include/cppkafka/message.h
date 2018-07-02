@@ -43,7 +43,7 @@
 namespace cppkafka {
 
 class MessageTimestamp;
-struct Internal;
+class Internal;
 
 /**
  * \brief Thin wrapper over a rdkafka message handle
