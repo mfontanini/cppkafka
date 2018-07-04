@@ -1,7 +1,6 @@
 # Override default CMAKE_FIND_LIBRARY_SUFFIXES
 if (CPPKAFKA_RDKAFKA_STATIC_LIB)
     if (MSVC)
-        add_definitions("-DLIBRDKAFKA_STATICLIB")
         set(RDKAFKA_SUFFIX lib)
     else()
         set(RDKAFKA_SUFFIX a)

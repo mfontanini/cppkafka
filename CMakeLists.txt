@@ -49,6 +49,10 @@ else()
     add_definitions("-DCPPKAFKA_STATIC=1")
 endif()
 
+if (CPPKAFKA_RDKAFKA_STATIC_LIB)
+    add_definitions("-DLIBRDKAFKA_STATICLIB")
+endif()
+
 # Look for Boost (just need boost.optional headers here)
 find_package(Boost REQUIRED ${FIND_PACKAGE_QUIET})
 find_package(RdKafka REQUIRED ${FIND_PACKAGE_QUIET})
