@@ -403,7 +403,7 @@ public:
      * \return A Queue object
      *
      * \remark Note that this call will disable forwarding to the consumer_queue.
-     *         To restore forwarding (if desired) call Queue::forward_to_queue(consumer_queue)
+     *         To restore forwarding if desired, call Queue::forward_to_queue(consumer_queue)
      */
     Queue get_main_queue() const;
     
@@ -424,7 +424,7 @@ public:
      * \return A Queue object
      *
      * \remark Note that this call will disable forwarding to the consumer_queue.
-     *         To restore forwarding (if desired) call Queue::forward_to_queue(consumer_queue)
+     *         To restore forwarding if desired, call Queue::forward_to_queue(consumer_queue)
      */
     Queue get_partition_queue(const TopicPartition& partition) const;
 private:
