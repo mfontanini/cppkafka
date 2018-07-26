@@ -261,8 +261,9 @@ MessageList Consumer::poll_batch(size_t max_batch_size) {
 
 MessageList Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
     vector<rd_kafka_message_t*> raw_messages(max_batch_size);
-    rd_kafka_queue_t* queue = rd_kafka_queue_get_consumer(get_handle());
-    ssize_t result = rd_kafka_consume_batch_queue(queue, timeout.count(), raw_messages.data(),
+    // Note that this will leak the queue when using rdkafka < 0.11.5 (see get_queue comment)
+    Queue queue(get_queue(rd_kafka_queue_get_consumer(get_handle())));
+    ssize_t result = rd_kafka_consume_batch_queue(queue.get_handle() , timeout.count(), raw_messages.data(),
                                                   raw_messages.size());
     if (result == -1) {
         check_error(rd_kafka_last_error());
