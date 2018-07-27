@@ -438,6 +438,7 @@ private:
     AssignmentCallback assignment_callback_;
     RevocationCallback revocation_callback_;
     RebalanceErrorCallback rebalance_error_callback_;
+    Queue poll_batch_queue_;
 };
 
 } // cppkafka
