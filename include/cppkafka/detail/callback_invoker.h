@@ -101,7 +101,7 @@ public:
                 try {
                     // Log it
                     handle_->get_configuration().get_log_callback()(*handle_,
-                                                                    static_cast<int>(LogLevel::LOG_ERR),
+                                                                    static_cast<int>(LogLevel::LogErr),
                                                                     library_name,
                                                                     error_msg.str());
                 }
@@ -109,7 +109,7 @@ public:
             }
             else {
                 rd_kafka_log_print(handle_->get_handle(),
-                                   static_cast<int>(LogLevel::LOG_ERR),
+                                   static_cast<int>(LogLevel::LogErr),
                                    library_name,
                                    error_msg.str().c_str());
             }
