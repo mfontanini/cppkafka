@@ -99,10 +99,10 @@ Consumer::~Consumer() {
             error_cb(*this, static_cast<int>(ex.get_error().get_error()), error_msg.str());
         }
         else if (logger_cb) {
-            logger_cb(*this, static_cast<int>(LogLevel::LOG_ERR), "cppkafka", error_msg.str());
+            logger_cb(*this, static_cast<int>(LogLevel::LogErr), "cppkafka", error_msg.str());
         }
         else {
-            rd_kafka_log_print(get_handle(), static_cast<int>(LogLevel::LOG_ERR), "cppkafka", error_msg.str().c_str());
+            rd_kafka_log_print(get_handle(), static_cast<int>(LogLevel::LogErr), "cppkafka", error_msg.str().c_str());
         }
     }
 }
