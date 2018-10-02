@@ -74,6 +74,7 @@ void Producer::produce(const MessageBuilder& builder) {
                                     RD_KAFKA_V_MSGFLAGS(policy),
                                     RD_KAFKA_V_TIMESTAMP(builder.timestamp().count()),
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
+                                    RD_KAFKA_V_HEADERS(MessageBuilder::HeaderListType(builder.header_list()).get_handle()), //copy headers
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
                                     RD_KAFKA_V_OPAQUE(builder.user_data()),
                                     RD_KAFKA_V_END);
@@ -91,6 +92,7 @@ void Producer::produce(const Message& message) {
                                     RD_KAFKA_V_MSGFLAGS(policy),
                                     RD_KAFKA_V_TIMESTAMP(duration),
                                     RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
+                                    RD_KAFKA_V_HEADERS(Message::HeaderListType(message.get_header_list()).get_handle()), //copy headers
                                     RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
                                     RD_KAFKA_V_OPAQUE(message.get_user_data()),
                                     RD_KAFKA_V_END);

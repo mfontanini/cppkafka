@@ -63,6 +63,14 @@ Message::Message(HandlePtr handle)
   payload_(handle_ ? Buffer((const Buffer::DataType*)handle_->payload, handle_->len) : Buffer()),
   key_(handle_ ? Buffer((const Buffer::DataType*)handle_->key, handle_->key_len) : Buffer()),
   user_data_(handle_ ? handle_->_private : nullptr) {
+    // get the header list if any
+    if (handle_) {
+        rd_kafka_headers_t* headers_handle;
+        Error error = rd_kafka_message_headers(handle_.get(), &headers_handle);
+        if (!error) {
+            header_list_ = HeaderListType::make_non_owning(headers_handle);
+        }
+    }
 }
 
 Message& Message::load_internal() {

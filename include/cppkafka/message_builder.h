@@ -35,6 +35,7 @@
 #include "topic.h"
 #include "macros.h"
 #include "message.h"
+#include "header_list.h"
 
 namespace cppkafka {
 
@@ -44,6 +45,8 @@ namespace cppkafka {
 template <typename BufferType, typename Concrete>
 class BasicMessageBuilder {
 public:
+    using HeaderType = Header<BufferType>;
+    using HeaderListType = HeaderList<HeaderType>;
     /**
      * Construct a BasicMessageBuilder
      *
@@ -100,6 +103,13 @@ public:
     Concrete& key(BufferType&& value);
 
     /**
+     *  Add a header to the message
+     *
+     * \param header The header to be used
+     */
+    Concrete& header(const HeaderType& header);
+    
+    /**
      * Sets the message's payload
      *
      * \param value The payload to be used
@@ -146,6 +156,16 @@ public:
      * Gets the message's key
      */
     BufferType& key();
+    
+    /**
+     * Gets the list of headers
+     */
+    const HeaderListType& header_list() const;
+    
+    /**
+     * Gets the list of headers
+     */
+    HeaderListType& header_list();
 
     /**
      * Gets the message's payload
@@ -180,6 +200,7 @@ private:
     std::string topic_;
     int partition_{-1};
     BufferType key_;
+    HeaderListType header_list_;
     BufferType payload_;
     std::chrono::milliseconds timestamp_{0};
     void* user_data_;
@@ -238,6 +259,12 @@ C& BasicMessageBuilder<T, C>::key(T&& value) {
 }
 
 template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::header(const HeaderType& header) {
+    header_list_.add(header);
+    return get_concrete();
+}
+
+template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::payload(const T& value) {
     get_concrete().construct_buffer(payload_, value);
     return get_concrete();
@@ -279,6 +306,18 @@ const T& BasicMessageBuilder<T, C>::key() const {
 template <typename T, typename C>
 T& BasicMessageBuilder<T, C>::key() {
     return key_;
+}
+
+template <typename T, typename C>
+const typename BasicMessageBuilder<T, C>::HeaderListType&
+BasicMessageBuilder<T, C>::header_list() const {
+    return header_list_;
+}
+
+template <typename T, typename C>
+typename BasicMessageBuilder<T, C>::HeaderListType&
+BasicMessageBuilder<T, C>::header_list() {
+    return header_list_;
 }
 
 template <typename T, typename C>
@@ -338,6 +377,9 @@ C& BasicMessageBuilder<T, C>::get_concrete() {
  */
 class MessageBuilder : public BasicMessageBuilder<Buffer, MessageBuilder> {
 public:
+    using Base = BasicMessageBuilder<Buffer, MessageBuilder>;
+    using HeaderType = Base::HeaderType;
+    using HeaderListType = Base::HeaderListType;
     using BasicMessageBuilder::BasicMessageBuilder;
 
     void construct_buffer(Buffer& lhs, const Buffer& rhs) {

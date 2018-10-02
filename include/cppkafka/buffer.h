@@ -172,6 +172,14 @@ CPPKAFKA_API bool operator==(const Buffer& lhs, const Buffer& rhs);
  */
 CPPKAFKA_API bool operator!=(const Buffer& lhs, const Buffer& rhs);
 
+/**
+ * Compares Buffer objects lexicographically
+ */
+CPPKAFKA_API bool operator<(const Buffer& lhs, const Buffer& rhs);
+CPPKAFKA_API bool operator<=(const Buffer& lhs, const Buffer& rhs);
+CPPKAFKA_API bool operator>(const Buffer& lhs, const Buffer& rhs);
+CPPKAFKA_API bool operator>=(const Buffer& lhs, const Buffer& rhs);
+
 } // cppkafka
 
 #endif // CPPKAFKA_BUFFER_H
