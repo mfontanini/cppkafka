@@ -60,7 +60,9 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr(const ClonablePtr& rhs)
-    : handle_(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()), cloner_(rhs.cloner_) {
+    : handle_(rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
+                            std::unique_ptr<T, Deleter>(nullptr, nullptr)),
+      cloner_(rhs.cloner_) {
 
     }
 
@@ -70,7 +72,15 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr& operator=(const ClonablePtr& rhs) {
-        handle_.reset(cloner_(rhs.handle_.get()));
+        if (this == &rhs) {
+            return *this;
+        }
+        if (rhs.cloner_) {
+            handle_.reset(rhs.cloner_(rhs.handle_.get()));
+        }
+        else {
+            handle_.reset();
+        }
         return *this;
     }
 
