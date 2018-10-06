@@ -849,9 +849,10 @@ void BufferedProducer<BufferType>::on_delivery_report(const Message& message) {
     if (tracker) {
         tracker->should_retry_.set_value(should_retry);
     }
-    // Decrement the expected acks
-    --pending_acks_;
-    assert(pending_acks_ != (size_t)-1); // Prevent underflow
+    // Decrement the expected acks and check to prevent underflow
+    if (pending_acks_ > 0) {
+        --pending_acks_;
+    }
 }
 
 } // cppkafka
