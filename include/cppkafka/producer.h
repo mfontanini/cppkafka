@@ -113,6 +113,7 @@ public:
      * \param builder The builder class used to compose a message
      */
     void produce(const MessageBuilder& builder);
+    void produce(MessageBuilder&& builder);
     
     /**
      * \brief Produces a message
@@ -120,6 +121,7 @@ public:
      * \param message The message to be produced
      */
     void produce(const Message& message);
+    void produce(Message&& message);
 
     /**
      * \brief Polls on this handle
@@ -157,6 +159,10 @@ public:
      */
     void flush(std::chrono::milliseconds timeout);
 private:
+    void do_produce(const MessageBuilder& builder, MessageBuilder::HeaderListType&& headers);
+    void do_produce(const Message& message, MessageBuilder::HeaderListType&& headers);
+    
+    // Members
     PayloadPolicy message_payload_policy_;
 };
 

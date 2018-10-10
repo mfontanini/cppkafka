@@ -260,6 +260,9 @@ C& BasicMessageBuilder<T, C>::key(T&& value) {
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::header(const HeaderType& header) {
+    if (!header_list_) {
+        header_list_ = HeaderListType(5);
+    }
     header_list_.add(header);
     return get_concrete();
 }

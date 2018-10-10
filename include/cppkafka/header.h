@@ -36,24 +36,60 @@
 
 namespace cppkafka {
 
+/**
+ * \brief Class representing a rdkafka header.
+ *
+ * The template parameter 'BufferType' can represent a cppkafka::Buffer, std::string, std::vector, etc.
+ * A valid header may contain an empty name as well as null data.
+ */
 template <typename BufferType>
 class Header {
 public:
     using ValueType = BufferType;
+    
+    /**
+     * \brief Build an empty header with no data
+     */
     Header() = default;
     
-    Header(const std::string& name,
+    /**
+     * \brief Build a header instance
+     * \param name The header name
+     * \param value The non-modifiable header data
+     */
+    Header(const std::string name,
            const BufferType& value);
     
-    Header(const std::string& name,
+    /**
+     * \brief Build a header instance
+     * \param name The header name
+     * \param value The header data to be moved
+     */
+    Header(const std::string name,
            BufferType&& value);
     
+    /**
+     * \brief Get the header name
+     * \return A reference to the name
+     */
     const std::string& get_name() const;
     
+    /**
+     * \brief Get the header value
+     * \return A const reference to the underlying buffer
+     */
     const BufferType& get_value() const;
     
+    /**
+     * \brief Get the header value
+     * \return A non-const reference to the underlying buffer
+     */
     BufferType& get_value();
     
+    /**
+     * \brief Check if this header is empty
+     * \return True if the header contains valid data, false otherwise.
+     */
     operator bool() const;
     
 private:
@@ -66,6 +102,7 @@ private:
     BufferType value_;
 };
 
+// Comparison operators for Header type
 template <typename BufferType>
 bool operator==(const Header<BufferType>& lhs, const Header<BufferType>& rhs) {
     return std::tie(lhs.get_name(), lhs.get_value()) == std::tie(rhs.get_name(), rhs.get_value());
@@ -96,20 +133,19 @@ bool operator>=(const Header<BufferType>& lhs, const Header<BufferType>& rhs) {
     return !(lhs < rhs);
 }
 
+// Implementation
 template <typename BufferType>
-Header<BufferType>::Header(const std::string& name,
+Header<BufferType>::Header(const std::string name,
                            const BufferType& value)
-: name_(name),
+: name_(std::move(name)),
   value_(make_value(value)) {
-  assert(!name.empty());
 }
 
 template <typename BufferType>
-Header<BufferType>::Header(const std::string& name,
-                          BufferType&& value)
-: name_(name),
+Header<BufferType>::Header(const std::string name,
+                           BufferType&& value)
+: name_(std::move(name)),
   value_(std::move(value)) {
-  assert(!name.empty());
 }
 
 template <typename BufferType>

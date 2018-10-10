@@ -7,7 +7,7 @@ compiler:
   - clang
 
 env:
-  - RDKAFKA_VERSION=v0.11.0
+  - RDKAFKA_VERSION=v0.11.5
 
 os:
   - linux

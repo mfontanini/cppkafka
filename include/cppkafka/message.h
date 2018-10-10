@@ -176,9 +176,9 @@ public:
     /**
      * \brief Gets the message latency in microseconds as measured from the produce() call.
      */
-    int64_t get_latency() const {
+    std::chrono::microseconds get_latency() const {
         assert(handle_);
-        return rd_kafka_message_latency(handle_.get());
+        return std::chrono::microseconds(rd_kafka_message_latency(handle_.get()));
     }
 
     /**

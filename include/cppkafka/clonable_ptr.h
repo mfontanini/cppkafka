@@ -61,7 +61,7 @@ public:
      */
     ClonablePtr(const ClonablePtr& rhs)
     : handle_(rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
-                            std::unique_ptr<T, Deleter>(nullptr, nullptr)),
+                            std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter())),
       cloner_(rhs.cloner_) {
 
     }
@@ -75,12 +75,8 @@ public:
         if (this == &rhs) {
             return *this;
         }
-        if (rhs.cloner_) {
-            handle_.reset(rhs.cloner_(rhs.handle_.get()));
-        }
-        else {
-            handle_.reset();
-        }
+        handle_ = rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
+                                std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter());
         return *this;
     }
 
@@ -96,7 +92,14 @@ public:
     }
     
     /**
-     * \brief Indicates whether this clonable pointer is valid (not null)
+     * \brief Releases ownership of the internal pointer
+     */
+    T* release() {
+        return handle_.release();
+    }
+    
+    /**
+     * \brief Indicates whether this ClonablePtr instance is valid (not null)
      */
     explicit operator bool() const {
         return static_cast<bool>(handle_);
