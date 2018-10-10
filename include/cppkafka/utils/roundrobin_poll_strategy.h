@@ -105,7 +105,7 @@ public:
     template <typename Allocator>
     std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
                                                const Allocator& alloc);
-    MessageList poll_batch(size_t max_batch_size) override;
+    std::vector<Message> poll_batch(size_t max_batch_size) override;
 
     /**
      * \sa PollInterface::poll_batch
@@ -114,8 +114,8 @@ public:
     std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
                                                std::chrono::milliseconds timeout,
                                                const Allocator& alloc);
-    MessageList poll_batch(size_t max_batch_size,
-                           std::chrono::milliseconds timeout) override;
+    std::vector<Message> poll_batch(size_t max_batch_size,
+                                    std::chrono::milliseconds timeout) override;
     
 protected:
     /**

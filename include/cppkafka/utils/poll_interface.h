@@ -108,7 +108,7 @@ struct PollInterface {
      * otherwise the broker will think this consumer is down and will trigger a rebalance
      * (if using dynamic subscription)
      */
-    virtual MessageList poll_batch(size_t max_batch_size) = 0;
+    virtual std::vector<Message> poll_batch(size_t max_batch_size) = 0;
 
     /**
      * \brief Polls all assigned partitions for a batch of new messages in round-robin fashion
@@ -122,7 +122,7 @@ struct PollInterface {
      *
      * \return A list of messages
      */
-    virtual MessageList poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout) = 0;
+    virtual std::vector<Message> poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout) = 0;
 };
 
 } //cppkafka

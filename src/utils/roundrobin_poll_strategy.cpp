@@ -68,11 +68,12 @@ Message RoundRobinPollStrategy::poll(milliseconds timeout) {
     return get_consumer_queue().queue.consume(timeout);
 }
 
-MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size) {
+std::vector<Message> RoundRobinPollStrategy::poll_batch(size_t max_batch_size) {
     return poll_batch(max_batch_size, get_consumer().get_timeout(), allocator<Message>());
 }
 
-MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size, milliseconds timeout) {
+std::vector<Message> RoundRobinPollStrategy::poll_batch(size_t max_batch_size,
+                                                        milliseconds timeout) {
     return poll_batch(max_batch_size, timeout, allocator<Message>());
 }
 

@@ -48,9 +48,9 @@ public:
     void delete_polling_strategy();
     Message poll();
     Message poll(std::chrono::milliseconds timeout);
-    MessageList poll_batch(size_t max_batch_size);
-    MessageList poll_batch(size_t max_batch_size,
-                           std::chrono::milliseconds timeout);
+    std::vector<Message> poll_batch(size_t max_batch_size);
+    std::vector<Message> poll_batch(size_t max_batch_size,
+                                    std::chrono::milliseconds timeout);
     void set_timeout(std::chrono::milliseconds timeout);
     std::chrono::milliseconds get_timeout();
 private:

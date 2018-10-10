@@ -145,7 +145,7 @@ public:
     template <typename Allocator>
     std::vector<Message, Allocator> consume_batch(size_t max_batch_size,
                                                   const Allocator& alloc) const;
-    MessageList consume_batch(size_t max_batch_size) const;
+    std::vector<Message> consume_batch(size_t max_batch_size) const;
     
     /**
      * \brief Consumes a batch of messages from this queue
@@ -164,8 +164,8 @@ public:
     std::vector<Message, Allocator> consume_batch(size_t max_batch_size,
                                                   std::chrono::milliseconds timeout,
                                                   const Allocator& alloc) const;
-    MessageList consume_batch(size_t max_batch_size,
-                              std::chrono::milliseconds timeout) const;
+    std::vector<Message> consume_batch(size_t max_batch_size,
+                                       std::chrono::milliseconds timeout) const;
     
     /**
      * Indicates whether this queue is valid (not null)

@@ -386,7 +386,7 @@ public:
     template <typename Allocator>
     std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
                                                const Allocator& alloc);
-    MessageList poll_batch(size_t max_batch_size);
+    std::vector<Message> poll_batch(size_t max_batch_size);
 
     /**
      * \brief Polls for a batch of messages
@@ -403,7 +403,8 @@ public:
     std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
                                                std::chrono::milliseconds timeout,
                                                const Allocator& alloc);
-    MessageList poll_batch(size_t max_batch_size, std::chrono::milliseconds timeout);
+    std::vector<Message> poll_batch(size_t max_batch_size,
+                                    std::chrono::milliseconds timeout);
     
     /**
      * \brief Get the global event queue servicing this consumer corresponding to

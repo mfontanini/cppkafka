@@ -256,11 +256,11 @@ Message Consumer::poll(milliseconds timeout) {
     return rd_kafka_consumer_poll(get_handle(), static_cast<int>(timeout.count()));
 }
 
-MessageList Consumer::poll_batch(size_t max_batch_size) {
+std::vector<Message> Consumer::poll_batch(size_t max_batch_size) {
     return poll_batch(max_batch_size, get_timeout(), allocator<Message>());
 }
 
-MessageList Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
+std::vector<Message> Consumer::poll_batch(size_t max_batch_size, milliseconds timeout) {
     return poll_batch(max_batch_size, timeout, allocator<Message>());
 }
 

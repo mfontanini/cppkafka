@@ -19,7 +19,6 @@ using cppkafka::Consumer;
 using cppkafka::BasicConsumerDispatcher;
 
 using cppkafka::Message;
-using cppkafka::MessageList;
 using cppkafka::TopicPartition;
 
 //==================================================================================
@@ -89,7 +88,7 @@ BasicConsumerRunner<ConsumerType>::~BasicConsumerRunner() {
 }
 
 template <typename ConsumerType>
-const MessageList& BasicConsumerRunner<ConsumerType>::get_messages() const {
+const std::vector<Message>& BasicConsumerRunner<ConsumerType>::get_messages() const {
     return messages_;
 }
 
@@ -135,7 +134,7 @@ Message PollStrategyAdapter::poll(milliseconds timeout) {
 }
 
 inline
-MessageList PollStrategyAdapter::poll_batch(size_t max_batch_size) {
+std::vector<Message> PollStrategyAdapter::poll_batch(size_t max_batch_size) {
     if (strategy_) {
         return strategy_->poll_batch(max_batch_size);
     }
@@ -143,8 +142,8 @@ MessageList PollStrategyAdapter::poll_batch(size_t max_batch_size) {
 }
 
 inline
-MessageList PollStrategyAdapter::poll_batch(size_t max_batch_size,
-                                           milliseconds timeout) {
+std::vector<Message> PollStrategyAdapter::poll_batch(size_t max_batch_size,
+                                                     milliseconds timeout) {
     if (strategy_) {
         return strategy_->poll_batch(max_batch_size, timeout);
     }
