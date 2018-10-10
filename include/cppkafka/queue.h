@@ -138,8 +138,13 @@ public:
      *
      * \param max_batch_size The max number of messages to consume if available
      *
+     * \param alloc The optionally supplied allocator for the message list
+     *
      * \return A list of messages. Could be empty if there's nothing to consume
      */
+    template <typename Allocator>
+    std::vector<Message, Allocator> consume_batch(size_t max_batch_size,
+                                                  const Allocator& alloc) const;
     MessageList consume_batch(size_t max_batch_size) const;
     
     /**
@@ -151,9 +156,16 @@ public:
      *
      * \param timeout The timeout to be used on this call
      *
+     * \param alloc The optionally supplied allocator for the message list
+     *
      * \return A list of messages. Could be empty if there's nothing to consume
      */
-    MessageList consume_batch(size_t max_batch_size, std::chrono::milliseconds timeout) const;
+    template <typename Allocator>
+    std::vector<Message, Allocator> consume_batch(size_t max_batch_size,
+                                                  std::chrono::milliseconds timeout,
+                                                  const Allocator& alloc) const;
+    MessageList consume_batch(size_t max_batch_size,
+                              std::chrono::milliseconds timeout) const;
     
     /**
      * Indicates whether this queue is valid (not null)
@@ -177,6 +189,32 @@ private:
 };
 
 using QueueList = std::vector<Queue>;
+
+template <typename Allocator>
+std::vector<Message, Allocator> Queue::consume_batch(size_t max_batch_size,
+                                                     const Allocator& alloc) const {
+    return consume_batch(max_batch_size, timeout_ms_, alloc);
+}
+
+template <typename Allocator>
+std::vector<Message, Allocator> Queue::consume_batch(size_t max_batch_size,
+                                                     std::chrono::milliseconds timeout,
+                                                     const Allocator& alloc) const {
+    std::vector<rd_kafka_message_t*> raw_messages(max_batch_size);
+    ssize_t result = rd_kafka_consume_batch_queue(handle_.get(),
+                                                  static_cast<int>(timeout.count()),
+                                                  raw_messages.data(),
+                                                  raw_messages.size());
+    if (result == -1) {
+        rd_kafka_resp_err_t error = rd_kafka_last_error();
+        if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
+            throw QueueException(error);
+        }
+        return std::vector<Message, Allocator>(alloc);
+    }
+    // Build message list
+    return std::vector<Message, Allocator>(raw_messages.begin(), raw_messages.begin() + result, alloc);
+}
 
 } // cppkafka
 
