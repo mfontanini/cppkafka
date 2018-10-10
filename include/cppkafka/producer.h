@@ -159,8 +159,13 @@ public:
      */
     void flush(std::chrono::milliseconds timeout);
 private:
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     void do_produce(const MessageBuilder& builder, MessageBuilder::HeaderListType&& headers);
     void do_produce(const Message& message, MessageBuilder::HeaderListType&& headers);
+#else
+    void do_produce(const MessageBuilder& builder);
+    void do_produce(const Message& message);
+#endif
     
     // Members
     PayloadPolicy message_payload_policy_;

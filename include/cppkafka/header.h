@@ -30,9 +30,12 @@
 #ifndef CPPKAFKA_HEADER_H
 #define CPPKAFKA_HEADER_H
 
+#include "macros.h"
 #include "buffer.h"
 #include <string>
 #include <assert.h>
+
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
 
 namespace cppkafka {
 
@@ -186,5 +189,7 @@ Buffer Header<BufferType>::make_value(const Buffer& other) {
 }
 
 } //namespace cppkafka
+
+#endif //v0.11.4
 
 #endif //CPPKAFKA_HEADER_H

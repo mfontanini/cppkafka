@@ -64,6 +64,7 @@ Producer::PayloadPolicy Producer::get_payload_policy() const {
     return message_payload_policy_;
 }
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
 void Producer::produce(const MessageBuilder& builder) {
     do_produce(builder, MessageBuilder::HeaderListType(builder.header_list())); //copy headers
 }
@@ -81,6 +82,25 @@ void Producer::produce(Message&& message) {
     Message temp(std::move(message)); //rdakfka still owns the header list at this point
     do_produce(temp, HeaderList<Message::HeaderType>(temp.detach_header_list<Message::HeaderType>())); //move headers
 }
+#else
+void Producer::produce(const MessageBuilder& builder) {
+    do_produce(builder);
+}
+
+void Producer::produce(MessageBuilder&& builder) {
+    MessageBuilder temp(std::move(builder));
+    do_produce(temp);
+}
+
+void Producer::produce(const Message& message) {
+    do_produce(message);
+}
+
+void Producer::produce(Message&& message) {
+    Message temp(std::move(message));
+    do_produce(temp);
+}
+#endif
 
 int Producer::poll() {
     return poll(get_timeout());
@@ -98,6 +118,8 @@ void Producer::flush(milliseconds timeout) {
     auto result = rd_kafka_flush(get_handle(), static_cast<int>(timeout.count()));
     check_error(result);
 }
+
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
 
 void Producer::do_produce(const MessageBuilder& builder,
                           MessageBuilder::HeaderListType&& headers) {
@@ -135,5 +157,42 @@ void Producer::do_produce(const Message& message,
                                     RD_KAFKA_V_END);
     check_error(result);
 }
+
+#else
+
+void Producer::do_produce(const MessageBuilder& builder) {
+    const Buffer& payload = builder.payload();
+    const Buffer& key = builder.key();
+    const int policy = static_cast<int>(message_payload_policy_);
+    auto result = rd_kafka_producev(get_handle(),
+                                    RD_KAFKA_V_TOPIC(builder.topic().data()),
+                                    RD_KAFKA_V_PARTITION(builder.partition()),
+                                    RD_KAFKA_V_MSGFLAGS(policy),
+                                    RD_KAFKA_V_TIMESTAMP(builder.timestamp().count()),
+                                    RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
+                                    RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
+                                    RD_KAFKA_V_OPAQUE(builder.user_data()),
+                                    RD_KAFKA_V_END);
+    check_error(result);
+}
+
+void Producer::do_produce(const Message& message) {
+    const Buffer& payload = message.get_payload();
+    const Buffer& key = message.get_key();
+    const int policy = static_cast<int>(message_payload_policy_);
+    int64_t duration = message.get_timestamp() ? message.get_timestamp().get().get_timestamp().count() : 0;
+    auto result = rd_kafka_producev(get_handle(),
+                                    RD_KAFKA_V_TOPIC(message.get_topic().data()),
+                                    RD_KAFKA_V_PARTITION(message.get_partition()),
+                                    RD_KAFKA_V_MSGFLAGS(policy),
+                                    RD_KAFKA_V_TIMESTAMP(duration),
+                                    RD_KAFKA_V_KEY((void*)key.get_data(), key.get_size()),
+                                    RD_KAFKA_V_VALUE((void*)payload.get_data(), payload.get_size()),
+                                    RD_KAFKA_V_OPAQUE(message.get_user_data()),
+                                    RD_KAFKA_V_END);
+    check_error(result);
+}
+
+#endif //v0.11.4
 
 } // cppkafka

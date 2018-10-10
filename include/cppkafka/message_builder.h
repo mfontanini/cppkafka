@@ -45,8 +45,10 @@ namespace cppkafka {
 template <typename BufferType, typename Concrete>
 class BasicMessageBuilder {
 public:
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     using HeaderType = Header<BufferType>;
     using HeaderListType = HeaderList<HeaderType>;
+#endif
     /**
      * Construct a BasicMessageBuilder
      *
@@ -102,12 +104,14 @@ public:
      */
     Concrete& key(BufferType&& value);
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     /**
      *  Add a header to the message
      *
      * \param header The header to be used
      */
     Concrete& header(const HeaderType& header);
+#endif
     
     /**
      * Sets the message's payload
@@ -157,6 +161,7 @@ public:
      */
     BufferType& key();
     
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     /**
      * Gets the list of headers
      */
@@ -166,7 +171,8 @@ public:
      * Gets the list of headers
      */
     HeaderListType& header_list();
-
+#endif
+    
     /**
      * Gets the message's payload
      */
@@ -200,7 +206,9 @@ private:
     std::string topic_;
     int partition_{-1};
     BufferType key_;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     HeaderListType header_list_;
+#endif
     BufferType payload_;
     std::chrono::milliseconds timestamp_{0};
     void* user_data_;
@@ -258,6 +266,7 @@ C& BasicMessageBuilder<T, C>::key(T&& value) {
     return get_concrete();
 }
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::header(const HeaderType& header) {
     if (!header_list_) {
@@ -266,6 +275,7 @@ C& BasicMessageBuilder<T, C>::header(const HeaderType& header) {
     header_list_.add(header);
     return get_concrete();
 }
+#endif
 
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::payload(const T& value) {
@@ -311,6 +321,7 @@ T& BasicMessageBuilder<T, C>::key() {
     return key_;
 }
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
 template <typename T, typename C>
 const typename BasicMessageBuilder<T, C>::HeaderListType&
 BasicMessageBuilder<T, C>::header_list() const {
@@ -322,6 +333,7 @@ typename BasicMessageBuilder<T, C>::HeaderListType&
 BasicMessageBuilder<T, C>::header_list() {
     return header_list_;
 }
+#endif
 
 template <typename T, typename C>
 const T& BasicMessageBuilder<T, C>::payload() const {
@@ -381,9 +393,11 @@ C& BasicMessageBuilder<T, C>::get_concrete() {
 class MessageBuilder : public BasicMessageBuilder<Buffer, MessageBuilder> {
 public:
     using Base = BasicMessageBuilder<Buffer, MessageBuilder>;
+    using BasicMessageBuilder::BasicMessageBuilder;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     using HeaderType = Base::HeaderType;
     using HeaderListType = Base::HeaderListType;
-    using BasicMessageBuilder::BasicMessageBuilder;
+#endif
 
     void construct_buffer(Buffer& lhs, const Buffer& rhs) {
         lhs = Buffer(rhs.get_data(), rhs.get_size());

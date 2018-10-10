@@ -184,6 +184,7 @@ TEST_CASE("simple production", "[producer]") {
         CHECK(message.get_timestamp()->get_timestamp() == timestamp);
     }
     
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     SECTION("message with key and move-able headers") {
         using Hdr = MessageBuilder::HeaderType;
         const string payload = "Hello world! 2";
@@ -218,6 +219,7 @@ TEST_CASE("simple production", "[producer]") {
         CHECK(message.get_header_list().at(1) == Hdr(std::string(""), header2));
         CHECK(message.get_header_list().back() == Hdr(std::string("header3"), header3));
     }
+#endif //v0.11.4
     
     SECTION("message without message builder") {
         const string payload = "Goodbye cruel world!";
@@ -350,6 +352,7 @@ TEST_CASE("multiple messages", "[producer]") {
     }
 }
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
 TEST_CASE("multiple messages with copy-able headers", "[producer][headers]") {
     using Hdr = MessageBuilder::HeaderType;
     size_t message_count = 2;
@@ -393,6 +396,7 @@ TEST_CASE("multiple messages with copy-able headers", "[producer][headers]") {
     CHECK(messages[0].get_header_list() == messages[1].get_header_list());
     CHECK(messages[0].get_header_list().get_handle() != messages[1].get_header_list().get_handle());
 }
+#endif //v0.11.4
 
 TEST_CASE("multiple sync messages", "[producer][buffered_producer][sync]") {
     size_t message_count = 10;

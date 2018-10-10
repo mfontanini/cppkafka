@@ -60,8 +60,10 @@ class CPPKAFKA_API Message {
 public:
     friend class MessageInternal;
     using InternalPtr = std::shared_ptr<Internal>;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     using HeaderType = Header<Buffer>;
     using HeaderListType = HeaderList<HeaderType>;
+#endif
     /**
      * Constructs a message that won't take ownership of the given pointer
      */
@@ -124,6 +126,7 @@ public:
         return payload_;
     }
     
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     /**
      * \brief Gets the message's header list
      */
@@ -140,6 +143,7 @@ public:
         Error error = rd_kafka_message_detach_headers(handle_.get(), &headers_handle);
         return error ? HeaderList<HeaderType>() : HeaderList<HeaderType>(headers_handle);
     }
+#endif
 
     /**
      * \brief Gets the message's key
@@ -213,7 +217,9 @@ private:
     HandlePtr handle_;
     Buffer payload_;
     Buffer key_;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     HeaderListType header_list_;
+#endif
     void* user_data_;
     InternalPtr internal_;
 };

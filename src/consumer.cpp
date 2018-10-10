@@ -29,6 +29,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include "macros.h"
 #include "consumer.h"
 #include "exceptions.h"
 #include "logging.h"
@@ -48,7 +49,7 @@ using std::equal;
 namespace cppkafka {
 
 // See: https://github.com/edenhill/librdkafka/issues/1792
-const int rd_kafka_queue_refcount_bug_version = 0x000b0500;
+const int rd_kafka_queue_refcount_bug_version = RD_KAFKA_QUEUE_REFCOUNT_BUG_VERSION;
 Queue get_queue(rd_kafka_queue_t* handle) {
     if (rd_kafka_version() <= rd_kafka_queue_refcount_bug_version) {
         return Queue::make_non_owning(handle);

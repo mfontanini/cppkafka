@@ -36,6 +36,8 @@
 #include "header_list_iterator.h"
 #include "exceptions.h"
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+
 namespace cppkafka {
 
 /**
@@ -309,5 +311,7 @@ HeaderList<HeaderType>::operator bool() const {
 }
 
 } //namespace cppkafka
+
+#endif //v0.11.4
 
 #endif //CPPKAFKA_HEADER_LIST_H

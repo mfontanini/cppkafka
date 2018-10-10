@@ -26,7 +26,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+ 
 #include "message.h"
 #include "message_internal.h"
 
@@ -63,6 +63,7 @@ Message::Message(HandlePtr handle)
   payload_(handle_ ? Buffer((const Buffer::DataType*)handle_->payload, handle_->len) : Buffer()),
   key_(handle_ ? Buffer((const Buffer::DataType*)handle_->key, handle_->key_len) : Buffer()),
   user_data_(handle_ ? handle_->_private : nullptr) {
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     // get the header list if any
     if (handle_) {
         rd_kafka_headers_t* headers_handle;
@@ -71,6 +72,7 @@ Message::Message(HandlePtr handle)
             header_list_ = HeaderListType::make_non_owning(headers_handle);
         }
     }
+#endif
 }
 
 Message& Message::load_internal() {

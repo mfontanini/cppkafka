@@ -26,6 +26,8 @@ using std::chrono::seconds;
 using std::chrono::milliseconds;
 using std::chrono::system_clock;
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+
 using namespace cppkafka;
 using StringHeader = Header<std::string>;
 using BufferHeader = Header<Buffer>;
@@ -218,5 +220,7 @@ TEST_CASE("iterate", "[headers]") {
     //rewind end() iterator
     CHECK((--list.end())->get_name() == "header3");
 }
+
+#endif //v0.11.4
 
 

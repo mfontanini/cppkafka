@@ -17,6 +17,8 @@ only supported via the high level consumer API. _cppkafka_ requires **rdkafka >=
 order to use it. Other wrapped functionalities are also provided, like fetching metadata, 
 offsets, etc.
 
+* _cppkafka_ provides message header support. This feature requires **rdkafka >= 0.11.4**.
+
 * _cppkafka_ tries to add minimal overhead over _librdkafka_. A very thin wrapper for _librdkafka_
 messages is used for consumption so there's virtually no overhead at all.
 

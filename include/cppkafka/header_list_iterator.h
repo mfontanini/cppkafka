@@ -35,6 +35,8 @@
 #include <iterator>
 #include "header.h"
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+
 namespace cppkafka {
 
 template <typename HeaderType>
@@ -184,6 +186,8 @@ bool operator!=(const HeaderIterator<HeaderType>& lhs, const HeaderIterator<Head
 }
 
 } //namespace cppkafka
+
+#endif //v0.11.4
 
 #endif //CPPKAFKA_HEADER_LIST_ITERATOR_H
 
