@@ -65,13 +65,13 @@ Producer::PayloadPolicy Producer::get_payload_policy() const {
 }
 
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+
 void Producer::produce(const MessageBuilder& builder) {
     do_produce(builder, MessageBuilder::HeaderListType(builder.header_list())); //copy headers
 }
 
 void Producer::produce(MessageBuilder&& builder) {
-    MessageBuilder temp(std::move(builder)); //owns header list after the move
-    do_produce(temp, MessageBuilder::HeaderListType(temp.header_list().release_handle())); //move headers
+    do_produce(builder, MessageBuilder::HeaderListType(builder.header_list().release_handle())); //move headers
 }
 
 void Producer::produce(const Message& message) {
@@ -79,17 +79,17 @@ void Producer::produce(const Message& message) {
 }
 
 void Producer::produce(Message&& message) {
-    Message temp(std::move(message)); //rdakfka still owns the header list at this point
-    do_produce(temp, HeaderList<Message::HeaderType>(temp.detach_header_list<Message::HeaderType>())); //move headers
+    do_produce(message, message.detach_header_list<Message::HeaderType>()); //move headers
 }
+
 #else
+
 void Producer::produce(const MessageBuilder& builder) {
     do_produce(builder);
 }
 
 void Producer::produce(MessageBuilder&& builder) {
-    MessageBuilder temp(std::move(builder));
-    do_produce(temp);
+    do_produce(builder);
 }
 
 void Producer::produce(const Message& message) {
@@ -97,9 +97,9 @@ void Producer::produce(const Message& message) {
 }
 
 void Producer::produce(Message&& message) {
-    Message temp(std::move(message));
-    do_produce(temp);
+    do_produce(message);
 }
+
 #endif
 
 int Producer::poll() {
@@ -193,6 +193,6 @@ void Producer::do_produce(const Message& message) {
     check_error(result);
 }
 
-#endif //v0.11.4
+#endif //RD_KAFKA_HEADERS_SUPPORT_VERSION
 
 } // cppkafka

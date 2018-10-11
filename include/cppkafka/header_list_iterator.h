@@ -187,7 +187,7 @@ bool operator!=(const HeaderIterator<HeaderType>& lhs, const HeaderIterator<Head
 
 } //namespace cppkafka
 
-#endif //v0.11.4
+#endif //RD_KAFKA_HEADERS_SUPPORT_VERSION
 
 #endif //CPPKAFKA_HEADER_LIST_ITERATOR_H
 

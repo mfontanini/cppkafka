@@ -221,6 +221,6 @@ TEST_CASE("iterate", "[headers]") {
     CHECK((--list.end())->get_name() == "header3");
 }
 
-#endif //v0.11.4
+#endif //RD_KAFKA_HEADERS_SUPPORT_VERSION
 
 

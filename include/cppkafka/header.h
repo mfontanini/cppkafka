@@ -60,7 +60,7 @@ public:
      * \param name The header name
      * \param value The non-modifiable header data
      */
-    Header(const std::string name,
+    Header(std::string name,
            const BufferType& value);
     
     /**
@@ -68,7 +68,7 @@ public:
      * \param name The header name
      * \param value The header data to be moved
      */
-    Header(const std::string name,
+    Header(std::string name,
            BufferType&& value);
     
     /**
@@ -138,14 +138,14 @@ bool operator>=(const Header<BufferType>& lhs, const Header<BufferType>& rhs) {
 
 // Implementation
 template <typename BufferType>
-Header<BufferType>::Header(const std::string name,
+Header<BufferType>::Header(std::string name,
                            const BufferType& value)
 : name_(std::move(name)),
   value_(make_value(value)) {
 }
 
 template <typename BufferType>
-Header<BufferType>::Header(const std::string name,
+Header<BufferType>::Header(std::string name,
                            BufferType&& value)
 : name_(std::move(name)),
   value_(std::move(value)) {
@@ -190,6 +190,6 @@ Buffer Header<BufferType>::make_value(const Buffer& other) {
 
 } //namespace cppkafka
 
-#endif //v0.11.4
+#endif //RD_KAFKA_HEADERS_SUPPORT_VERSION
 
 #endif //CPPKAFKA_HEADER_H

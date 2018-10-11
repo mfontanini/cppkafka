@@ -312,6 +312,6 @@ HeaderList<HeaderType>::operator bool() const {
 
 } //namespace cppkafka
 
-#endif //v0.11.4
+#endif //RD_KAFKA_HEADERS_SUPPORT_VERSION
 
 #endif //CPPKAFKA_HEADER_LIST_H
