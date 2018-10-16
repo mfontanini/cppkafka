@@ -9,8 +9,7 @@ add_custom_target(tests)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions("-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\"")
 
-add_executable(
-    cppkafka_tests
+add_executable(cppkafka_tests
     buffer_test.cpp
     compacted_topic_processor_test.cpp
     configuration_test.cpp
@@ -19,6 +18,7 @@ add_executable(
     producer_test.cpp
     consumer_test.cpp
     roundrobin_poll_test.cpp
+    headers_test.cpp
 
     # Main file
     test_main.cpp

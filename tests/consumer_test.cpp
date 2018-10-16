@@ -195,7 +195,7 @@ TEST_CASE("consumer throttle", "[consumer]") {
             if (callback_executed_count == 3) {
                 return Message();
             }
-            return move(msg);
+            return msg;
         },
         [&](ConsumerDispatcher::Timeout) {
             if (callback_executed_count == 3) {

@@ -43,4 +43,8 @@
     #define CPPKAFKA_API
 #endif // _WIN32 && !CPPKAFKA_STATIC
 
+// See: https://github.com/edenhill/librdkafka/issues/1792
+#define RD_KAFKA_QUEUE_REFCOUNT_BUG_VERSION 0x000b0500 //v0.11.5.00
+#define RD_KAFKA_HEADERS_SUPPORT_VERSION 0x000b0402 //v0.11.4.02
+
 #endif // CPPKAFKA_MACROS_H

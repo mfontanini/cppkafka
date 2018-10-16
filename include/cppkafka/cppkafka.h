@@ -39,6 +39,9 @@
 #include <cppkafka/error.h>
 #include <cppkafka/exceptions.h>
 #include <cppkafka/group_information.h>
+#include <cppkafka/header.h>
+#include <cppkafka/header_list.h>
+#include <cppkafka/header_list_iterator.h>
 #include <cppkafka/kafka_handle_base.h>
 #include <cppkafka/logging.h>
 #include <cppkafka/macros.h>

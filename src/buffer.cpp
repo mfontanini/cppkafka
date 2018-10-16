@@ -34,6 +34,7 @@
 
 using std::string;
 using std::equal;
+using std::lexicographical_compare;
 using std::ostream;
 using std::hex;
 using std::dec;
@@ -99,6 +100,24 @@ bool operator==(const Buffer& lhs, const Buffer& rhs) {
 
 bool operator!=(const Buffer& lhs, const Buffer& rhs) { 
     return !(lhs == rhs);
+}
+
+bool operator<(const Buffer& lhs, const Buffer& rhs) {
+    return lexicographical_compare(lhs.get_data(), lhs.get_data() + lhs.get_size(),
+                                   rhs.get_data(), rhs.get_data() + rhs.get_size());
+}
+
+bool operator>(const Buffer& lhs, const Buffer& rhs) {
+    return lexicographical_compare(rhs.get_data(), rhs.get_data() + rhs.get_size(),
+                                   lhs.get_data(), lhs.get_data() + lhs.get_size());
+}
+
+bool operator<=(const Buffer& lhs, const Buffer& rhs) {
+    return !(lhs > rhs);
+}
+
+bool operator>=(const Buffer& lhs, const Buffer& rhs) {
+    return !(lhs < rhs);
 }
 
 } // cppkafka

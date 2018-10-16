@@ -41,7 +41,7 @@ template <typename T, typename Deleter, typename Cloner>
 class ClonablePtr {
 public:
     /**
-     * Creates an instance
+     * \brief Creates an instance
      *
      * \param ptr The pointer to be wrapped
      * \param deleter The deleter functor
@@ -60,17 +60,23 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr(const ClonablePtr& rhs)
-    : handle_(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()), cloner_(rhs.cloner_) {
+    : handle_(rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
+                            std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter())),
+      cloner_(rhs.cloner_) {
 
     }
 
     /** 
-     * Copies and assigns the given pointer
+     * \brief Copies and assigns the given pointer
      *
      * \param rhs The pointer to be copied
      */
     ClonablePtr& operator=(const ClonablePtr& rhs) {
-        handle_.reset(cloner_(rhs.handle_.get()));
+        if (this == &rhs) {
+            return *this;
+        }
+        handle_ = rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
+                                std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter());
         return *this;
     }
 
@@ -79,10 +85,24 @@ public:
     ~ClonablePtr() = default;
 
     /**
-     * Getter for the internal pointer
+     * \brief Getter for the internal pointer
      */
     T* get() const {
         return handle_.get();
+    }
+    
+    /**
+     * \brief Releases ownership of the internal pointer
+     */
+    T* release() {
+        return handle_.release();
+    }
+    
+    /**
+     * \brief Indicates whether this ClonablePtr instance is valid (not null)
+     */
+    explicit operator bool() const {
+        return static_cast<bool>(handle_);
     }
 private:
     std::unique_ptr<T, Deleter> handle_;

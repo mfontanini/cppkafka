@@ -39,6 +39,7 @@
 #include "buffer.h"
 #include "macros.h"
 #include "error.h"
+#include "header_list.h"
 
 namespace cppkafka {
 
@@ -59,6 +60,10 @@ class CPPKAFKA_API Message {
 public:
     friend class MessageInternal;
     using InternalPtr = std::shared_ptr<Internal>;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+    using HeaderType = Header<Buffer>;
+    using HeaderListType = HeaderList<HeaderType>;
+#endif
     /**
      * Constructs a message that won't take ownership of the given pointer
      */
@@ -84,7 +89,7 @@ public:
     Message& operator=(Message&& rhs) = default;
 
     /**
-     * Gets the error attribute
+     * \brief Gets the error attribute
      */
     Error get_error() const {
         assert(handle_);
@@ -92,14 +97,14 @@ public:
     }
 
     /**
-     * Utility function to check for get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF
+     * \brief Utility function to check for get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF
      */
     bool is_eof() const {
         return get_error() == RD_KAFKA_RESP_ERR__PARTITION_EOF;
     }
 
     /**
-     * Gets the topic that this message belongs to
+     * \brief Gets the topic that this message belongs to
      */
     std::string get_topic() const {
         assert(handle_);
@@ -107,7 +112,7 @@ public:
     }
 
     /**
-     * Gets the partition that this message belongs to
+     * \brief Gets the partition that this message belongs to
      */
     int get_partition() const {
         assert(handle_);
@@ -115,21 +120,40 @@ public:
     }
 
     /**
-     * Gets the message's payload
+     * \brief Gets the message's payload
      */
     const Buffer& get_payload() const {
         return payload_;
     }
+    
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+    /**
+     * \brief Gets the message's header list
+     */
+    const HeaderListType& get_header_list() const {
+        return header_list_;
+    }
+    
+    /**
+     * \brief Detaches the message's header list
+     */
+    template <typename HeaderType>
+    HeaderList<HeaderType> detach_header_list() {
+        rd_kafka_headers_t* headers_handle;
+        Error error = rd_kafka_message_detach_headers(handle_.get(), &headers_handle);
+        return error ? HeaderList<HeaderType>() : HeaderList<HeaderType>(headers_handle);
+    }
+#endif
 
     /**
-     * Gets the message's key
+     * \brief Gets the message's key
      */
     const Buffer& get_key() const {
         return key_;
     }
 
     /**
-     * Gets the message offset
+     * \brief Gets the message offset
      */
     int64_t get_offset() const {
         assert(handle_);
@@ -152,23 +176,31 @@ public:
      * If calling rd_kafka_message_timestamp returns -1, then boost::none_t will be returned.
      */
     inline boost::optional<MessageTimestamp> get_timestamp() const;
+    
+    /**
+     * \brief Gets the message latency in microseconds as measured from the produce() call.
+     */
+    std::chrono::microseconds get_latency() const {
+        assert(handle_);
+        return std::chrono::microseconds(rd_kafka_message_latency(handle_.get()));
+    }
 
     /**
-     * Indicates whether this message is valid (not null)
+     * \brief Indicates whether this message is valid (not null)
      */
     explicit operator bool() const {
         return handle_ != nullptr;
     }
 
     /**
-     * Gets the rdkafka message handle
+     * \brief Gets the rdkafka message handle
      */
     rd_kafka_message_t* get_handle() const {
         return handle_.get();
     }
     
     /**
-     * Internal private const data accessor (internal use only)
+     * \brief Internal private const data accessor (internal use only)
      */
     InternalPtr internal() const {
         return internal_;
@@ -185,6 +217,9 @@ private:
     HandlePtr handle_;
     Buffer payload_;
     Buffer key_;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+    HeaderListType header_list_;
+#endif
     void* user_data_;
     InternalPtr internal_;
 };
