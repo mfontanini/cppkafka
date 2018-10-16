@@ -68,14 +68,14 @@ TEST_CASE("modify", "[headers]") {
     SECTION("add") {
         HeaderList<StringHeader> list(10);
         //empty header name
-        list.add(StringHeader(std::string(), std::string("payload1")));
+        list.add({{}, "payload1"});
         //empty payload
-        list.add(StringHeader(std::string("header2"), std::string()));
-        list.add(StringHeader(std::string("header3"), std::string("payload3")));
+        list.add({"header2", {}});
+        list.add({"header3", "payload3"});
         //both null
-        list.add(StringHeader(std::string(), std::string()));
-        //both empty (0 length strings)
-        list.add(StringHeader(std::string(""), std::string("")));
+        list.add({{}, {}});
+        //both empty (0-length strings)
+        list.add({"", ""});
         
         //validate
         REQUIRE(list.size() == 5);
@@ -90,25 +90,25 @@ TEST_CASE("modify", "[headers]") {
     SECTION("remove") {
         HeaderList<StringHeader> list(10);
         //empty header name
-        list.add(StringHeader(std::string(), std::string("payload1")));
+        list.add({{}, "payload1"});
         //empty payload
-        list.add(StringHeader(std::string("header2"), std::string()));
-        list.add(StringHeader(std::string("header3"), std::string("payload3")));
+        list.add({"header2", {}});
+        list.add({"header3", "payload3"});
         //both null
-        list.add(StringHeader(std::string(), std::string()));
+        list.add({{}, {}});
         //both empty (0 length strings)
-        list.add(StringHeader(std::string(""), std::string("")));
+        list.add({"", ""});
         
         //Remove a bogus name
-        Error err = list.remove(std::string("bogus"));
+        Error err = list.remove("bogus");
         REQUIRE(err.get_error() == RD_KAFKA_RESP_ERR__NOENT);
         //Remove header with name
-        list.remove(std::string("header2"));
+        list.remove("header2");
         REQUIRE(list.size() == 4);
-        list.remove(std::string("header3"));
+        list.remove("header3");
         REQUIRE(list.size() == 3);
         //Remove headers without name
-        list.remove(std::string());
+        list.remove({});
         REQUIRE(list.size() == 0);
     }
 }
@@ -117,9 +117,9 @@ TEST_CASE("copy and move", "[headers]") {
     SECTION("copy owning") {
         //Create an owning header list and copy it
         HeaderList<StringHeader> list(3), list2(3);
-        list.add(StringHeader(std::string("header1"), std::string("payload1")));
-        list.add(StringHeader(std::string("header2"), std::string("payload2")));
-        list.add(StringHeader(std::string("header3"), std::string("payload3")));
+        list.add({"header1", "payload1"});
+        list.add({"header2", "payload2"});
+        list.add({"header3", "payload3"});
         REQUIRE(list2.size() == 0);
         list2 = list;
         REQUIRE(list2.size() == 3);
@@ -136,9 +136,9 @@ TEST_CASE("copy and move", "[headers]") {
         //Create an owning header list and copy it
         HeaderList<BufferHeader> list(3), list2(3);
         string payload1 = "payload1", payload2 = "payload2", payload3 = "payload3";
-        list.add(BufferHeader(std::string("header1"), payload1));
-        list.add(BufferHeader(std::string("header2"), payload2));
-        list.add(BufferHeader(std::string("header3"), payload3));
+        list.add({"header1", payload1});
+        list.add({"header2", payload2});
+        list.add({"header3", payload3});
         REQUIRE(list2.size() == 0);
         list2 = list;
         REQUIRE(list2.size() == 3);
@@ -154,9 +154,9 @@ TEST_CASE("copy and move", "[headers]") {
     SECTION("copy non-owning") {
         //Create an owning header list and copy it
         HeaderList<StringHeader> list(3), list2(3), list3(HeaderList<StringHeader>::make_non_owning(list.get_handle()));
-        list.add(StringHeader(std::string("header1"), std::string("payload1")));
-        list.add(StringHeader(std::string("header2"), std::string("payload2")));
-        list.add(StringHeader(std::string("header3"), std::string("payload3")));
+        list.add({"header1", "payload1"});
+        list.add({"header2", "payload2"});
+        list.add({"header3", "payload3"});
         list2 = list3; //copy non-owning list
         REQUIRE(list.size() == 3);
         REQUIRE(list3.size() == list.size());
@@ -171,9 +171,9 @@ TEST_CASE("copy and move", "[headers]") {
     
     SECTION("move") {
         HeaderList<StringHeader> list(3), list2;
-        list.add(StringHeader(std::string("header1"), std::string("payload1")));
-        list.add(StringHeader(std::string("header2"), std::string("payload2")));
-        list.add(StringHeader(std::string("header3"), std::string("payload3")));
+        list.add({"header1", "payload1"});
+        list.add({"header2", "payload2"});
+        list.add({"header3", "payload3"});
         auto handle = list.get_handle();
         list2 = std::move(list);
         CHECK_FALSE(!!list);
@@ -185,9 +185,9 @@ TEST_CASE("copy and move", "[headers]") {
 
 TEST_CASE("access", "[headers]") {
     HeaderList<StringHeader> list(3);
-    list.add(StringHeader(std::string("header1"), std::string("payload1")));
-    list.add(StringHeader(std::string("header2"), std::string("payload2")));
-    list.add(StringHeader(std::string("header3"), std::string("payload3")));
+    list.add({"header1", "payload1"});
+    list.add({"header2", "payload2"});
+    list.add({"header3", "payload3"});
     CHECK(list.at(0).get_value() == "payload1");
     CHECK(list.at(1).get_value() == "payload2");
     CHECK(list.at(2).get_value() == "payload3");
@@ -199,11 +199,11 @@ TEST_CASE("access", "[headers]") {
 TEST_CASE("iterate", "[headers]") {
     HeaderList<StringHeader> list(3);
     REQUIRE(list.begin() == list.end());
-    list.add(StringHeader(std::string("header1"), std::string("payload1")));
+    list.add({"header1", "payload1"});
     REQUIRE(list.begin() != list.end());
     CHECK(++list.begin() == list.end());
-    list.add(StringHeader(std::string("header2"), std::string("payload2")));
-    list.add(StringHeader(std::string("header3"), std::string("payload3")));
+    list.add({"header2", "payload2"});
+    list.add({"header3", "payload3"});
     int i = 0;
     for (auto it = list.begin(); it != list.end(); ++it, ++i) {
         CHECK(it->get_name().length() == 7);

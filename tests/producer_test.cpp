@@ -197,9 +197,9 @@ TEST_CASE("simple production", "[producer]") {
                                                      .key(key)
                                                      .payload(payload)
                                                      .timestamp(timestamp)
-                                                     .header(Hdr())
-                                                     .header(Hdr(std::string(""), header2))
-                                                     .header(Hdr(std::string("header3"), header3)));
+                                                     .header(Hdr{})
+                                                     .header(Hdr{"", header2})
+                                                     .header(Hdr{"header3", header3}));
         runner.try_join();
 
         const auto& messages = runner.get_messages();
@@ -215,9 +215,9 @@ TEST_CASE("simple production", "[producer]") {
         //validate headers
         REQUIRE(!!message.get_header_list());
         REQUIRE(message.get_header_list().size() == 3);
-        CHECK(message.get_header_list().front() == Hdr());
-        CHECK(message.get_header_list().at(1) == Hdr(std::string(""), header2));
-        CHECK(message.get_header_list().back() == Hdr(std::string("header3"), header3));
+        CHECK(message.get_header_list().front() == Hdr{});
+        CHECK(message.get_header_list().at(1) == Hdr{"", header2});
+        CHECK(message.get_header_list().back() == Hdr{"header3", header3});
     }
 #endif //RD_KAFKA_HEADERS_SUPPORT_VERSION
     
@@ -368,9 +368,9 @@ TEST_CASE("multiple messages with copy-able headers", "[producer][headers]") {
     Producer producer(make_producer_config());
     MessageBuilder builder(KAFKA_TOPICS[0]);
     builder.payload(payload)
-             .header(Hdr())
-             .header(Hdr(std::string(""), header2))
-             .header(Hdr(std::string("header3"), header3));
+             .header(Hdr{})
+             .header(Hdr{"", header2})
+             .header(Hdr{"header3", header3});
     producer.produce(builder);
     producer.produce(builder);
     
@@ -388,9 +388,9 @@ TEST_CASE("multiple messages with copy-able headers", "[producer][headers]") {
     //validate headers
     REQUIRE(!!message.get_header_list());
     REQUIRE(message.get_header_list().size() == 3);
-    CHECK(message.get_header_list().front() == Hdr());
-    CHECK(message.get_header_list().at(1) == Hdr(std::string(""), header2));
-    CHECK(message.get_header_list().back() == Hdr(std::string("header3"), header3));
+    CHECK(message.get_header_list().front() == Hdr{});
+    CHECK(message.get_header_list().at(1) == Hdr{"", header2});
+    CHECK(message.get_header_list().back() == Hdr{"header3", header3});
     
     //validate second message
     CHECK(messages[0].get_header_list() == messages[1].get_header_list());
