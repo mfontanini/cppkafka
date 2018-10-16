@@ -102,14 +102,21 @@ public:
     /**
      * \sa PollInterface::poll_batch
      */
-    MessageList poll_batch(size_t max_batch_size) override;
+    template <typename Allocator>
+    std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
+                                               const Allocator& alloc);
+    std::vector<Message> poll_batch(size_t max_batch_size) override;
 
     /**
      * \sa PollInterface::poll_batch
      */
-    MessageList poll_batch(size_t max_batch_size,
-                           std::chrono::milliseconds timeout) override;
- 
+    template <typename Allocator>
+    std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
+                                               std::chrono::milliseconds timeout,
+                                               const Allocator& alloc);
+    std::vector<Message> poll_batch(size_t max_batch_size,
+                                    std::chrono::milliseconds timeout) override;
+    
 protected:
     /**
      * \sa PollStrategyBase::reset_state
@@ -119,16 +126,65 @@ protected:
     QueueData& get_next_queue();
     
 private:
+    template <typename Allocator>
     void consume_batch(Queue& queue,
-                       MessageList& messages,
+                       std::vector<Message, Allocator>& messages,
                        ssize_t& count,
-                       std::chrono::milliseconds timeout);
+                       std::chrono::milliseconds timeout,
+                       const Allocator& alloc);
     
     void restore_forwarding();
     
     // Members
     QueueMap::iterator  queue_iter_;
 };
+
+// Implementations
+template <typename Allocator>
+std::vector<Message, Allocator> RoundRobinPollStrategy::poll_batch(size_t max_batch_size,
+                                                                   const Allocator& alloc) {
+    return poll_batch(max_batch_size, get_consumer().get_timeout(), alloc);
+}
+
+template <typename Allocator>
+std::vector<Message, Allocator> RoundRobinPollStrategy::poll_batch(size_t max_batch_size,
+                                                                   std::chrono::milliseconds timeout,
+                                                                   const Allocator& alloc) {
+    std::vector<Message, Allocator> messages(alloc);
+    ssize_t count = max_batch_size;
+    
+    // batch from the group event queue first (non-blocking)
+    consume_batch(get_consumer_queue().queue, messages, count, std::chrono::milliseconds(0), alloc);
+    size_t num_queues = get_partition_queues().size();
+    while ((count > 0) && (num_queues--)) {
+        // batch from the next partition (non-blocking)
+        consume_batch(get_next_queue().queue, messages, count, std::chrono::milliseconds(0), alloc);
+    }
+    // we still have space left in the buffer
+    if (count > 0) {
+        // wait on the event queue until timeout
+        consume_batch(get_consumer_queue().queue, messages, count, timeout, alloc);
+    }
+    return messages;
+}
+
+template <typename Allocator>
+void RoundRobinPollStrategy::consume_batch(Queue& queue,
+                                           std::vector<Message, Allocator>& messages,
+                                           ssize_t& count,
+                                           std::chrono::milliseconds timeout,
+                                           const Allocator& alloc) {
+    std::vector<Message, Allocator> queue_messages = queue.consume_batch(count, timeout, alloc);
+    if (queue_messages.empty()) {
+        return;
+    }
+    // concatenate both lists
+    messages.insert(messages.end(),
+                    make_move_iterator(queue_messages.begin()),
+                    make_move_iterator(queue_messages.end()));
+    // reduce total batch count
+    count -= queue_messages.size();
+}
 
 } //cppkafka
 
