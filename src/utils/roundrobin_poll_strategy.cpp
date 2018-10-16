@@ -32,6 +32,7 @@
 using std::string;
 using std::chrono::milliseconds;
 using std::make_move_iterator;
+using std::allocator;
 
 namespace cppkafka {
 
@@ -67,45 +68,14 @@ Message RoundRobinPollStrategy::poll(milliseconds timeout) {
     return get_consumer_queue().queue.consume(timeout);
 }
 
-MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size) {
-    return poll_batch(max_batch_size, get_consumer().get_timeout());
+std::vector<Message> RoundRobinPollStrategy::poll_batch(size_t max_batch_size) {
+    return poll_batch(max_batch_size, get_consumer().get_timeout(), allocator<Message>());
 }
 
-MessageList RoundRobinPollStrategy::poll_batch(size_t max_batch_size, milliseconds timeout) {
-    MessageList messages;
-    ssize_t count = max_batch_size;
-    
-    // batch from the group event queue first (non-blocking)
-    consume_batch(get_consumer_queue().queue, messages, count, milliseconds(0));
-    size_t num_queues = get_partition_queues().size();
-    while ((count > 0) && (num_queues--)) {
-        // batch from the next partition (non-blocking)
-        consume_batch(get_next_queue().queue, messages, count, milliseconds(0));
-    }
-    // we still have space left in the buffer
-    if (count > 0) {
-        // wait on the event queue until timeout
-        consume_batch(get_consumer_queue().queue, messages, count, timeout);
-    }
-    return messages;
+std::vector<Message> RoundRobinPollStrategy::poll_batch(size_t max_batch_size,
+                                                        milliseconds timeout) {
+    return poll_batch(max_batch_size, timeout, allocator<Message>());
 }
-
-void RoundRobinPollStrategy::consume_batch(Queue& queue,
-                                           MessageList& messages,
-                                           ssize_t& count,
-                                           milliseconds timeout) {
-    MessageList queue_messages = queue.consume_batch(count, timeout);
-    if (queue_messages.empty()) {
-        return;
-    }
-    // concatenate both lists
-    messages.insert(messages.end(),
-                    make_move_iterator(queue_messages.begin()),
-                    make_move_iterator(queue_messages.end()));
-    // reduce total batch count
-    count -= queue_messages.size();
-}
-
 
 void RoundRobinPollStrategy::restore_forwarding() {
     // forward all partition queues

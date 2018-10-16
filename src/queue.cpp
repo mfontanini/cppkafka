@@ -32,6 +32,7 @@
 using std::vector;
 using std::exception;
 using std::chrono::milliseconds;
+using std::allocator;
 
 namespace cppkafka {
 
@@ -94,25 +95,13 @@ Message Queue::consume(milliseconds timeout) const {
     return Message(rd_kafka_consume_queue(handle_.get(), static_cast<int>(timeout.count())));
 }
 
-MessageList Queue::consume_batch(size_t max_batch_size) const {
-    return consume_batch(max_batch_size, timeout_ms_);
+std::vector<Message> Queue::consume_batch(size_t max_batch_size) const {
+    return consume_batch(max_batch_size, timeout_ms_, allocator<Message>());
 }
 
-MessageList Queue::consume_batch(size_t max_batch_size, milliseconds timeout) const {
-    vector<rd_kafka_message_t*> raw_messages(max_batch_size);
-    ssize_t result = rd_kafka_consume_batch_queue(handle_.get(),
-                                                  static_cast<int>(timeout.count()),
-                                                  raw_messages.data(),
-                                                  raw_messages.size());
-    if (result == -1) {
-        rd_kafka_resp_err_t error = rd_kafka_last_error();
-        if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
-            throw QueueException(error);
-        }
-        return MessageList();
-    }
-    // Build message list
-    return MessageList(raw_messages.begin(), raw_messages.begin() + result);
+std::vector<Message> Queue::consume_batch(size_t max_batch_size,
+                                          milliseconds timeout) const {
+    return consume_batch(max_batch_size, timeout, allocator<Message>());
 }
 
 } //cppkafka
