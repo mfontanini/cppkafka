@@ -35,6 +35,7 @@
 #include "../queue.h"
 #include "../topic_partition_list.h"
 #include "poll_interface.h"
+#include "../macros.h"
 
 namespace cppkafka {
 
@@ -52,7 +53,7 @@ struct QueueData {
  *
  * \brief Base implementation of  the PollInterface
  */
-class PollStrategyBase : public PollInterface {
+class CPPKAFKA_API PollStrategyBase : public PollInterface {
 public:
     using QueueMap = std::map<TopicPartition, QueueData>;
     
