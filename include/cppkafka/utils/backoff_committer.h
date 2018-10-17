@@ -37,6 +37,7 @@
 #include "../consumer.h"
 #include "backoff_performer.h"
 #include "../detail/callback_invoker.h"
+#include "../macros.h"
 
 namespace cppkafka {
 
@@ -71,7 +72,7 @@ namespace cppkafka {
  * committer.commit(some_message);
  * \endcode
  */
-class BackoffCommitter : public BackoffPerformer {
+class CPPKAFKA_API BackoffCommitter : public BackoffPerformer {
 public:
     /**
      * \brief The error callback.

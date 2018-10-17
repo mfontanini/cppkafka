@@ -31,6 +31,7 @@
 #define CPPKAFKA_MESSAGE_INTERNAL_H
 
 #include <memory>
+#include "macros.h"
 
 namespace cppkafka {
 
@@ -45,7 +46,7 @@ using InternalPtr = std::shared_ptr<Internal>;
 /**
  * \brief Private message data structure
  */
-class MessageInternal {
+class CPPKAFKA_API MessageInternal {
 public:
     MessageInternal(void* user_data, std::shared_ptr<Internal> internal);
     static std::unique_ptr<MessageInternal> load(Message& message);
