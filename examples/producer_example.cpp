@@ -75,4 +75,7 @@ int main(int argc, char* argv[]) {
         // Actually produce the message we've built
         producer.produce(builder);
     }
+    
+    // Flush all produced messages
+    producer.flush();
 }
