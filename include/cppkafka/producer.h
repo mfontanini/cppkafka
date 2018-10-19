@@ -73,6 +73,9 @@ class Message;
  *
  * // Write using a key on a fixed partition (42)
  * producer.produce(MessageBuilder("some_topic").partition(42).key(key).payload(payload));
+ *
+ * // Flush the produced messages
+ * producer.flush();
  * 
  * \endcode
  */
