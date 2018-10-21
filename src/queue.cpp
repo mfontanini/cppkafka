@@ -95,13 +95,20 @@ Message Queue::consume(milliseconds timeout) const {
     return Message(rd_kafka_consume_queue(handle_.get(), static_cast<int>(timeout.count())));
 }
 
-std::vector<Message> Queue::consume_batch(size_t max_batch_size) const {
+vector<Message> Queue::consume_batch(size_t max_batch_size) const {
     return consume_batch(max_batch_size, timeout_ms_, allocator<Message>());
 }
 
-std::vector<Message> Queue::consume_batch(size_t max_batch_size,
-                                          milliseconds timeout) const {
+vector<Message> Queue::consume_batch(size_t max_batch_size, milliseconds timeout) const {
     return consume_batch(max_batch_size, timeout, allocator<Message>());
+}
+
+Event Queue::next_event() const {
+    return next_event(timeout_ms_);
+}
+
+Event Queue::next_event(milliseconds timeout) const {
+    return Event(rd_kafka_queue_poll(handle_.get(), timeout.count()));
 }
 
 } //cppkafka
