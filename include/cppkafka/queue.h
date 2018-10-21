@@ -134,10 +134,10 @@ public:
     /**
      * \brief Consumes a batch of messages from this queue
      *
-     * This translates to a call to rd_kafka_consume_batch_queue using the configured timeout for this object
+     * This translates to a call to rd_kafka_consume_batch_queue using the configured timeout
+     * for this object
      *
      * \param max_batch_size The max number of messages to consume if available
-     *
      * \param alloc The optionally supplied allocator for the message list
      *
      * \return A list of messages. Could be empty if there's nothing to consume
@@ -145,17 +145,27 @@ public:
     template <typename Allocator>
     std::vector<Message, Allocator> consume_batch(size_t max_batch_size,
                                                   const Allocator& alloc) const;
+
+    /**
+     * \brief Consumes a batch of messages from this queue
+     *
+     * This translates to a call to rd_kafka_consume_batch_queue using the configured timeout
+     * for this object
+     *
+     * \param max_batch_size The max number of messages to consume if available
+     *
+     * \return A list of messages. Could be empty if there's nothing to consume
+     */
     std::vector<Message> consume_batch(size_t max_batch_size) const;
     
     /**
      * \brief Consumes a batch of messages from this queue
      *
-     * Same as Queue::consume_batch(size_t) but the specified timeout will be used instead of the configured one
+     * Same as Queue::consume_batch(size_t) but the specified timeout will be used instead of the
+     * configured one
      *
      * \param max_batch_size The max number of messages to consume if available
-     *
      * \param timeout The timeout to be used on this call
-     *
      * \param alloc The optionally supplied allocator for the message list
      *
      * \return A list of messages. Could be empty if there's nothing to consume
@@ -164,6 +174,18 @@ public:
     std::vector<Message, Allocator> consume_batch(size_t max_batch_size,
                                                   std::chrono::milliseconds timeout,
                                                   const Allocator& alloc) const;
+
+    /**
+     * \brief Consumes a batch of messages from this queue
+     *
+     * Same as Queue::consume_batch(size_t) but the specified timeout will be used instead of the
+     * configured one
+     *
+     * \param max_batch_size The max number of messages to consume if available
+     * \param timeout The timeout to be used on this call
+     *
+     * \return A list of messages. Could be empty if there's nothing to consume
+     */
     std::vector<Message> consume_batch(size_t max_batch_size,
                                        std::chrono::milliseconds timeout) const;
     

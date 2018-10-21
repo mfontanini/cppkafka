@@ -376,7 +376,7 @@ public:
     /**
      * \brief Polls for a batch of messages
      *
-     * This can return one or more messages
+     * This can return zero or more messages
      *
      * \param max_batch_size The maximum amount of messages expected
      * \param alloc The optionally supplied allocator for allocating messages
@@ -386,12 +386,22 @@ public:
     template <typename Allocator>
     std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
                                                const Allocator& alloc);
+
+    /**
+     * \brief Polls for a batch of messages
+     *
+     * This can return zero or more messages
+     *
+     * \param max_batch_size The maximum amount of messages expected
+     *
+     * \return A list of messages
+     */
     std::vector<Message> poll_batch(size_t max_batch_size);
 
     /**
      * \brief Polls for a batch of messages
      *
-     * This can return one or more messages
+     * This can return zero or more messages
      *
      * \param max_batch_size The maximum amount of messages expected
      * \param timeout The timeout for this operation
@@ -403,6 +413,17 @@ public:
     std::vector<Message, Allocator> poll_batch(size_t max_batch_size,
                                                std::chrono::milliseconds timeout,
                                                const Allocator& alloc);
+
+    /**
+     * \brief Polls for a batch of messages
+     *
+     * This can return one or more messages
+     *
+     * \param max_batch_size The maximum amount of messages expected
+     * \param timeout The timeout for this operation
+     *
+     * \return A list of messages
+     */
     std::vector<Message> poll_batch(size_t max_batch_size,
                                     std::chrono::milliseconds timeout);
     
@@ -465,14 +486,18 @@ std::vector<Message, Allocator> Consumer::poll_batch(size_t max_batch_size,
     std::vector<rd_kafka_message_t*> raw_messages(max_batch_size);
     // Note that this will leak the queue when using rdkafka < 0.11.5 (see get_queue comment)
     Queue queue(get_queue(rd_kafka_queue_get_consumer(get_handle())));
-    ssize_t result = rd_kafka_consume_batch_queue(queue.get_handle() , timeout.count(), raw_messages.data(),
+    ssize_t result = rd_kafka_consume_batch_queue(queue.get_handle(),
+                                                  timeout.count(),
+                                                  raw_messages.data(),
                                                   raw_messages.size());
     if (result == -1) {
         check_error(rd_kafka_last_error());
         // on the off-chance that check_error() does not throw an error
         return std::vector<Message, Allocator>(alloc);
     }
-    return std::vector<Message, Allocator>(raw_messages.begin(), raw_messages.begin() + result, alloc);
+    return std::vector<Message, Allocator>(raw_messages.begin(),
+                                           raw_messages.begin() + result,
+                                           alloc);
 }
 
 } // cppkafka
