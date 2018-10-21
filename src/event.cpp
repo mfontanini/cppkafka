@@ -90,4 +90,8 @@ TopicPartitionList Event::get_topic_partition_list() const {
     return convert(toppars_handle);
 }
 
+Event::operator bool() const {
+    return !!handle_;
+}
+
 } // cppkafka

@@ -143,6 +143,13 @@ public:
      * * RD_KAFKA_EVENT_OFFSET_COMMIT
      */
     TopicPartitionList get_topic_partition_list() const;
+
+    /**
+     * Check whether this event is valid
+     *
+     * /return true iff this event has a valid (non-null) handle inside
+     */
+    operator bool() const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_event_t, decltype(&rd_kafka_event_destroy)>;
 
