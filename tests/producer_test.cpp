@@ -42,7 +42,7 @@ static Configuration make_consumer_config() {
     Configuration config = {
         { "metadata.broker.list", KAFKA_TEST_INSTANCE },
         { "enable.auto.commit", false },
-        { "group.id", "producer_test" },
+        { "group.id", make_consumer_group_id() },
         { "api.version.request", true }
     };
     return config;

@@ -44,7 +44,8 @@ BasicConsumerRunner<ConsumerType>::BasicConsumerRunner(ConsumerType& consumer,
                 }
             },
             // EOF callback
-            [&](typename BasicConsumerDispatcher<ConsumerType>::EndOfFile, const TopicPartition& topic_partition) {
+            [&](typename BasicConsumerDispatcher<ConsumerType>::EndOfFile,
+                const TopicPartition& topic_partition) {
                 if (number_eofs != partitions) {
                     number_eofs++;
                     if (number_eofs == partitions) {

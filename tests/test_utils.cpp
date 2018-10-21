@@ -1,7 +1,21 @@
+#include <cstdint>
+#include <iomanip>
+#include <limits>
+#include <sstream>
+#include <random>
 #include "test_utils.h"
 
+using std::chrono::duration_cast;
 using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::system_clock;
+using std::hex;
 using std::move;
+using std::numeric_limits;
+using std::ostringstream;
+using std::random_device;
+using std::string;
+using std::uniform_int_distribution;
 using std::unique_ptr;
 using std::vector;
 
@@ -63,4 +77,18 @@ milliseconds PollStrategyAdapter::get_timeout() {
         return strategy_->get_timeout();
     }
     return Consumer::get_timeout();
+}
+
+// Misc
+
+string make_consumer_group_id() {
+    ostringstream output;
+    output << hex;
+
+    random_device rd;
+    uniform_int_distribution<uint64_t> distribution(0, numeric_limits<uint64_t>::max());
+    const auto now = duration_cast<seconds>(system_clock::now().time_since_epoch());
+    const auto random_number = distribution(rd);
+    output << now.count() << random_number;
+    return output.str();
 }
