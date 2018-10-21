@@ -19,6 +19,7 @@ add_executable(cppkafka_tests
     consumer_test.cpp
     roundrobin_poll_test.cpp
     headers_test.cpp
+    test_utils.cpp
 
     # Main file
     test_main.cpp

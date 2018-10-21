@@ -35,7 +35,7 @@ static Configuration make_producer_config() {
     return config;
 }
 
-static Configuration make_consumer_config(const string& group_id = "consumer_test") {
+static Configuration make_consumer_config(const string& group_id = make_consumer_group_id()) {
     Configuration config;
     config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
     config.set("enable.auto.commit", false);
@@ -85,11 +85,12 @@ TEST_CASE("message consumption", "[consumer]") {
 TEST_CASE("consumer rebalance", "[consumer]") {
     TopicPartitionList assignment1;
     TopicPartitionList assignment2;
+    const string group_id = make_consumer_group_id();
     bool revocation_called = false;
     int partition = 0;
 
     // Create a consumer and subscribe to the topic
-    Consumer consumer1(make_consumer_config());
+    Consumer consumer1(make_consumer_config(group_id));
     consumer1.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment1 = topic_partitions;
     });
@@ -100,7 +101,7 @@ TEST_CASE("consumer rebalance", "[consumer]") {
     ConsumerRunner runner1(consumer1, 1, KAFKA_NUM_PARTITIONS);
 
     // Create a second consumer and subscribe to the topic
-    Consumer consumer2(make_consumer_config());
+    Consumer consumer2(make_consumer_config(group_id));
     consumer2.set_assignment_callback([&](const TopicPartitionList& topic_partitions) {
         assignment2 = topic_partitions;
     });

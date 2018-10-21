@@ -7,13 +7,14 @@
 #include <condition_variable>
 #include <catch.hpp>
 #include <memory>
-#include <iostream>
+#include <stdexcept>
 #include "cppkafka/cppkafka.h"
 #include "test_utils.h"
 
 using std::vector;
 using std::move;
 using std::string;
+using std::exception;
 using std::thread;
 using std::set;
 using std::mutex;
@@ -33,18 +34,18 @@ using namespace cppkafka;
 //                           Helper functions
 //==================================================================================
 static Configuration make_producer_config() {
-    Configuration config;
-    config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
+    Configuration config = {    
+        { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+    };
     return config;
 }
 
-static Configuration make_consumer_config(const string& group_id = "rr_consumer_test") {
-    Configuration config;
-    config.set("metadata.broker.list", KAFKA_TEST_INSTANCE);
-    config.set("enable.auto.commit", true);
-    config.set("enable.auto.offset.store", true );
-    config.set("auto.commit.interval.ms", 100);
-    config.set("group.id", group_id);
+static Configuration make_consumer_config(const string& group_id = make_consumer_group_id()) {
+    Configuration config = {
+        { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+        { "enable.auto.commit", false },
+        { "group.id", group_id },
+    };
     return config;
 }
 
@@ -62,44 +63,6 @@ static vector<int> make_roundrobin_partition_vector(int total_messages) {
 //========================================================================
 //                              TESTS
 //========================================================================
-
-TEST_CASE("serial consumer test", "[roundrobin consumer]") {
-    int messages_per_partition = 3;
-    int total_messages = KAFKA_NUM_PARTITIONS * messages_per_partition;
-
-    // Create a consumer and subscribe to the topic
-    Consumer consumer(make_consumer_config());
-    TopicPartitionList partitions;
-    for (int i = 0; i < KAFKA_NUM_PARTITIONS; partitions.emplace_back(KAFKA_TOPICS[0], i++));
-    consumer.assign(partitions);
-    
-    // Start the runner with the original consumer
-    ConsumerRunner runner(consumer, total_messages, KAFKA_NUM_PARTITIONS);
-
-    // Produce messages so we stop the consumer
-    Producer producer(make_producer_config());
-    string payload = "Serial";
-    
-    // push 3 messages in each partition
-    for (int i = 0; i < total_messages; ++i) {
-        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(i%KAFKA_NUM_PARTITIONS).payload(payload));
-    }
-    producer.flush();
-    runner.try_join();
-    
-    // Check that we have all messages
-    REQUIRE(runner.get_messages().size() == total_messages);
-    
-    // messages should have sequential identical partition ids in groups of <messages_per_partition>
-    int expected_partition;
-    for (int i = 0; i < total_messages; ++i) {
-        if ((i % messages_per_partition) == 0) {
-            expected_partition = runner.get_messages()[i].get_partition();
-        }
-        REQUIRE(runner.get_messages()[i].get_partition() == expected_partition);
-        REQUIRE((string)runner.get_messages()[i].get_payload() == payload);
-    }
-}
 
 TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
     TopicPartitionList assignment;
@@ -119,9 +82,21 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
     
     // push 3 messages in each partition
     for (int i = 0; i < total_messages; ++i) {
-        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(i%KAFKA_NUM_PARTITIONS).payload(payload));
+        producer.produce(MessageBuilder(KAFKA_TOPICS[0])
+                            .partition(i % KAFKA_NUM_PARTITIONS)
+                            .payload(payload));
     }
-    producer.flush();
+    for (int i = 0; i < 3; ++i) {
+        try {
+            producer.flush();
+            break;
+        }
+        catch (const exception& ex) {
+            if (i == 2) {
+                throw;
+            }
+        }
+    }
     runner.try_join();
     
     // Check that we have all messages

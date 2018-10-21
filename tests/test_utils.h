@@ -1,6 +1,7 @@
 #ifndef CPPKAFKA_TEST_UTILS_H
 #define CPPKAFKA_TEST_UTILS_H
 
+#include <string>
 #include <thread>
 #include <vector>
 #include "cppkafka/consumer.h"
@@ -57,8 +58,13 @@ private:
     std::unique_ptr<PollInterface> strategy_;
 };
 
+// Misc
+
+std::string make_consumer_group_id();
+
 using PollConsumerRunner = BasicConsumerRunner<PollStrategyAdapter>;
 using ConsumerRunner = BasicConsumerRunner<Consumer>;
+
 
 #include "test_utils_impl.h"
 
