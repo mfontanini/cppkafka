@@ -564,7 +564,7 @@ void BufferedProducer<BufferType, Allocator>::flush(bool preserve_order) {
 
 template <typename BufferType, typename Allocator>
 bool BufferedProducer<BufferType, Allocator>::flush(std::chrono::milliseconds timeout,
-                                         bool preserve_order) {
+                                                    bool preserve_order) {
     if (preserve_order) {
         CounterGuard<size_t> counter_guard(flushes_in_progress_);
         QueueType flush_queue; // flush from temporary queue
@@ -572,13 +572,15 @@ bool BufferedProducer<BufferType, Allocator>::flush(std::chrono::milliseconds ti
             std::lock_guard<std::mutex> lock(mutex_);
             std::swap(messages_, flush_queue);
         }
+        auto remaining = timeout;
         auto start_time = std::chrono::high_resolution_clock::now();
-        while (!flush_queue.empty() &&
-               (std::chrono::duration_cast<std::chrono::milliseconds>
-                   (std::chrono::high_resolution_clock::now() - start_time) < timeout)) {
+        do {
             sync_produce(flush_queue.front());
             flush_queue.pop_front();
-        }
+            // calculate remaining time
+            remaining = timeout - std::chrono::duration_cast<std::chrono::milliseconds>
+                (std::chrono::high_resolution_clock::now() - start_time);
+        } while (!flush_queue.empty() && (remaining.count() > 0));
     }
     else {
         async_flush();
@@ -608,7 +610,7 @@ template <typename BufferType, typename Allocator>
 bool BufferedProducer<BufferType, Allocator>::wait_for_acks(std::chrono::milliseconds timeout) {
     auto remaining = timeout;
     auto start_time = std::chrono::high_resolution_clock::now();
-    while ((pending_acks_ > 0) && (remaining.count() > 0)) {
+    do {
         try {
             producer_.flush(remaining);
         }
@@ -625,7 +627,7 @@ bool BufferedProducer<BufferType, Allocator>::wait_for_acks(std::chrono::millise
         // calculate remaining time
         remaining = timeout - std::chrono::duration_cast<std::chrono::milliseconds>
             (std::chrono::high_resolution_clock::now() - start_time);
-    }
+    } while ((pending_acks_ > 0) && (remaining.count() > 0));
     return (pending_acks_ == 0);
 }
 
