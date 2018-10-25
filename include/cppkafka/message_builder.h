@@ -128,11 +128,19 @@ public:
     Concrete& payload(BufferType&& value);
 
     /**
-     * Sets the message's timestamp
+     * Sets the message's timestamp with a 'duration'
      *
      * \param value The timestamp to be used
      */
     Concrete& timestamp(std::chrono::milliseconds value);
+    
+    /**
+     * Sets the message's timestamp with a 'time_point'.
+     *
+     * \param value The timestamp to be used
+     */
+    template <typename Clock, typename Duration = typename Clock::duration>
+    Concrete& timestamp(std::chrono::time_point<Clock, Duration> value);
 
     /**
      * Sets the message's user data pointer
@@ -184,7 +192,8 @@ public:
     BufferType& payload();
 
     /**
-     * Gets the message's timestamp
+     * Gets the message's timestamp as a duration. If the timestamp was created with a 'time_point',
+     * the duration represents the number of milliseconds since epoch.
      */
     std::chrono::milliseconds timestamp() const;
 
@@ -292,6 +301,14 @@ C& BasicMessageBuilder<T, C>::payload(T&& value) {
 template <typename T, typename C>
 C& BasicMessageBuilder<T, C>::timestamp(std::chrono::milliseconds value) {
     timestamp_ = value;
+    return get_concrete();
+}
+
+template <typename T, typename C>
+template <typename Clock, typename Duration>
+C& BasicMessageBuilder<T, C>::timestamp(std::chrono::time_point<Clock, Duration> value)
+{
+    timestamp_ = std::chrono::duration_cast<std::chrono::milliseconds>(value.time_since_epoch());
     return get_concrete();
 }
 

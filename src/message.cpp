@@ -87,8 +87,16 @@ Message& Message::load_internal() {
 // MessageTimestamp
 
 MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
-: timestamp_(timestamp), type_(type) {
+: timestamp_(timestamp),
+  type_(type) {
 
+}
+
+template <typename Clock, typename Duration>
+MessageTimestamp::MessageTimestamp(std::chrono::time_point<Clock, Duration> timestamp, TimestampType type)
+: timestamp_(std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch())),
+  type_(type) {
+  
 }
 
 milliseconds MessageTimestamp::get_timestamp() const {

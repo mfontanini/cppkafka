@@ -164,7 +164,7 @@ TEST_CASE("simple production", "[producer]") {
     SECTION("message with key") {
         const string payload = "Hello world! 2";
         const string key = "such key";
-        const milliseconds timestamp{15};
+        auto timestamp = std::chrono::system_clock::now();
         Producer producer(config);
         producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(partition)
                                                      .key(key)
@@ -181,7 +181,7 @@ TEST_CASE("simple production", "[producer]") {
         CHECK(message.get_partition() == partition);
         CHECK(!!message.get_error() == false);
         REQUIRE(!!message.get_timestamp() == true);
-        CHECK(message.get_timestamp()->get_timestamp() == timestamp);
+        CHECK(message.get_timestamp()->get_timestamp() == std::chrono::duration_cast<milliseconds>(timestamp.time_since_epoch()));
     }
     
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
