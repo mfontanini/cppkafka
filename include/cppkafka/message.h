@@ -245,12 +245,6 @@ public:
     MessageTimestamp(std::chrono::milliseconds timestamp, TimestampType type);
     
     /**
-     * Constructs a timestamp object using a 'time_point'.
-     */
-    template <typename Clock, typename Duration = typename Clock::duration>
-    MessageTimestamp(std::chrono::time_point<Clock, Duration> timestamp, TimestampType type);
-
-    /**
      * Gets the timestamp value. If the timestamp was created with a 'time_point',
      * the duration represents the number of milliseconds since epoch.
      */
