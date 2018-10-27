@@ -46,6 +46,15 @@ Queue Queue::make_non_owning(rd_kafka_queue_t* handle) {
     return Queue(handle, NonOwningTag{});
 }
 
+Queue Queue::make_queue(rd_kafka_queue_t* handle) {
+    if (rd_kafka_version() <= RD_KAFKA_QUEUE_REFCOUNT_BUG_VERSION) {
+        return Queue::make_non_owning(handle);
+    }
+    else {
+        return Queue(handle);
+    }
+}
+
 Queue::Queue()
 : handle_(nullptr, nullptr),
   timeout_ms_(DEFAULT_TIMEOUT) {

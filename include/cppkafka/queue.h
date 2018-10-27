@@ -52,7 +52,18 @@ public:
      * \param handle The handle to be used
      */
     static Queue make_non_owning(rd_kafka_queue_t* handle);
-    
+
+    /**
+     * \brieef Creates a Queue object out of a handle.
+     *
+     * This will check what the rdkafka version is and will return either an owned
+     * queue handle or a non owned one, depending on whether the current version
+     * is >= RD_KAFKA_QUEUE_REFCOUNT_BUG_VERSION (see macros.h)
+     *
+     * \param handle The handle to be used
+     */
+    static Queue make_queue(rd_kafka_queue_t* handle);
+
     /**
      * \brief Constructs an empty queue
      *
