@@ -74,7 +74,7 @@ void error_callback_proxy(rd_kafka_t*, int err, const char *reason, void *opaque
 void throttle_callback_proxy(rd_kafka_t*, const char* broker_name,
                               int32_t broker_id, int throttle_time_ms, void *opaque) {
     KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
-     CallbackInvoker<Configuration::ThrottleCallback>
+    CallbackInvoker<Configuration::ThrottleCallback>
          ("throttle", handle->get_configuration().get_throttle_callback(), handle)
          (*handle, broker_name, broker_id, milliseconds(throttle_time_ms));
 }
@@ -100,6 +100,13 @@ int socket_callback_proxy(int domain, int type, int protocol, void* opaque) {
     return CallbackInvoker<Configuration::SocketCallback>
         ("socket", handle->get_configuration().get_socket_callback(), handle)
         (domain, type, protocol);
+}
+
+void background_event_callback_proxy(rd_kafka_t*, rd_kafka_event_t* event_ptr, void *opaque) {
+    KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
+    CallbackInvoker<Configuration::BackgroundEventCallback>
+        ("background_event", handle->get_configuration().get_background_event_callback(), handle)
+        (*handle, Event{event_ptr});
 }
 
 // Configuration
@@ -177,6 +184,14 @@ Configuration& Configuration::set_socket_callback(SocketCallback callback) {
     return *this;
 }
 
+#if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
+Configuration& Configuration::set_background_event_callback(BackgroundEventCallback callback) {
+    background_event_callback_ = move(callback);
+    rd_kafka_conf_set_background_event_cb(handle_.get(), &background_event_callback_proxy);
+    return *this;
+}
+#endif
+
 Configuration&
 Configuration::set_default_topic_configuration(TopicConfiguration config) {
     default_topic_config_ = std::move(config);
@@ -237,6 +252,11 @@ const Configuration::StatsCallback& Configuration::get_stats_callback() const {
 
 const Configuration::SocketCallback& Configuration::get_socket_callback() const {
     return socket_callback_;
+}
+
+const Configuration::BackgroundEventCallback&
+Configuration::get_background_event_callback() const {
+    return background_event_callback_;
 }
 
 const optional<TopicConfiguration>& Configuration::get_default_topic_configuration() const {
