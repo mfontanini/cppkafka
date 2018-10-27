@@ -177,6 +177,7 @@ public:
      */
     boost::optional<MessageTimestamp> get_timestamp() const;
     
+#if RD_KAFKA_VERSION >= RD_KAFKA_MESSAGE_LATENCY_SUPPORT_VERSION
     /**
      * \brief Gets the message latency in microseconds as measured from the produce() call.
      */
@@ -184,6 +185,7 @@ public:
         assert(handle_);
         return std::chrono::microseconds(rd_kafka_message_latency(handle_.get()));
     }
+#endif
 
     /**
      * \brief Indicates whether this message is valid (not null)
