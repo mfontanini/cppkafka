@@ -73,10 +73,6 @@ void* Event::get_opaque() const {
     return rd_kafka_event_opaque(handle_.get());
 }
 
-string Event::get_stats() const {
-    return rd_kafka_event_stats(handle_.get());
-}
-
 TopicPartition Event::get_topic_partition() const {
     using TopparHandle = unique_ptr<rd_kafka_topic_partition_t,
                                     decltype(&rd_kafka_topic_partition_destroy)>;

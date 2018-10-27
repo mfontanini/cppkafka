@@ -121,12 +121,16 @@ public:
      */
     void* get_opaque() const;
 
+#if RD_KAFKA_VERSION >= RD_KAFKA_EVENT_STATS_SUPPORT_VERSION
     /**
      * \brief Gets the stats in this event
      *
      * This call is only valid if the event type is RD_KAFKA_EVENT_STATS
      */
-    std::string get_stats() const;
+    std::string get_stats() const {
+        return rd_kafka_event_stats(handle_.get());
+    }
+#endif
 
     /**
      * \brief Gets the topic/partition for this event
