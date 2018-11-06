@@ -7,6 +7,7 @@ set(SOURCES
     buffer.cpp
     queue.cpp
     message.cpp
+    message_timestamp.cpp
     message_internal.cpp
     topic_partition.cpp
     topic_partition_list.cpp

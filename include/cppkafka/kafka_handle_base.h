@@ -45,6 +45,7 @@
 #include "topic_configuration.h"
 #include "configuration.h"
 #include "macros.h"
+#include "logging.h"
 
 namespace cppkafka {
 
@@ -107,6 +108,11 @@ public:
      * \param timeout The timeout to be set
      */
     void set_timeout(std::chrono::milliseconds timeout);
+    
+    /**
+     * @brief Sets the log level
+     */
+     void set_log_level(LogLevel level);
 
     /**
      * \brief Adds one or more brokers to this handle's broker list

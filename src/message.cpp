@@ -84,20 +84,14 @@ Message& Message::load_internal() {
     return *this;
 }
 
-// MessageTimestamp
-
-MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
-: timestamp_(timestamp),
-  type_(type) {
-
-}
-
-milliseconds MessageTimestamp::get_timestamp() const {
-    return timestamp_;
-}
-
-MessageTimestamp::TimestampType MessageTimestamp::get_type() const {
-    return type_;
+boost::optional<MessageTimestamp> Message::get_timestamp() const {
+    rd_kafka_timestamp_type_t type = RD_KAFKA_TIMESTAMP_NOT_AVAILABLE;
+    int64_t timestamp = rd_kafka_message_timestamp(handle_.get(), &type);
+    if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
+        return {};
+    }
+    return MessageTimestamp(std::chrono::milliseconds(timestamp),
+                            static_cast<MessageTimestamp::TimestampType>(type));
 }
 
 } // cppkafka

@@ -40,10 +40,10 @@
 #include "macros.h"
 #include "error.h"
 #include "header_list.h"
+#include "message_timestamp.h"
 
 namespace cppkafka {
 
-class MessageTimestamp;
 class Internal;
 
 /**
@@ -175,7 +175,7 @@ public:
      *
      * If calling rd_kafka_message_timestamp returns -1, then boost::none_t will be returned.
      */
-    inline boost::optional<MessageTimestamp> get_timestamp() const;
+    boost::optional<MessageTimestamp> get_timestamp() const;
     
     /**
      * \brief Gets the message latency in microseconds as measured from the produce() call.
@@ -225,49 +225,6 @@ private:
 };
 
 using MessageList = std::vector<Message>;
-
-/**
- * Represents a message's timestamp
- */
-class CPPKAFKA_API MessageTimestamp {
-public:
-    /**
-     * The timestamp type
-     */
-    enum TimestampType {
-        CREATE_TIME = RD_KAFKA_TIMESTAMP_CREATE_TIME,
-        LOG_APPEND_TIME = RD_KAFKA_TIMESTAMP_LOG_APPEND_TIME
-    };
-
-    /**
-     * Constructs a timestamp object using a 'duration'.
-     */
-    MessageTimestamp(std::chrono::milliseconds timestamp, TimestampType type);
-    
-    /**
-     * Gets the timestamp value. If the timestamp was created with a 'time_point',
-     * the duration represents the number of milliseconds since epoch.
-     */
-    std::chrono::milliseconds get_timestamp() const;
-
-    /**
-     * Gets the timestamp type
-     */
-    TimestampType get_type() const;
-private:
-    std::chrono::milliseconds timestamp_;
-    TimestampType type_;
-};
-
-boost::optional<MessageTimestamp> Message::get_timestamp() const {
-    rd_kafka_timestamp_type_t type = RD_KAFKA_TIMESTAMP_NOT_AVAILABLE;
-    int64_t timestamp = rd_kafka_message_timestamp(handle_.get(), &type);
-    if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
-        return {};
-    }
-    return MessageTimestamp(std::chrono::milliseconds(timestamp),
-                            static_cast<MessageTimestamp::TimestampType>(type));
-}
 
 } // cppkafka
 

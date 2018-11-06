@@ -52,8 +52,8 @@ Producer::Producer(Configuration config)
     if (!ptr) {
         throw Exception("Failed to create producer handle: " + string(error_buffer));
     }
-    rd_kafka_set_log_level(ptr, 7);
     set_handle(ptr);
+    set_log_level(LogLevel::LogErr);
 }
 
 void Producer::set_payload_policy(PayloadPolicy policy) {
