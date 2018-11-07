@@ -110,7 +110,7 @@ public:
     void set_timeout(std::chrono::milliseconds timeout);
     
     /**
-     * @brief Sets the log level
+     * \brief Sets the log level
      */
      void set_log_level(LogLevel level);
 
