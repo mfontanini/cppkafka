@@ -26,43 +26,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+ 
+#include "message_timestamp.h"
 
-#ifndef CPPKAFKA_H
-#define CPPKAFKA_H
+using std::chrono::milliseconds;
 
-#include <cppkafka/buffer.h>
-#include <cppkafka/clonable_ptr.h>
-#include <cppkafka/configuration.h>
-#include <cppkafka/configuration_base.h>
-#include <cppkafka/configuration_option.h>
-#include <cppkafka/consumer.h>
-#include <cppkafka/error.h>
-#include <cppkafka/exceptions.h>
-#include <cppkafka/group_information.h>
-#include <cppkafka/header.h>
-#include <cppkafka/header_list.h>
-#include <cppkafka/header_list_iterator.h>
-#include <cppkafka/kafka_handle_base.h>
-#include <cppkafka/logging.h>
-#include <cppkafka/macros.h>
-#include <cppkafka/message.h>
-#include <cppkafka/message_builder.h>
-#include <cppkafka/message_internal.h>
-#include <cppkafka/message_timestamp.h>
-#include <cppkafka/metadata.h>
-#include <cppkafka/producer.h>
-#include <cppkafka/queue.h>
-#include <cppkafka/topic.h>
-#include <cppkafka/topic_configuration.h>
-#include <cppkafka/topic_partition.h>
-#include <cppkafka/topic_partition_list.h>
-#include <cppkafka/utils/backoff_committer.h>
-#include <cppkafka/utils/backoff_performer.h>
-#include <cppkafka/utils/buffered_producer.h>
-#include <cppkafka/utils/compacted_topic_processor.h>
-#include <cppkafka/utils/consumer_dispatcher.h>
-#include <cppkafka/utils/poll_interface.h>
-#include <cppkafka/utils/poll_strategy_base.h>
-#include <cppkafka/utils/roundrobin_poll_strategy.h>
+namespace cppkafka {
 
-#endif
+MessageTimestamp::MessageTimestamp(milliseconds timestamp, TimestampType type)
+: timestamp_(timestamp),
+  type_(type) {
+
+}
+
+milliseconds MessageTimestamp::get_timestamp() const {
+    return timestamp_;
+}
+
+MessageTimestamp::TimestampType MessageTimestamp::get_type() const {
+    return type_;
+}
+
+} // cppkafka
+

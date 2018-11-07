@@ -83,6 +83,10 @@ void KafkaHandleBase::set_timeout(milliseconds timeout) {
     timeout_ms_ = timeout;
 }
 
+void KafkaHandleBase::set_log_level(LogLevel level) {
+    rd_kafka_set_log_level(handle_.get(), static_cast<int>(level));
+}
+
 void KafkaHandleBase::add_brokers(const string& brokers) {
     rd_kafka_brokers_add(handle_.get(), brokers.data());
 }
