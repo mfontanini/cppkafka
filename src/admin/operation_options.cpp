@@ -97,6 +97,10 @@ rd_kafka_AdminOptions_t* OperationOptions::get_handle() const {
     return handle_.get();
 }
 
+bool OperationOptions::is_associated_with(const KafkaHandleBase& kafka_handle) const {
+    return kafka_handle_ == &kafka_handle;
+}
+
 } // admin
 } // cppkafka
 

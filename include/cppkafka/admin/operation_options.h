@@ -100,6 +100,13 @@ public:
      * \brief Gets the internal rd_kafka_AdminOptions_t pointer
      */
     rd_kafka_AdminOptions_t* get_handle() const;
+
+    /**
+     * \brief Indicates whether this handle was constructed with the provided kafka handle
+     *
+     * \param kafka_handle The kafka handle to check association with
+     */
+    bool is_associated_with(const KafkaHandleBase& kafka_handle) const;
 private:
     using HandlePtr = std::unique_ptr<rd_kafka_AdminOptions_t,
                                       decltype(&rd_kafka_AdminOptions_destroy)>;
