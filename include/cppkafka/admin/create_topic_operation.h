@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 #include "operation.h"
+#include "compound_operation.h"
 #include "../configuration_option.h"
 
 #if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
@@ -44,6 +45,11 @@ namespace admin {
 
 class CreateTopicOperation : public Operation {
 public:
+    /**
+     * The rdkafka type used for this operation's handle
+     */
+    using HandleType = rd_kafka_NewTopic_t;
+
     /**
      * \brief Constructs an instance of a CreateTopicOperation
      *
@@ -111,6 +117,12 @@ private:
 
     HandlePtr handle_;
 };
+
+/**
+ * \brief Creates several topics
+ */
+using CreateTopicsOperation = CompoundOperation<CreateTopicOperation,
+                                                &rd_kafka_CreateTopics>;
 
 } // admin
 } // cppkafka
