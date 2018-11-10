@@ -77,7 +77,7 @@ void CreateTopicOperation::set_config(const ConfigurationOption& config_option) 
     }
 }
 
-rd_kafka_NewTopic_t* CreateTopicOperation::get_handle() const {
+CreateTopicOperation::HandleType* CreateTopicOperation::get_handle() const {
     return handle_.get();
 }
 
