@@ -95,6 +95,10 @@ public:
      */
     void set_config(const ConfigurationOption& config_option);
 
+    /**
+     * \brief Gets a pointer to the internal handle
+     */
+    rd_kafka_NewTopic_t* get_handle() const;
 private:
     void do_execute(KafkaHandleBase& kafka_handle,
                     Queue& queue,

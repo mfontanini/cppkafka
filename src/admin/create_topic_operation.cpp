@@ -77,6 +77,10 @@ void CreateTopicOperation::set_config(const ConfigurationOption& config_option) 
     }
 }
 
+rd_kafka_NewTopic_t* CreateTopicOperation::get_handle() const {
+    return handle_.get();
+}
+
 void CreateTopicOperation::do_execute(KafkaHandleBase& kafka_handle,
                                       Queue& queue,
                                       const OperationOptions* options) {
