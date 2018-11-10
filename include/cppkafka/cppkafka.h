@@ -37,6 +37,7 @@
 #include <cppkafka/configuration_option.h>
 #include <cppkafka/consumer.h>
 #include <cppkafka/error.h>
+#include <cppkafka/event.h>
 #include <cppkafka/exceptions.h>
 #include <cppkafka/group_information.h>
 #include <cppkafka/header.h>

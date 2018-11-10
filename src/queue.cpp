@@ -46,6 +46,15 @@ Queue Queue::make_non_owning(rd_kafka_queue_t* handle) {
     return Queue(handle, NonOwningTag{});
 }
 
+Queue Queue::make_queue(rd_kafka_queue_t* handle) {
+    if (rd_kafka_version() <= RD_KAFKA_QUEUE_REFCOUNT_BUG_VERSION) {
+        return Queue::make_non_owning(handle);
+    }
+    else {
+        return Queue(handle);
+    }
+}
+
 Queue::Queue()
 : handle_(nullptr, nullptr),
   timeout_ms_(DEFAULT_TIMEOUT) {
@@ -95,13 +104,20 @@ Message Queue::consume(milliseconds timeout) const {
     return Message(rd_kafka_consume_queue(handle_.get(), static_cast<int>(timeout.count())));
 }
 
-std::vector<Message> Queue::consume_batch(size_t max_batch_size) const {
+vector<Message> Queue::consume_batch(size_t max_batch_size) const {
     return consume_batch(max_batch_size, timeout_ms_, allocator<Message>());
 }
 
-std::vector<Message> Queue::consume_batch(size_t max_batch_size,
-                                          milliseconds timeout) const {
+vector<Message> Queue::consume_batch(size_t max_batch_size, milliseconds timeout) const {
     return consume_batch(max_batch_size, timeout, allocator<Message>());
+}
+
+Event Queue::next_event() const {
+    return next_event(timeout_ms_);
+}
+
+Event Queue::next_event(milliseconds timeout) const {
+    return Event(rd_kafka_queue_poll(handle_.get(), timeout.count()));
 }
 
 } //cppkafka

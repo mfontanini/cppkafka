@@ -77,7 +77,7 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
     PollConsumerRunner runner(consumer, total_messages, KAFKA_NUM_PARTITIONS);
 
     // Produce messages so we stop the consumer
-    Producer producer(make_producer_config());
+    BufferedProducer<string> producer(make_producer_config());
     string payload = "RoundRobin";
     
     // push 3 messages in each partition
@@ -86,17 +86,8 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
                             .partition(i % KAFKA_NUM_PARTITIONS)
                             .payload(payload));
     }
-    for (int i = 0; i < 3; ++i) {
-        try {
-            producer.flush();
-            break;
-        }
-        catch (const exception& ex) {
-            if (i == 2) {
-                throw;
-            }
-        }
-    }
+    producer.flush();
+
     runner.try_join();
     
     // Check that we have all messages

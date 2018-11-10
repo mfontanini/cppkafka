@@ -461,7 +461,6 @@ public:
 private:
     static void rebalance_proxy(rd_kafka_t *handle, rd_kafka_resp_err_t error,
                                 rd_kafka_topic_partition_list_t *partitions, void *opaque);
-    static Queue get_queue(rd_kafka_queue_t* handle);
     void close();
     void commit(const Message& msg, bool async);
     void commit(const TopicPartitionList* topic_partitions, bool async);
@@ -485,7 +484,7 @@ std::vector<Message, Allocator> Consumer::poll_batch(size_t max_batch_size,
                                                      const Allocator& alloc) {
     std::vector<rd_kafka_message_t*> raw_messages(max_batch_size);
     // Note that this will leak the queue when using rdkafka < 0.11.5 (see get_queue comment)
-    Queue queue(get_queue(rd_kafka_queue_get_consumer(get_handle())));
+    Queue queue = Queue::make_queue(rd_kafka_queue_get_consumer(get_handle()));
     ssize_t result = rd_kafka_consume_batch_queue(queue.get_handle(),
                                                   timeout.count(),
                                                   raw_messages.data(),

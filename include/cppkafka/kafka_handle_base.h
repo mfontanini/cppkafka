@@ -46,6 +46,7 @@
 #include "configuration.h"
 #include "macros.h"
 #include "logging.h"
+#include "queue.h"
 
 namespace cppkafka {
 
@@ -238,6 +239,19 @@ public:
      * \return A reference to the configuration object
      */ 
     const Configuration& get_configuration() const;
+
+#if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
+    /**
+     * \brief Gets the background queue
+     *
+     * This translates into a call to rd_kafka_queue_get_background
+     *
+     * \return The background queue
+     */
+    Queue get_background_queue() const {
+        return Queue::make_queue(rd_kafka_queue_get_background(handle_.get()));
+    }
+#endif
 
     /**
      * \brief Gets the length of the out queue 

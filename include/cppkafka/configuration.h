@@ -42,6 +42,7 @@
 #include "clonable_ptr.h"
 #include "configuration_base.h"
 #include "macros.h"
+#include "event.h"
 
 namespace cppkafka {
 
@@ -78,6 +79,7 @@ public:
                                            const std::string& message)>;
     using StatsCallback = std::function<void(KafkaHandleBase& handle, const std::string& json)>;
     using SocketCallback = std::function<int(int domain, int type, int protocol)>;
+    using BackgroundEventCallback = std::function<void(KafkaHandleBase& handle, Event)>;
 
     using ConfigurationBase<Configuration>::set;
     using ConfigurationBase<Configuration>::get;
@@ -142,6 +144,13 @@ public:
      */
     Configuration& set_socket_callback(SocketCallback callback);
 
+#if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
+    /**
+     * Sets the background event callback (invokes rd_kafka_conf_set_background_event_cb)
+     */
+    Configuration& set_background_event_callback(BackgroundEventCallback callback);
+#endif
+
     /** 
      * Sets the default topic configuration
      */
@@ -205,6 +214,11 @@ public:
     const SocketCallback& get_socket_callback() const;
 
     /**
+     * Gets the background event callback
+     */
+    const BackgroundEventCallback& get_background_event_callback() const;
+
+    /**
      * Gets the default topic configuration
      */
     const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
@@ -229,6 +243,7 @@ private:
     LogCallback log_callback_;
     StatsCallback stats_callback_;
     SocketCallback socket_callback_;
+    BackgroundEventCallback background_event_callback_;
 };
 
 } // cppkafka

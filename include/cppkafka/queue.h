@@ -31,6 +31,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
+#include "event.h"
 #include "macros.h"
 #include "message.h"
 
@@ -51,7 +52,18 @@ public:
      * \param handle The handle to be used
      */
     static Queue make_non_owning(rd_kafka_queue_t* handle);
-    
+
+    /**
+     * \brieef Creates a Queue object out of a handle.
+     *
+     * This will check what the rdkafka version is and will return either an owned
+     * queue handle or a non owned one, depending on whether the current version
+     * is >= RD_KAFKA_QUEUE_REFCOUNT_BUG_VERSION (see macros.h)
+     *
+     * \param handle The handle to be used
+     */
+    static Queue make_queue(rd_kafka_queue_t* handle);
+
     /**
      * \brief Constructs an empty queue
      *
@@ -130,7 +142,7 @@ public:
      * \return A message
      */
     Message consume(std::chrono::milliseconds timeout) const;
-    
+
     /**
      * \brief Consumes a batch of messages from this queue
      *
@@ -188,7 +200,23 @@ public:
      */
     std::vector<Message> consume_batch(size_t max_batch_size,
                                        std::chrono::milliseconds timeout) const;
-    
+
+    /**
+     * \brief Extracts the next message in this Queue
+     *
+     * /return The latest event, if any
+     */
+    Event next_event() const;
+
+    /**
+     * \brief Extracts the next message in this Queue
+     *
+     * \param timeout The amount of time to wait for this operation to complete
+     *
+     * /return The latest event, if any
+     */
+    Event next_event(std::chrono::milliseconds timeout) const;
+
     /**
      * Indicates whether this queue is valid (not null)
      */

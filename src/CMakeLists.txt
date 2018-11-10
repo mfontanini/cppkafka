@@ -14,6 +14,7 @@ set(SOURCES
     metadata.cpp
     group_information.cpp
     error.cpp
+    event.cpp
 
     kafka_handle_base.cpp
     producer.cpp
