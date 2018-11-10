@@ -134,6 +134,22 @@ private:
     Error error_;
 };
 
+/**
+ * Admin operation options exception
+ */
+class CPPKAFKA_API AdminOperationOptionsException : public Exception {
+public:
+    using Exception::Exception;
+};
+
+/**
+ * Admin operation exception
+ */
+class CPPKAFKA_API AdminOperationException : public Exception {
+public:
+    using Exception::Exception;
+};
+
 } // cppkafka
 
 #endif // CPPKAFKA_EXCEPTIONS_H
