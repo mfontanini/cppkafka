@@ -190,6 +190,11 @@ Configuration& Configuration::set_background_event_callback(BackgroundEventCallb
     rd_kafka_conf_set_background_event_cb(handle_.get(), &background_event_callback_proxy);
     return *this;
 }
+
+Configuration& Configuration::set_events(int events) {
+    rd_kafka_conf_set_events(handle_.get(), events);
+    return *this;
+}
 #endif
 
 Configuration&

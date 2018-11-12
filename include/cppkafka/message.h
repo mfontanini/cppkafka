@@ -187,6 +187,13 @@ public:
     }
 #endif
 
+#if (RD_KAFKA_VERSION >= RD_KAFKA_MESSAGE_STATUS_SUPPORT_VERSION)
+    rd_kafka_msg_status_t get_status() const {
+        assert(handle_);
+        return rd_kafka_message_status(handle_.get());
+    }
+#endif
+
     /**
      * \brief Indicates whether this message is valid (not null)
      */

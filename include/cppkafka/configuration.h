@@ -149,6 +149,11 @@ public:
      * Sets the background event callback (invokes rd_kafka_conf_set_background_event_cb)
      */
     Configuration& set_background_event_callback(BackgroundEventCallback callback);
+    
+    /**
+     * Sets the event mask (invokes rd_kafka_conf_set_events)
+     */
+    Configuration& set_events(int events);
 #endif
 
     /** 
