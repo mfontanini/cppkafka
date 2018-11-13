@@ -70,7 +70,6 @@ Consumer::Consumer(Configuration config)
     }
     rd_kafka_poll_set_consumer(ptr);
     set_handle(ptr);
-    set_log_level(LogLevel::LogErr);
 }
 
 Consumer::~Consumer() {
