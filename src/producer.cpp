@@ -53,7 +53,6 @@ Producer::Producer(Configuration config)
         throw Exception("Failed to create producer handle: " + string(error_buffer));
     }
     set_handle(ptr);
-    set_log_level(LogLevel::LogErr);
 }
 
 void Producer::set_payload_policy(PayloadPolicy policy) {
