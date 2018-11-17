@@ -92,6 +92,17 @@ public:
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
+    /**
+     * Constructs a buffer from an array
+     *
+     * \param data The the array to be used as input
+     */
+    template <typename T, size_t N>
+    Buffer(const std::array<T, N>& data)
+    : data_(reinterpret_cast<const DataType*>(&data[0])), size_(N * sizeof(T)) {
+        static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
+    }
+
     // Don't allow construction from temporary vectors
     template <typename T>
     Buffer(std::vector<T>&& data) = delete;
