@@ -39,7 +39,6 @@
 namespace cppkafka {
 namespace admin {
 
-
 /**
  * \brief Represents an admin operation to be applied on a kafka handle
  */
@@ -72,9 +71,31 @@ public:
      */
     void execute(KafkaHandleBase& kafka_handle, Queue& queue);
 protected:
+    template <typename T>
+    using RunOperationType = void(*)(rd_kafka_t*,
+                                  T**,
+                                  size_t,
+                                  const rd_kafka_AdminOptions_t*,
+                                  rd_kafka_queue_t*);
+
     virtual void do_execute(KafkaHandleBase& kafka_handle,
                             Queue& queue,
                             const OperationOptions* options) = 0;
+
+    template <typename T>
+    void run_operation(KafkaHandleBase& kafka_handle,
+                       Queue& queue,
+                       const OperationOptions* options,
+                       T* operation_handle,
+                       RunOperationType<T> functor) {
+        functor(
+            kafka_handle.get_handle(),
+            &operation_handle,
+            1 /*number of operations*/,
+            options ? options->get_handle() : nullptr,
+            queue.get_handle()
+        );
+    }
 };
 
 } // admin

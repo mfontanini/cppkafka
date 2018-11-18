@@ -84,14 +84,7 @@ CreateTopicOperation::HandleType* CreateTopicOperation::get_handle() const {
 void CreateTopicOperation::do_execute(KafkaHandleBase& kafka_handle,
                                       Queue& queue,
                                       const OperationOptions* options) {
-    rd_kafka_NewTopic_t* new_topic_handle = handle_.get();
-    rd_kafka_CreateTopics(
-        kafka_handle.get_handle(),
-        &new_topic_handle,
-        1 /*number of topics*/,
-        options ? options->get_handle() : nullptr,
-        queue.get_handle()
-    );
+    run_operation(kafka_handle, queue, options, handle_.get(), &rd_kafka_CreateTopics);
 }
 
 void CreateTopicOperation::init(const string& topic,

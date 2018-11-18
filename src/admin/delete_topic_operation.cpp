@@ -44,14 +44,7 @@ DeleteTopicOperation::DeleteTopicOperation(const string& name)
 void DeleteTopicOperation::do_execute(KafkaHandleBase& kafka_handle,
                                       Queue& queue,
                                       const OperationOptions* options) {
-    rd_kafka_DeleteTopic_t* delete_topic_handle = handle_.get();
-    rd_kafka_DeleteTopics(
-        kafka_handle.get_handle(),
-        &delete_topic_handle,
-        1 /*number of operations*/,
-        options ? options->get_handle() : nullptr,
-        queue.get_handle()
-    );
+    run_operation(kafka_handle, queue, options, handle_.get(), &rd_kafka_DeleteTopics);
 }
 
 DeleteTopicOperation::HandleType* DeleteTopicOperation::get_handle() const {
