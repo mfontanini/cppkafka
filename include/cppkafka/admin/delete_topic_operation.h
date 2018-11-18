@@ -74,8 +74,8 @@ private:
 /**
  * \brief Deletes several topics
  */
-using DeleteTopicsOperation = CompoundOperation<DeleteTopicOperation,
-                                                &rd_kafka_DeleteTopics>;
+using CompoundDeleteTopicOperation = CompoundOperation<DeleteTopicOperation,
+                                                       &rd_kafka_DeleteTopics>;
 
 } // admin
 } // cppkafka

@@ -121,8 +121,8 @@ private:
 /**
  * \brief Creates several topics
  */
-using CreateTopicsOperation = CompoundOperation<CreateTopicOperation,
-                                                &rd_kafka_CreateTopics>;
+using CompoundCreateTopicOperation = CompoundOperation<CreateTopicOperation,
+                                                       &rd_kafka_CreateTopics>;
 
 } // admin
 } // cppkafka
