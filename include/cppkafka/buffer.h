@@ -99,7 +99,7 @@ public:
      */
     template <typename T, size_t N>
     Buffer(const std::array<T, N>& data)
-    : data_(reinterpret_cast<const DataType*>(&data[0])), size_(N * sizeof(T)) {
+    : data_(reinterpret_cast<const DataType*>(data.data())), size_(data.size()) {
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
