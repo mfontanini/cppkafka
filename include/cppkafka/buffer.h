@@ -92,6 +92,10 @@ public:
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
+    // Don't allow construction from temporary vectors
+    template <typename T>
+    Buffer(std::vector<T>&& data) = delete;
+
     /**
      * Constructs a buffer from an array
      *
@@ -103,9 +107,9 @@ public:
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
-    // Don't allow construction from temporary vectors
-    template <typename T>
-    Buffer(std::vector<T>&& data) = delete;
+    // Don't allow construction from temporary arrays
+    template <typename T, size_t N>
+    Buffer(std::array<T, N>&& data) = delete;
 
     /**
      * \brief Construct a buffer from a const string ref
