@@ -31,6 +31,7 @@
 #define CPPKAFKA_BUFFER_H
 
 #include <cstddef>
+#include <array>
 #include <vector>
 #include <iosfwd>
 #include <algorithm>
