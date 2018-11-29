@@ -147,6 +147,12 @@ public:
     rd_kafka_headers_t* get_handle() const;
     
     /**
+     * \brief Clone the underlying header list handle.
+     * \return The handle.
+     */
+    rd_kafka_headers_t* clone_handle() const;
+    
+    /**
      * \brief Get the underlying header list handle and release its ownership.
      * \return The handle.
      * \warning After this call, the HeaderList becomes invalid.
@@ -159,10 +165,14 @@ public:
      */
     explicit operator bool() const;
     
+    /**
+     * \brief Indicates if this list owns the underlying handle or not.
+     */
+    bool is_owning() const;
+    
 private:
     struct NonOwningTag { };
     static void dummy_deleter(rd_kafka_headers_t*) {}
-    static rd_kafka_headers_t* dummy_cloner(const rd_kafka_headers_t* handle) { return const_cast<rd_kafka_headers_t*>(handle); }
     
     using HandlePtr = ClonablePtr<rd_kafka_headers_t, decltype(&rd_kafka_headers_destroy),
                                   decltype(&rd_kafka_headers_copy)>;
@@ -193,7 +203,7 @@ bool operator!=(const HeaderList<HeaderType>& lhs, const HeaderList<HeaderType> 
 
 template <typename HeaderType>
 HeaderList<HeaderType> HeaderList<HeaderType>::make_non_owning(rd_kafka_headers_t* handle) {
-    return HeaderList(handle, NonOwningTag());
+    return handle ? HeaderList(handle, NonOwningTag()) : HeaderList();
 }
 
 template <typename HeaderType>
@@ -210,14 +220,16 @@ HeaderList<HeaderType>::HeaderList(size_t reserve)
 
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(rd_kafka_headers_t* handle)
-: handle_(handle, &rd_kafka_headers_destroy, &rd_kafka_headers_copy) { //if we own the header list, we clone it on copy
-
+: handle_(handle,
+          handle ? &rd_kafka_headers_destroy : nullptr,
+          handle ? &rd_kafka_headers_copy : nullptr) { //if we own the header list, we clone it on copy
 }
 
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(rd_kafka_headers_t* handle, NonOwningTag)
-: handle_(HandlePtr(handle, &dummy_deleter, &dummy_cloner)) { //if we don't own the header list, we forward the handle on copy.
-
+: handle_(handle,
+          handle ? &dummy_deleter : nullptr,
+          nullptr) { //if we don't own the header list, we forward the handle on copy.
 }
 
 // Methods
@@ -254,7 +266,8 @@ HeaderType HeaderList<HeaderType>::at(size_t index) const {
     if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
         throw Exception(error.to_string());
     }
-    return HeaderType(name, BufferType(value, size));
+    //Use 'Buffer' to implicitly convert to 'BufferType'
+    return HeaderType(name, Buffer(value, size));
 }
 
 template <typename HeaderType>
@@ -269,8 +282,7 @@ HeaderType HeaderList<HeaderType>::back() const {
 
 template <typename HeaderType>
 size_t HeaderList<HeaderType>::size() const {
-    assert(handle_);
-    return rd_kafka_header_cnt(handle_.get());
+    return handle_ ? rd_kafka_header_cnt(handle_.get()) : 0;
 }
 
 template <typename HeaderType>
@@ -281,7 +293,6 @@ bool HeaderList<HeaderType>::empty() const {
 template <typename HeaderType>
 typename HeaderList<HeaderType>::Iterator
 HeaderList<HeaderType>::begin() const {
-    assert(handle_);
     if (empty()) {
         return end();
     }
@@ -291,13 +302,17 @@ HeaderList<HeaderType>::begin() const {
 template <typename HeaderType>
 typename HeaderList<HeaderType>::Iterator
 HeaderList<HeaderType>::end() const {
-    assert(handle_);
     return Iterator(make_non_owning(handle_.get()), size());
 }
 
 template <typename HeaderType>
 rd_kafka_headers_t* HeaderList<HeaderType>::get_handle() const {
     return handle_.get();
+}
+
+template <typename HeaderType>
+rd_kafka_headers_t* HeaderList<HeaderType>::clone_handle() const {
+    return handle_.clone();
 }
 
 template <typename HeaderType>
@@ -308,6 +323,11 @@ rd_kafka_headers_t* HeaderList<HeaderType>::release_handle() {
 template <typename HeaderType>
 HeaderList<HeaderType>::operator bool() const {
     return static_cast<bool>(handle_);
+}
+
+template <typename HeaderType>
+bool HeaderList<HeaderType>::is_owning() const {
+    return handle_.get_deleter() != &dummy_deleter;
 }
 
 } //namespace cppkafka

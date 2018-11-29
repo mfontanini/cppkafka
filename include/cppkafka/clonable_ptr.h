@@ -60,9 +60,9 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr(const ClonablePtr& rhs)
-    : handle_(rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
-                            std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter())),
-      cloner_(rhs.cloner_) {
+    : handle_(rhs.get_cloner() ? std::unique_ptr<T, Deleter>(rhs.clone(), rhs.get_deleter()) :
+                                 std::unique_ptr<T, Deleter>(rhs.get(), rhs.get_deleter())),
+      cloner_(rhs.get_cloner()) {
 
     }
 
@@ -72,11 +72,11 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr& operator=(const ClonablePtr& rhs) {
-        if (this == &rhs) {
-            return *this;
+        if (this != &rhs) {
+            handle_ = rhs.get_cloner() ? std::unique_ptr<T, Deleter>(rhs.clone(), rhs.get_deleter()) :
+                                         std::unique_ptr<T, Deleter>(rhs.get(), rhs.get_deleter());
+            cloner_ = rhs.get_cloner();
         }
-        handle_ = rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
-                                std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter());
         return *this;
     }
 
@@ -92,10 +92,38 @@ public:
     }
     
     /**
+     * \brief Clones the internal pointer using the specified cloner function.
+     */
+    T* clone() const {
+        return cloner_ ? cloner_(handle_.get()) : handle_.get();
+    }
+    
+    /**
      * \brief Releases ownership of the internal pointer
      */
     T* release() {
         return handle_.release();
+    }
+    
+    /**
+     * \brief Reset the internal pointer to a new one
+     */
+    void reset(T* ptr) {
+        handle_.reset(ptr);
+    }
+    
+    /**
+     * \brief Get the deleter
+     */
+    const Deleter& get_deleter() const {
+        return handle_.get_deleter();
+    }
+    
+    /**
+     * \brief Get the cloner
+     */
+    const Cloner& get_cloner() const {
+        return cloner_;
     }
     
     /**
