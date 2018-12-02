@@ -81,6 +81,11 @@ public:
             throw Exception("Invalid buffer configuration");
         }
     }
+    
+    template <typename Iter>
+    Buffer(const Iter first, Iter last)
+    : Buffer(&*first, std::distance(first, last)) {
+    }
 
     /**
      * Constructs a buffer from a vector

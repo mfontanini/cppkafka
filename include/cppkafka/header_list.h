@@ -260,8 +260,7 @@ HeaderType HeaderList<HeaderType>::at(size_t index) const {
     if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
         throw Exception(error.to_string());
     }
-    //Use 'Buffer' to implicitly convert to 'BufferType'
-    return HeaderType(name, Buffer(value, size));
+    return HeaderType(name, BufferType(value, value + size));
 }
 
 template <typename HeaderType>
