@@ -92,13 +92,6 @@ public:
     }
     
     /**
-     * \brief Clones the internal pointer using the specified cloner function.
-     */
-    T* clone() const {
-        return cloner_ ? cloner_(handle_.get()) : handle_.get();
-    }
-    
-    /**
      * \brief Releases ownership of the internal pointer
      */
     T* release() {
@@ -133,6 +126,13 @@ public:
         return static_cast<bool>(handle_);
     }
 private:
+    /**
+     * \brief Clones the internal pointer using the specified cloner function.
+     */
+    T* clone() const {
+        return cloner_ ? cloner_(handle_.get()) : handle_.get();
+    }
+    
     std::unique_ptr<T, Deleter> handle_;
     Cloner cloner_;
 };

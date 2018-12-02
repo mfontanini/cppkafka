@@ -147,12 +147,6 @@ public:
     rd_kafka_headers_t* get_handle() const;
     
     /**
-     * \brief Clone the underlying header list handle.
-     * \return The handle.
-     */
-    rd_kafka_headers_t* clone_handle() const;
-    
-    /**
      * \brief Get the underlying header list handle and release its ownership.
      * \return The handle.
      * \warning After this call, the HeaderList becomes invalid.
@@ -308,11 +302,6 @@ HeaderList<HeaderType>::end() const {
 template <typename HeaderType>
 rd_kafka_headers_t* HeaderList<HeaderType>::get_handle() const {
     return handle_.get();
-}
-
-template <typename HeaderType>
-rd_kafka_headers_t* HeaderList<HeaderType>::clone_handle() const {
-    return handle_.clone();
 }
 
 template <typename HeaderType>
