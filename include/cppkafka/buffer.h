@@ -82,6 +82,12 @@ public:
         }
     }
     
+    /**
+     * Constructs a buffer from two iterators in the range [first,last)
+     *
+     * \param first An iterator to the start of data
+     * \param last An iterator to the end of data (not included)
+     */
     template <typename Iter>
     Buffer(const Iter first, Iter last)
     : Buffer(&*first, std::distance(first, last)) {
