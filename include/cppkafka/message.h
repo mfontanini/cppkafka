@@ -129,23 +129,13 @@ public:
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     /**
      * \brief Sets the message's header list.
-     * \note After this call, the Message will take ownership of the header list.
+     * \note This calls rd_kafka_message_set_headers.
      */
     void set_header_list(const HeaderListType& headers) {
         assert(handle_);
-        assert(!headers.is_owning());
-        rd_kafka_message_set_headers(handle_.get(), headers.get_handle());
-        header_list_ = HeaderListType::make_non_owning(headers.get_handle());
-    }
-    
-    /**
-     * \brief Sets the message's header list.
-     * \note After this call, the Message will take ownership of the header list.
-     */
-    void set_header_list(HeaderListType&& headers) {
-        assert(handle_);
-        rd_kafka_message_set_headers(handle_.get(), headers.get_handle());
-        header_list_ = HeaderListType::make_non_owning(headers.release_handle());
+        rd_kafka_headers_t* handle_copy = rd_kafka_headers_copy(headers.get_handle());
+        rd_kafka_message_set_headers(handle_.get(), handle_copy);
+        header_list_ = HeaderListType::make_non_owning(handle_copy);
     }
     
     /**

@@ -159,11 +159,6 @@ public:
      */
     explicit operator bool() const;
     
-    /**
-     * \brief Indicates if this list owns the underlying handle or not.
-     */
-    bool is_owning() const;
-    
 private:
     struct NonOwningTag { };
     static void dummy_deleter(rd_kafka_headers_t*) {}
@@ -311,11 +306,6 @@ rd_kafka_headers_t* HeaderList<HeaderType>::release_handle() {
 template <typename HeaderType>
 HeaderList<HeaderType>::operator bool() const {
     return static_cast<bool>(handle_);
-}
-
-template <typename HeaderType>
-bool HeaderList<HeaderType>::is_owning() const {
-    return handle_.get_deleter() != &dummy_deleter;
 }
 
 } //namespace cppkafka
