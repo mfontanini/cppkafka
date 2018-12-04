@@ -192,7 +192,7 @@ bool operator!=(const HeaderList<HeaderType>& lhs, const HeaderList<HeaderType> 
 
 template <typename HeaderType>
 HeaderList<HeaderType> HeaderList<HeaderType>::make_non_owning(rd_kafka_headers_t* handle) {
-    return handle ? HeaderList(handle, NonOwningTag()) : HeaderList();
+    return HeaderList(handle, NonOwningTag());
 }
 
 template <typename HeaderType>
@@ -204,21 +204,19 @@ HeaderList<HeaderType>::HeaderList()
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(size_t reserve)
 : handle_(rd_kafka_headers_new(reserve), &rd_kafka_headers_destroy, &rd_kafka_headers_copy) {
-
+    assert(reserve);
 }
 
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(rd_kafka_headers_t* handle)
-: handle_(handle,
-          handle ? &rd_kafka_headers_destroy : nullptr,
-          handle ? &rd_kafka_headers_copy : nullptr) { //if we own the header list, we clone it on copy
+: handle_(handle, &rd_kafka_headers_destroy, &rd_kafka_headers_copy) { //if we own the header list, we clone it on copy
+    assert(handle);
 }
 
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(rd_kafka_headers_t* handle, NonOwningTag)
-: handle_(handle,
-          handle ? &dummy_deleter : nullptr,
-          nullptr) { //if we don't own the header list, we forward the handle on copy.
+: handle_(handle, &dummy_deleter, nullptr) { //if we don't own the header list, we forward the handle on copy.
+    assert(handle);
 }
 
 // Methods

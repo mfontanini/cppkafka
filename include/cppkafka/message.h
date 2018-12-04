@@ -133,6 +133,9 @@ public:
      */
     void set_header_list(const HeaderListType& headers) {
         assert(handle_);
+        if (!headers) {
+            return; //nothing to set
+        }
         rd_kafka_headers_t* handle_copy = rd_kafka_headers_copy(headers.get_handle());
         rd_kafka_message_set_headers(handle_.get(), handle_copy);
         header_list_ = HeaderListType::make_non_owning(handle_copy);

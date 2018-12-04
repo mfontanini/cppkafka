@@ -60,7 +60,7 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr(const ClonablePtr& rhs)
-    : handle_(std::unique_ptr<T, Deleter>(rhs.clone(), rhs.get_deleter())),
+    : handle_(std::unique_ptr<T, Deleter>(rhs.try_clone(), rhs.get_deleter())),
       cloner_(rhs.get_cloner()) {
 
     }
@@ -72,7 +72,7 @@ public:
      */
     ClonablePtr& operator=(const ClonablePtr& rhs) {
         if (this != &rhs) {
-            handle_ = std::unique_ptr<T, Deleter>(rhs.clone(), rhs.get_deleter());
+            handle_ = std::unique_ptr<T, Deleter>(rhs.try_clone(), rhs.get_deleter());
             cloner_ = rhs.get_cloner();
         }
         return *this;
@@ -124,10 +124,7 @@ public:
         return static_cast<bool>(handle_);
     }
 private:
-    /**
-     * \brief Clones the internal pointer using the specified cloner function.
-     */
-    T* clone() const {
+    T* try_clone() const {
         return cloner_ ? cloner_(get()) : get();
     }
     

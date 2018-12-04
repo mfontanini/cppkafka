@@ -245,8 +245,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
   key_(Buffer(message.get_key().get_data(), message.get_key().get_size())),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
   header_list_(message.get_header_list() ?
-               rd_kafka_headers_copy(message.get_header_list().get_handle()) :
-               nullptr), //copy and assume ownership
+               rd_kafka_headers_copy(message.get_header_list().get_handle()) : nullptr), //copy headers
 #endif
   payload_(Buffer(message.get_payload().get_data(), message.get_payload().get_size())),
   timestamp_(message.get_timestamp() ? message.get_timestamp().get().get_timestamp() :
@@ -263,8 +262,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const BasicMessageBuilder<U, V>& 
   partition_(rhs.partition()),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
   header_list_(rhs.header_list() ?
-               rd_kafka_headers_copy(rhs.header_list().get_handle()) :
-               nullptr), //copy headers
+               rd_kafka_headers_copy(rhs.header_list().get_handle()) : nullptr), //copy headers
 #endif
   timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
@@ -279,7 +277,8 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(BasicMessageBuilder<U, V>&& rhs)
 : topic_(rhs.topic()),
   partition_(rhs.partition()),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
-  header_list_(rhs.header_list().release_handle()), //assume ownership
+  header_list_(rhs.header_list() ?
+               rhs.header_list().release_handle() : nullptr), //assume header ownership
 #endif
   timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
@@ -476,15 +475,16 @@ public:
     
 
     MessageBuilder clone() const {
-        return std::move(MessageBuilder(topic()).
-            key(Buffer(key().get_data(), key().get_size())).
+        MessageBuilder builder(topic());
+        builder.key(Buffer(key().get_data(), key().get_size())).
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
             headers(header_list()).
 #endif
             payload(Buffer(payload().get_data(), payload().get_size())).
             timestamp(timestamp()).
             user_data(user_data()).
-            internal(internal()));
+            internal(internal());
+        return builder;
     }
 };
 
