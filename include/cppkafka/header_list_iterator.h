@@ -154,7 +154,7 @@ private:
     HeaderIterator(HeaderListType headers,
                    size_t index)
     : header_list_(std::move(headers)),
-      header_(index == header_list_.size() ? HeaderType() : header_list_.at(index)),
+      header_(header_list_.empty() ? HeaderType() : header_list_.at(index)),
       index_(index) {
     }
     

@@ -245,7 +245,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
   key_(Buffer(message.get_key().get_data(), message.get_key().get_size())),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
   header_list_(message.get_header_list() ?
-               rd_kafka_headers_copy(message.get_header_list().get_handle()) : nullptr), //copy headers
+               HeaderListType(rd_kafka_headers_copy(message.get_header_list().get_handle())) : HeaderListType()), //copy headers
 #endif
   payload_(Buffer(message.get_payload().get_data(), message.get_payload().get_size())),
   timestamp_(message.get_timestamp() ? message.get_timestamp().get().get_timestamp() :
@@ -262,7 +262,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const BasicMessageBuilder<U, V>& 
   partition_(rhs.partition()),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
   header_list_(rhs.header_list() ?
-               rd_kafka_headers_copy(rhs.header_list().get_handle()) : nullptr), //copy headers
+               HeaderListType(rd_kafka_headers_copy(rhs.header_list().get_handle())) : HeaderListType()), //copy headers
 #endif
   timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
@@ -278,7 +278,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(BasicMessageBuilder<U, V>&& rhs)
   partition_(rhs.partition()),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
   header_list_(rhs.header_list() ?
-               rhs.header_list().release_handle() : nullptr), //assume header ownership
+               HeaderListType(rhs.header_list().release_handle()) : HeaderListType()), //assume header ownership
 #endif
   timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
