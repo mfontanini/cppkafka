@@ -89,7 +89,7 @@ public:
      * \param last An iterator to the end of data (not included)
      */
     template <typename Iter>
-    Buffer(const Iter first, Iter last)
+    Buffer(const Iter first, const Iter last)
     : Buffer(&*first, std::distance(first, last)) {
     }
 

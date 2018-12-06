@@ -244,6 +244,9 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
 : topic_(message.get_topic()),
   key_(Buffer(message.get_key().get_data(), message.get_key().get_size())),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+  //Here we must copy explicitly the Message headers since they are non-owning and this class
+  //assumes full ownership. Otherwise we will be holding an invalid handle when Message goes
+  //out of scope and rdkafka frees its resource.
   header_list_(message.get_header_list() ?
                HeaderListType(rd_kafka_headers_copy(message.get_header_list().get_handle())) : HeaderListType()), //copy headers
 #endif
@@ -261,8 +264,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(const BasicMessageBuilder<U, V>& 
 : topic_(rhs.topic()),
   partition_(rhs.partition()),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
-  header_list_(rhs.header_list() ?
-               HeaderListType(rd_kafka_headers_copy(rhs.header_list().get_handle())) : HeaderListType()), //copy headers
+  header_list_(rhs.header_list()), //copy headers
 #endif
   timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
@@ -277,8 +279,7 @@ BasicMessageBuilder<T, C>::BasicMessageBuilder(BasicMessageBuilder<U, V>&& rhs)
 : topic_(rhs.topic()),
   partition_(rhs.partition()),
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
-  header_list_(rhs.header_list() ?
-               HeaderListType(rhs.header_list().release_handle()) : HeaderListType()), //assume header ownership
+  header_list_(std::move(header_list())), //assume header ownership
 #endif
   timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
