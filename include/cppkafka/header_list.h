@@ -306,15 +306,13 @@ bool HeaderList<HeaderType>::empty() const {
 template <typename HeaderType>
 typename HeaderList<HeaderType>::Iterator
 HeaderList<HeaderType>::begin() const {
-    return empty() ? Iterator(HeaderList<HeaderType>(), 0) :
-                     Iterator(make_non_owning(handle_.get()), 0);
+    return Iterator(*this, 0);
 }
 
 template <typename HeaderType>
 typename HeaderList<HeaderType>::Iterator
 HeaderList<HeaderType>::end() const {
-    return empty() ? Iterator(HeaderList<HeaderType>(), size()) :
-                     Iterator(make_non_owning(handle_.get()), size());
+    return Iterator(*this, size());
 }
 
 template <typename HeaderType>

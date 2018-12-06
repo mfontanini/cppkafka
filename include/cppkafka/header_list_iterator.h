@@ -151,10 +151,9 @@ public:
     }
     
 private:
-    HeaderIterator(HeaderListType headers,
+    HeaderIterator(const HeaderListType& headers,
                    size_t index)
-    : header_list_(std::move(headers)),
-      header_(header_list_.empty() ? HeaderType() : header_list_.at(index)),
+    : header_list_(headers),
       index_(index) {
     }
     
@@ -169,7 +168,7 @@ private:
                                      other.get_value().get_size()));
     }
     
-    HeaderListType header_list_;
+    const HeaderListType& header_list_;
     HeaderType header_;
     size_t index_;
 };
