@@ -70,7 +70,7 @@ void Producer::produce(const MessageBuilder& builder) {
 }
 
 void Producer::produce(MessageBuilder&& builder) {
-    do_produce(builder, MessageBuilder::HeaderListType(builder.header_list().release_handle())); //move headers
+    do_produce(builder, std::move(builder.header_list())); //move headers
 }
 
 void Producer::produce(const Message& message) {

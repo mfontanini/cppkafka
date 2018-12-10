@@ -70,7 +70,12 @@ public:
      */
     template <typename OtherBufferType, typename OtherConcrete>
     BasicMessageBuilder(const BasicMessageBuilder<OtherBufferType, OtherConcrete>& rhs);
+    template <typename OtherBufferType, typename OtherConcrete>
+    BasicMessageBuilder(BasicMessageBuilder<OtherBufferType, OtherConcrete>&& rhs);
 
+    /**
+     * Default copy and move constructors and assignment operators
+     */
     BasicMessageBuilder(BasicMessageBuilder&&) = default;
     BasicMessageBuilder(const BasicMessageBuilder&) = default;
     BasicMessageBuilder& operator=(BasicMessageBuilder&&) = default;
@@ -106,11 +111,13 @@ public:
 
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     /**
-     *  Add a header to the message
+     *  Add a header(s) to the message
      *
      * \param header The header to be used
      */
     Concrete& header(const HeaderType& header);
+    Concrete& headers(const HeaderListType& headers);
+    Concrete& headers(HeaderListType&& headers);
 #endif
     
     /**
@@ -208,10 +215,12 @@ public:
     Message::InternalPtr internal() const;
     Concrete& internal(Message::InternalPtr internal);
     
-private:
+protected:
     void construct_buffer(BufferType& lhs, const BufferType& rhs);
-    Concrete& get_concrete();
 
+private:
+    Concrete& get_concrete();
+    
     std::string topic_;
     int partition_{-1};
     BufferType key_;
@@ -234,21 +243,49 @@ template <typename T, typename C>
 BasicMessageBuilder<T, C>::BasicMessageBuilder(const Message& message)
 : topic_(message.get_topic()),
   key_(Buffer(message.get_key().get_data(), message.get_key().get_size())),
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+  //Here we must copy explicitly the Message headers since they are non-owning and this class
+  //assumes full ownership. Otherwise we will be holding an invalid handle when Message goes
+  //out of scope and rdkafka frees its resource.
+  header_list_(message.get_header_list() ?
+               HeaderListType(rd_kafka_headers_copy(message.get_header_list().get_handle())) : HeaderListType()), //copy headers
+#endif
   payload_(Buffer(message.get_payload().get_data(), message.get_payload().get_size())),
   timestamp_(message.get_timestamp() ? message.get_timestamp().get().get_timestamp() :
                                        std::chrono::milliseconds(0)),
   user_data_(message.get_user_data()),
   internal_(message.internal()) {
+  
 }
 
 template <typename T, typename C>
 template <typename U, typename V>
 BasicMessageBuilder<T, C>::BasicMessageBuilder(const BasicMessageBuilder<U, V>& rhs)
-: topic_(rhs.topic()), partition_(rhs.partition()), timestamp_(rhs.timestamp()),
+: topic_(rhs.topic()),
+  partition_(rhs.partition()),
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+  header_list_(rhs.header_list()), //copy headers
+#endif
+  timestamp_(rhs.timestamp()),
   user_data_(rhs.user_data()),
   internal_(rhs.internal()) {
     get_concrete().construct_buffer(key_, rhs.key());
     get_concrete().construct_buffer(payload_, rhs.payload());
+}
+
+template <typename T, typename C>
+template <typename U, typename V>
+BasicMessageBuilder<T, C>::BasicMessageBuilder(BasicMessageBuilder<U, V>&& rhs)
+: topic_(rhs.topic()),
+  partition_(rhs.partition()),
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+  header_list_(std::move(header_list())), //assume header ownership
+#endif
+  timestamp_(rhs.timestamp()),
+  user_data_(rhs.user_data()),
+  internal_(rhs.internal()) {
+    get_concrete().construct_buffer(key_, std::move(rhs.key()));
+    get_concrete().construct_buffer(payload_, std::move(rhs.payload()));
 }
 
 template <typename T, typename C>
@@ -282,6 +319,18 @@ C& BasicMessageBuilder<T, C>::header(const HeaderType& header) {
         header_list_ = HeaderListType(5);
     }
     header_list_.add(header);
+    return get_concrete();
+}
+
+template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::headers(const HeaderListType& headers) {
+    header_list_ = headers;
+    return get_concrete();
+}
+
+template <typename T, typename C>
+C& BasicMessageBuilder<T, C>::headers(HeaderListType&& headers) {
+    header_list_ = std::move(headers);
     return get_concrete();
 }
 #endif
@@ -410,7 +459,7 @@ C& BasicMessageBuilder<T, C>::get_concrete() {
 class MessageBuilder : public BasicMessageBuilder<Buffer, MessageBuilder> {
 public:
     using Base = BasicMessageBuilder<Buffer, MessageBuilder>;
-    using BasicMessageBuilder::BasicMessageBuilder;
+    using BasicMessageBuilder<Buffer, MessageBuilder>::BasicMessageBuilder;
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     using HeaderType = Base::HeaderType;
     using HeaderListType = Base::HeaderListType;
@@ -421,17 +470,22 @@ public:
     }
 
     template <typename T>
-    void construct_buffer(Buffer& lhs, const T& rhs) {
-        lhs = Buffer(rhs);
+    void construct_buffer(Buffer& lhs, T&& rhs) {
+        lhs = Buffer(std::forward<T>(rhs));
     }
     
+
     MessageBuilder clone() const {
-        return std::move(MessageBuilder(topic()).
-                             key(Buffer(key().get_data(), key().get_size())).
-                             payload(Buffer(payload().get_data(), payload().get_size())).
-                             timestamp(timestamp()).
-                             user_data(user_data()).
-                             internal(internal()));
+        MessageBuilder builder(topic());
+        builder.key(Buffer(key().get_data(), key().get_size())).
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+            headers(header_list()).
+#endif
+            payload(Buffer(payload().get_data(), payload().get_size())).
+            timestamp(timestamp()).
+            user_data(user_data()).
+            internal(internal());
+        return builder;
     }
 };
 
@@ -441,7 +495,12 @@ public:
 template <typename T>
 class ConcreteMessageBuilder : public BasicMessageBuilder<T, ConcreteMessageBuilder<T>> {
 public:
+    using Base = BasicMessageBuilder<T, ConcreteMessageBuilder<T>>;
     using BasicMessageBuilder<T, ConcreteMessageBuilder<T>>::BasicMessageBuilder;
+#if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
+    using HeaderType = typename Base::HeaderType;
+    using HeaderListType = typename Base::HeaderListType;
+#endif
 };
 
 } // cppkafka

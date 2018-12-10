@@ -60,9 +60,8 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr(const ClonablePtr& rhs)
-    : handle_(rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
-                            std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter())),
-      cloner_(rhs.cloner_) {
+    : handle_(std::unique_ptr<T, Deleter>(rhs.try_clone(), rhs.get_deleter())),
+      cloner_(rhs.get_cloner()) {
 
     }
 
@@ -72,11 +71,10 @@ public:
      * \param rhs The pointer to be copied
      */
     ClonablePtr& operator=(const ClonablePtr& rhs) {
-        if (this == &rhs) {
-            return *this;
+        if (this != &rhs) {
+            handle_ = std::unique_ptr<T, Deleter>(rhs.try_clone(), rhs.get_deleter());
+            cloner_ = rhs.get_cloner();
         }
-        handle_ = rhs.cloner_ ? std::unique_ptr<T, Deleter>(rhs.cloner_(rhs.handle_.get()), rhs.handle_.get_deleter()) :
-                                std::unique_ptr<T, Deleter>(rhs.handle_.get(), rhs.handle_.get_deleter());
         return *this;
     }
 
@@ -99,12 +97,37 @@ public:
     }
     
     /**
+     * \brief Reset the internal pointer to a new one
+     */
+    void reset(T* ptr) {
+        handle_.reset(ptr);
+    }
+    
+    /**
+     * \brief Get the deleter
+     */
+    const Deleter& get_deleter() const {
+        return handle_.get_deleter();
+    }
+    
+    /**
+     * \brief Get the cloner
+     */
+    const Cloner& get_cloner() const {
+        return cloner_;
+    }
+    
+    /**
      * \brief Indicates whether this ClonablePtr instance is valid (not null)
      */
     explicit operator bool() const {
         return static_cast<bool>(handle_);
     }
 private:
+    T* try_clone() const {
+        return cloner_ ? cloner_(get()) : get();
+    }
+    
     std::unique_ptr<T, Deleter> handle_;
     Cloner cloner_;
 };

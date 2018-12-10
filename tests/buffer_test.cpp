@@ -39,7 +39,11 @@ TEST_CASE("construction", "[buffer]") {
     const string str_data = "Hello world!";
     const vector<uint8_t> data(str_data.begin(), str_data.end());
     const Buffer buffer(data);
+    const Buffer buffer2(data.begin(), data.end());
+    const Buffer buffer3(str_data.data(), str_data.data() + str_data.size());
     CHECK(str_data == buffer);
+    CHECK(buffer == buffer2);
+    CHECK(buffer == buffer3);
 }
 
 

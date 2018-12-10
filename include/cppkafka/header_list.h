@@ -51,6 +51,9 @@ namespace cppkafka {
 template <typename HeaderType>
 class HeaderList {
 public:
+    template <typename OtherHeaderType>
+    friend class HeaderList;
+    
     using BufferType = typename HeaderType::ValueType;
     using Iterator = HeaderIterator<HeaderType>;
     /**
@@ -74,6 +77,16 @@ public:
      * \param handle The header list handle.
      */
     explicit HeaderList(rd_kafka_headers_t* handle);
+    
+    /**
+     * \brief Create a header list from another header list type
+     * \param other The other list
+     */
+    template <typename OtherHeaderType>
+    HeaderList(const HeaderList<OtherHeaderType>& other);
+
+    template <typename OtherHeaderType>
+    HeaderList(HeaderList<OtherHeaderType>&& other);
     
     /**
      * \brief Add a header to the list. This translates to rd_kafka_header_add().
@@ -162,7 +175,6 @@ public:
 private:
     struct NonOwningTag { };
     static void dummy_deleter(rd_kafka_headers_t*) {}
-    static rd_kafka_headers_t* dummy_cloner(const rd_kafka_headers_t* handle) { return const_cast<rd_kafka_headers_t*>(handle); }
     
     using HandlePtr = ClonablePtr<rd_kafka_headers_t, decltype(&rd_kafka_headers_destroy),
                                   decltype(&rd_kafka_headers_copy)>;
@@ -205,18 +217,32 @@ HeaderList<HeaderType>::HeaderList()
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(size_t reserve)
 : handle_(rd_kafka_headers_new(reserve), &rd_kafka_headers_destroy, &rd_kafka_headers_copy) {
-
+    assert(reserve);
 }
 
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(rd_kafka_headers_t* handle)
 : handle_(handle, &rd_kafka_headers_destroy, &rd_kafka_headers_copy) { //if we own the header list, we clone it on copy
-
+    assert(handle);
 }
 
 template <typename HeaderType>
 HeaderList<HeaderType>::HeaderList(rd_kafka_headers_t* handle, NonOwningTag)
-: handle_(HandlePtr(handle, &dummy_deleter, &dummy_cloner)) { //if we don't own the header list, we forward the handle on copy.
+: handle_(handle, &dummy_deleter, nullptr) { //if we don't own the header list, we forward the handle on copy.
+    assert(handle);
+}
+
+template <typename HeaderType>
+template <typename OtherHeaderType>
+HeaderList<HeaderType>::HeaderList(const HeaderList<OtherHeaderType>& other)
+: handle_(other.handle_) {
+
+}
+
+template <typename HeaderType>
+template <typename OtherHeaderType>
+HeaderList<HeaderType>::HeaderList(HeaderList<OtherHeaderType>&& other)
+: handle_(std::move(other.handle_)) {
 
 }
 
@@ -254,7 +280,7 @@ HeaderType HeaderList<HeaderType>::at(size_t index) const {
     if (error != RD_KAFKA_RESP_ERR_NO_ERROR) {
         throw Exception(error.to_string());
     }
-    return HeaderType(name, BufferType(value, size));
+    return HeaderType(name, BufferType(value, value + size));
 }
 
 template <typename HeaderType>
@@ -269,8 +295,7 @@ HeaderType HeaderList<HeaderType>::back() const {
 
 template <typename HeaderType>
 size_t HeaderList<HeaderType>::size() const {
-    assert(handle_);
-    return rd_kafka_header_cnt(handle_.get());
+    return handle_ ? rd_kafka_header_cnt(handle_.get()) : 0;
 }
 
 template <typename HeaderType>
@@ -281,18 +306,13 @@ bool HeaderList<HeaderType>::empty() const {
 template <typename HeaderType>
 typename HeaderList<HeaderType>::Iterator
 HeaderList<HeaderType>::begin() const {
-    assert(handle_);
-    if (empty()) {
-        return end();
-    }
-    return Iterator(make_non_owning(handle_.get()), 0);
+    return Iterator(*this, 0);
 }
 
 template <typename HeaderType>
 typename HeaderList<HeaderType>::Iterator
 HeaderList<HeaderType>::end() const {
-    assert(handle_);
-    return Iterator(make_non_owning(handle_.get()), size());
+    return Iterator(*this, size());
 }
 
 template <typename HeaderType>

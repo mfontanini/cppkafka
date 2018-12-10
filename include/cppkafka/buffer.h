@@ -81,6 +81,17 @@ public:
             throw Exception("Invalid buffer configuration");
         }
     }
+    
+    /**
+     * Constructs a buffer from two iterators in the range [first,last)
+     *
+     * \param first An iterator to the start of data
+     * \param last An iterator to the end of data (not included)
+     */
+    template <typename Iter>
+    Buffer(const Iter first, const Iter last)
+    : Buffer(&*first, std::distance(first, last)) {
+    }
 
     /**
      * Constructs a buffer from a vector
@@ -93,7 +104,9 @@ public:
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
-    // Don't allow construction from temporary vectors
+    /**
+     * Don't allow construction from temporary vectors
+     */
     template <typename T>
     Buffer(std::vector<T>&& data) = delete;
 
@@ -108,7 +121,9 @@ public:
         static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
     }
 
-    // Don't allow construction from temporary arrays
+    /**
+     * Don't allow construction from temporary arrays
+     */
     template <typename T, size_t N>
     Buffer(std::array<T, N>&& data) = delete;
 
@@ -120,9 +135,11 @@ public:
      */
     Buffer(const std::string& data); 
 
-    // Don't allow construction from temporary strings
+    /**
+     * Don't allow construction from temporary strings
+     */
     Buffer(std::string&&) = delete;
-
+    
     Buffer(const Buffer&) = delete;
     Buffer(Buffer&&) = default;
     Buffer& operator=(const Buffer&) = delete;

@@ -128,6 +128,20 @@ public:
     
 #if (RD_KAFKA_VERSION >= RD_KAFKA_HEADERS_SUPPORT_VERSION)
     /**
+     * \brief Sets the message's header list.
+     * \note This calls rd_kafka_message_set_headers.
+     */
+    void set_header_list(const HeaderListType& headers) {
+        assert(handle_);
+        if (!headers) {
+            return; //nothing to set
+        }
+        rd_kafka_headers_t* handle_copy = rd_kafka_headers_copy(headers.get_handle());
+        rd_kafka_message_set_headers(handle_.get(), handle_copy);
+        header_list_ = HeaderListType::make_non_owning(handle_copy);
+    }
+    
+    /**
      * \brief Gets the message's header list
      */
     const HeaderListType& get_header_list() const {
