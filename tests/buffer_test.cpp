@@ -1,11 +1,13 @@
 #include <string>
 #include <vector>
+#include <array>
 #include <sstream>
 #include <catch.hpp>
 #include "cppkafka/buffer.h"
 
 using std::string;
 using std::vector;
+using std::array;
 using std::ostringstream;
 
 using namespace cppkafka;
@@ -36,14 +38,32 @@ TEST_CASE("conversions", "[buffer]") {
 }
 
 TEST_CASE("construction", "[buffer]") {
+    // From string
     const string str_data = "Hello world!";
-    const vector<uint8_t> data(str_data.begin(), str_data.end());
-    const Buffer buffer(data);
-    const Buffer buffer2(data.begin(), data.end());
-    const Buffer buffer3(str_data.data(), str_data.data() + str_data.size());
+    // From vector
+    const vector<uint8_t> vector_data(str_data.begin(), str_data.end());
+    // From array
+    const array<char,12> array_data{'H','e','l','l','o',' ','w','o','r','l','d','!'};
+    // From raw array
+    const char raw_array[12]{'H','e','l','l','o',' ','w','o','r','l','d','!'};
+    
+    // Build buffers
+    const Buffer buffer(vector_data); //vector
+    const Buffer buffer2(vector_data.begin(), vector_data.end()); //iterators
+    const Buffer buffer3(str_data.data(), str_data.data() + str_data.size()); //char iterators
+    const Buffer buffer4(array_data); //arrays
+    const Buffer buffer5(raw_array); //raw arrays
+    const Buffer buffer6(str_data); //string
+    const Buffer buffer7(str_data.data(), str_data.size()); //type + size
+    
+    // Test
     CHECK(str_data == buffer);
     CHECK(buffer == buffer2);
     CHECK(buffer == buffer3);
+    CHECK(buffer == buffer4);
+    CHECK(buffer == buffer5);
+    CHECK(buffer == buffer6);
+    CHECK(buffer == buffer7);
 }
 
 

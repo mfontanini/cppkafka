@@ -126,6 +126,20 @@ public:
      */
     template <typename T, size_t N>
     Buffer(std::array<T, N>&& data) = delete;
+    
+    /**
+     * Constructs a buffer from a raw array
+     *
+     * \param data The the array to be used as input
+     */
+    template <typename T, size_t N>
+    Buffer(const T(&data)[N])
+    : Buffer(data, N) {
+    }
+    
+     // Don't allow construction from temporary raw arrays
+    template <typename T, size_t N>
+    Buffer(T(&&data)[N]) = delete;
 
     /**
      * \brief Construct a buffer from a const string ref
