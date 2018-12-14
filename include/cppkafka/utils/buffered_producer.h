@@ -585,7 +585,7 @@ bool BufferedProducer<BufferType, Allocator>::flush(std::chrono::milliseconds ti
         // Re-enqueue remaining messages in original order
         if (!flush_queue.empty()) {
             std::lock_guard<std::mutex> lock(mutex_);
-            messages_.insert(messages_.begin(), std::make_move_iterator(flush_queue.rbegin()), std::make_move_iterator(flush_queue.rend()))
+            messages_.insert(messages_.begin(), std::make_move_iterator(flush_queue.begin()), std::make_move_iterator(flush_queue.end()));
         }
     }
     else {
