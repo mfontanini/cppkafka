@@ -633,6 +633,12 @@ bool BufferedProducer<BufferType, Allocator>::flush(std::chrono::milliseconds ti
             remaining = timeout - std::chrono::duration_cast<std::chrono::milliseconds>
                 (std::chrono::high_resolution_clock::now() - start_time);
         } while (!flush_queue.empty() && (remaining.count() > 0));
+        
+        // Re-enqueue remaining messages in original order
+        if (!flush_queue.empty()) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            messages_.insert(messages_.begin(), std::make_move_iterator(flush_queue.begin()), std::make_move_iterator(flush_queue.end()));
+        }
     }
     else {
         async_flush();
