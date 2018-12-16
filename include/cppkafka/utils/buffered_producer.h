@@ -104,14 +104,39 @@ public:
      * Callback to indicate a message failed to be produced by the broker.
      *
      * The returned bool indicates whether the BufferedProducer should try to produce
-     * the message again after each failure.
+     * the message again after each failure, subject to the maximum number of retries set. If this callback
+     * is not set or returns false or if the number of retries reaches zero, the ProduceTerminationCallback
+     * will be called.
      */
     using ProduceFailureCallback = std::function<bool(const Message&)>;
     
     /**
+     * Callback to indicate a message failed to be produced by the broker and was dropped.
+     *
+     * The application can use this callback to track delivery failure of messages similar to the
+     * FlushTerminationCallback. If the application is only interested in message dropped events,
+     * then ProduceFailureCallback should not be set.
+     */
+    using ProduceTerminationCallback = std::function<void(const Message&)>;
+    
+    /**
      * Callback to indicate a message failed to be flushed
+     *
+     * If this callback returns true, the message will be re-enqueued and flushed again later subject
+     * to the maximum number of retries set. If this callback is not set or returns false or if the number of retries
+     * reaches zero, the FlushTerminationCallback will be called.
      */
     using FlushFailureCallback = std::function<bool(const MessageBuilder&, Error error)>;
+    
+    /**
+     * Callback to indicate a message was dropped after multiple flush attempts or when the retry count
+     * reaches zero.
+     *
+     * The application can use this callback to track delivery failure of messages similar to the
+     * ProduceTerminationCallback. If the application is only interested in message dropped events,
+     * then FlushFailureCallback should not be set.
+     */
+    using FlushTerminationCallback = std::function<void(const MessageBuilder&, Error error)>;
 
     /**
      * \brief Constructs a buffered producer using the provided configuration
@@ -343,12 +368,23 @@ public:
      *
      * \param callback The callback to be set
      *
-     * \remark It is *highly* recommended to set this callback as your message may be produced
-     *         indefinitely if there's a remote error.
-     *
      * \warning Do not call any method on the BufferedProducer while inside this callback.
      */
     void set_produce_failure_callback(ProduceFailureCallback callback);
+    
+    /**
+     * \brief Sets the message produce termination callback
+     *
+     * This will be called when the delivery report callback is executed for a message having
+     * an error and after all retries have expired and the message is dropped.
+     *
+     * \param callback The callback to be set
+     *
+     * \remark If the application only tracks dropped messages, the set_produce_failure_callback() should not be set.
+     *
+     * \warning Do not call any method on the BufferedProducer while inside this callback.
+     */
+    void set_produce_termination_callback(ProduceTerminationCallback callback);
     
     /**
      * \brief Sets the successful delivery callback
@@ -360,18 +396,32 @@ public:
     void set_produce_success_callback(ProduceSuccessCallback callback);
     
     /**
-     * \brief Sets the local message produce failure callback
+     * \brief Sets the local flush failure callback
      *
      * This callback will be called when local message production fails during a flush() operation.
      * Failure errors are typically payload too large, unknown topic or unknown partition.
      * Note that if the callback returns false, the message will be dropped from the buffer,
-     * otherwise it will be re-enqueued for later retry.
+     * otherwise it will be re-enqueued for later retry subject to the message retry count.
      *
      * \param callback
      *
      * \warning Do not call any method on the BufferedProducer while inside this callback
      */
     void set_flush_failure_callback(FlushFailureCallback callback);
+    
+    /**
+     * \brief Sets the local flush termination callback
+     *
+     * This callback will be called when local message production fails during a flush() operation after
+     * all previous flush attempts have failed. The message will be dropped after this callback.
+     *
+     * \param callback
+     *
+     * \remark If the application only tracks dropped messages, the set_flush_failure_callback() should not be set.
+     *
+     * \warning Do not call any method on the BufferedProducer while inside this callback
+     */
+    void set_flush_termination_callback(FlushTerminationCallback callback);
     
     struct TestParameters {
         bool force_delivery_error_;
@@ -444,7 +494,9 @@ private:
     mutable std::mutex mutex_;
     ProduceSuccessCallback produce_success_callback_;
     ProduceFailureCallback produce_failure_callback_;
+    ProduceTerminationCallback produce_termination_callback_;
     FlushFailureCallback flush_failure_callback_;
+    FlushTerminationCallback flush_termination_callback_;
     ssize_t max_buffer_size_{-1};
     FlushMethod flush_method_{FlushMethod::Sync};
     std::atomic<size_t> pending_acks_{0};
@@ -746,6 +798,11 @@ void BufferedProducer<BufferType, Allocator>::set_produce_failure_callback(Produ
 }
 
 template <typename BufferType, typename Allocator>
+void BufferedProducer<BufferType, Allocator>::set_produce_termination_callback(ProduceTerminationCallback callback) {
+    produce_termination_callback_ = std::move(callback);
+}
+
+template <typename BufferType, typename Allocator>
 void BufferedProducer<BufferType, Allocator>::set_produce_success_callback(ProduceSuccessCallback callback) {
     produce_success_callback_ = std::move(callback);
 }
@@ -753,6 +810,11 @@ void BufferedProducer<BufferType, Allocator>::set_produce_success_callback(Produ
 template <typename BufferType, typename Allocator>
 void BufferedProducer<BufferType, Allocator>::set_flush_failure_callback(FlushFailureCallback callback) {
     flush_failure_callback_ = std::move(callback);
+}
+
+template <typename BufferType, typename Allocator>
+void BufferedProducer<BufferType, Allocator>::set_flush_termination_callback(FlushTerminationCallback callback) {
+    flush_termination_callback_ = std::move(callback);
 }
 
 template <typename BufferType, typename Allocator>
@@ -802,6 +864,9 @@ void BufferedProducer<BufferType, Allocator>::async_produce(BuilderType&& builde
             }
         }
         ++total_messages_dropped_;
+        // Call the flush termination callback
+        CallbackInvoker<FlushTerminationCallback>("flush termination", flush_termination_callback_, &producer_)
+            (builder, ex.get_error());
         if (throw_on_error) {
             throw;
         }
@@ -839,10 +904,14 @@ void BufferedProducer<BufferType, Allocator>::on_delivery_report(const Message& 
             }
             else {
                 ++total_messages_dropped_;
+                CallbackInvoker<ProduceTerminationCallback>
+                    ("produce termination", produce_termination_callback_, &producer_)(message);
             }
         }
         else {
             ++total_messages_dropped_;
+            CallbackInvoker<ProduceTerminationCallback>
+                ("produce termination", produce_termination_callback_, &producer_)(message);
         }
     }
     else {
