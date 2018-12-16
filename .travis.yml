@@ -1,6 +1,6 @@
 language: cpp
 
-sudo: false
+sudo: required
 
 compiler:
   - gcc
@@ -22,7 +22,6 @@ addons:
     - zookeeperd
 
 before_script:
-  - service zookeeper start
   - KAFKA_VERSION=2.11-1.0.2
   - wget http://apache.cs.utah.edu/kafka/1.0.2/kafka_$KAFKA_VERSION.tgz
   - tar xvzf kafka_$KAFKA_VERSION.tgz
