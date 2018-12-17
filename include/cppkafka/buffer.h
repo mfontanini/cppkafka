@@ -142,21 +142,6 @@ public:
     Buffer(T(&&data)[N]) = delete;
 
     /**
-     * Constructs a buffer from a raw array
-     *
-     * \param data The the array to be used as input
-     */
-    template <typename T, size_t N>
-    Buffer(const T(&data)[N])
-    : data_(reinterpret_cast<const DataType*>(&data[0])), size_(sizeof(T) * N) {
-        static_assert(sizeof(T) == sizeof(DataType), "sizeof(T) != sizeof(DataType)");
-    }
-
-    // Don't allow construction from temporary raw arrays
-    template <typename T, size_t N>
-    Buffer(const T(&&data)[N]) = delete;
-
-    /**
      * \brief Construct a buffer from a const string ref
      *
      * Note that you *can't use temporaries* here as they would be destructed after
