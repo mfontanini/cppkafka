@@ -146,7 +146,7 @@ public:
     using FlushTerminationCallback = std::function<void(const MessageBuilder&, Error error)>;
     
     /**
-     * Callback to indicate a queue full error was received when producing.
+     * Callback to indicate a RD_KAFKA_RESP_ERR__QUEUE_FULL was received when producing.
      *
      * The MessageBuilder instance represents the message which triggered the error. This callback will be called
      * according to the set_queue_full_notification() setting.
