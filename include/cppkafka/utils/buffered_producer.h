@@ -682,7 +682,7 @@ bool BufferedProducer<BufferType, Allocator>::flush(std::chrono::milliseconds ti
             std::swap(messages_, flush_queue);
         }
         auto remaining = timeout;
-        auto start_time = std::chrono::high_resolution_clock::now();        
+        auto start_time = std::chrono::high_resolution_clock::now();
         do {
             if (!hi_pri_flush_queue.empty()) {
                 sync_produce(hi_pri_flush_queue.front());
@@ -824,7 +824,7 @@ void BufferedProducer<BufferType, Allocator>::do_add_message(BuilderType&& build
         else {
             async_flush();
         }
-    }    
+    }
 }
 
 template <typename BufferType, typename Allocator>
