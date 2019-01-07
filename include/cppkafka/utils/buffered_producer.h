@@ -87,8 +87,15 @@ template <typename BufferType,
           typename Allocator = std::allocator<ConcreteMessageBuilder<BufferType>>>
 class CPPKAFKA_API BufferedProducer {
 public:
-    enum class FlushMethod { Sync,    ///< Empty the buffer and wait for acks from the broker
-                             Async }; ///< Empty the buffer and don't wait for acks
+    enum class FlushMethod {
+        Sync,    ///< Empty the buffer and wait for acks from the broker.
+        Async    ///< Empty the buffer and don't wait for acks.
+    };
+    enum class QueueFullNotification {
+        None,           ///< Don't notify (default).
+        OncePerMessage, ///< Notify once per message.
+        EachOccurence   ///< Notify on each occurence.
+    };
     /**
      * Concrete builder
      */
@@ -137,6 +144,14 @@ public:
      * then FlushFailureCallback should not be set.
      */
     using FlushTerminationCallback = std::function<void(const MessageBuilder&, Error error)>;
+    
+    /**
+     * Callback to indicate a RD_KAFKA_RESP_ERR__QUEUE_FULL was received when producing.
+     *
+     * The MessageBuilder instance represents the message which triggered the error. This callback will be called
+     * according to the set_queue_full_notification() setting.
+     */
+    using QueueFullCallback = std::function<void(const MessageBuilder&)>;
 
     /**
      * \brief Constructs a buffered producer using the provided configuration
@@ -358,6 +373,18 @@ public:
      * Simple helper to construct a builder object
      */
     Builder make_builder(std::string topic);
+    
+    /**
+     * Set the type of notification when RD_KAFKA_RESP_ERR__QUEUE_FULL is received.
+     *
+     * This will call the error callback for this producer. By default this is set to QueueFullNotification::None.
+     */
+    void set_queue_full_notification(QueueFullNotification notification);
+    
+    /**
+     * Get the queue full notification type.
+     */
+    QueueFullNotification get_queue_full_notification() const;
 
     /**
      * \brief Sets the message produce failure callback
@@ -422,6 +449,18 @@ public:
      * \warning Do not call any method on the BufferedProducer while inside this callback
      */
     void set_flush_termination_callback(FlushTerminationCallback callback);
+    
+    /**
+     * \brief Sets the local queue full error callback
+     *
+     * This callback will be called when local message production fails during a produce() operation according to the
+     * set_queue_full_notification() setting.
+     *
+     * \param callback
+     *
+     * \warning Do not call any method on the BufferedProducer while inside this callback
+     */
+    void set_queue_full_callback(QueueFullCallback callback);
     
     struct TestParameters {
         bool force_delivery_error_;
@@ -497,6 +536,7 @@ private:
     ProduceTerminationCallback produce_termination_callback_;
     FlushFailureCallback flush_failure_callback_;
     FlushTerminationCallback flush_termination_callback_;
+    QueueFullCallback queue_full_callback_;
     ssize_t max_buffer_size_{-1};
     FlushMethod flush_method_{FlushMethod::Sync};
     std::atomic<size_t> pending_acks_{0};
@@ -505,6 +545,7 @@ private:
     std::atomic<size_t> total_messages_dropped_{0};
     int max_number_retries_{0};
     bool has_internal_data_{false};
+    QueueFullNotification queue_full_notification_{QueueFullNotification::None};
 #ifdef KAFKA_TEST_INSTANCE
     TestParameters* test_params_;
 #endif
@@ -799,6 +840,17 @@ BufferedProducer<BufferType, Allocator>::make_builder(std::string topic) {
 }
 
 template <typename BufferType, typename Allocator>
+void BufferedProducer<BufferType, Allocator>::set_queue_full_notification(QueueFullNotification notification) {
+    queue_full_notification_ = notification;
+}
+
+template <typename BufferType, typename Allocator>
+typename BufferedProducer<BufferType, Allocator>::QueueFullNotification
+BufferedProducer<BufferType, Allocator>::get_queue_full_notification() const {
+    return queue_full_notification_;
+}
+
+template <typename BufferType, typename Allocator>
 void BufferedProducer<BufferType, Allocator>::set_produce_failure_callback(ProduceFailureCallback callback) {
     produce_failure_callback_ = std::move(callback);
 }
@@ -824,9 +876,15 @@ void BufferedProducer<BufferType, Allocator>::set_flush_termination_callback(Flu
 }
 
 template <typename BufferType, typename Allocator>
+void BufferedProducer<BufferType, Allocator>::set_queue_full_callback(QueueFullCallback callback) {
+    queue_full_callback_ = std::move(callback);
+}
+
+template <typename BufferType, typename Allocator>
 template <typename BuilderType>
 void BufferedProducer<BufferType, Allocator>::produce_message(BuilderType&& builder) {
     using builder_type = typename std::decay<BuilderType>::type;
+    bool queue_full_notify = queue_full_notification_ != QueueFullNotification::None;
     while (true) {
         try {
             MessageInternalGuard<builder_type> internal_guard(const_cast<builder_type&>(builder));
@@ -840,6 +898,11 @@ void BufferedProducer<BufferType, Allocator>::produce_message(BuilderType&& buil
             if (ex.get_error() == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
                 // If the output queue is full, then just poll
                 producer_.poll();
+                // Notify application so it can slow-down production
+                if (queue_full_notify) {
+                    queue_full_notify = queue_full_notification_ == QueueFullNotification::EachOccurence;
+                    CallbackInvoker<QueueFullCallback>("queue full", queue_full_callback_, &producer_)(builder);
+                }
             }
             else {
                 throw;
