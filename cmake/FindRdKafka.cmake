@@ -1,16 +1,11 @@
 # Override default CMAKE_FIND_LIBRARY_SUFFIXES
+# (Allows optional prioritization of static libraries during resolution)
 if (CPPKAFKA_RDKAFKA_STATIC_LIB)
-    if (MSVC)
-        set(RDKAFKA_SUFFIX lib)
-    else()
-        set(RDKAFKA_SUFFIX a)
-    endif()
+    set(RDKAFKA_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+    set(RDKAFKA_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
 else()
-    if (MSVC)
-        set(RDKAFKA_SUFFIX dll)
-    else()
-        set(RDKAFKA_SUFFIX so)
-    endif()
+    set(RDKAFKA_PREFIX ${CMAKE_SHARED_LIBRARY_PREFIX})
+    set(RDKAFKA_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif()
 
 find_path(RDKAFKA_ROOT_DIR
@@ -31,7 +26,7 @@ if (CPPKAFKA_CMAKE_VERBOSE)
 endif()
 
 find_library(RDKAFKA_LIBRARY
-    NAMES rdkafka.${RDKAFKA_SUFFIX} librdkafka.${RDKAFKA_SUFFIX} rdkafka
+    NAMES ${RDKAFKA_PREFIX}rdkafka${RDKAFKA_SUFFIX} rdkafka
     HINTS ${RDKAFKA_ROOT_DIR}/lib
 )
 
