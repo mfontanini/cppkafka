@@ -241,7 +241,7 @@ void KafkaHandleBase::check_error(rd_kafka_resp_err_t error,
         //check if any partition has errors
         for (int i = 0; i < list_ptr->cnt; ++i) {
             if (list_ptr->elems[i].err != RD_KAFKA_RESP_ERR_NO_ERROR) {
-                throw HandleException(error);
+                throw HandleException(list_ptr->elems[i].err);
             }
         }
     }
