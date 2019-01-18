@@ -708,6 +708,7 @@ bool BufferedProducer<BufferType, Allocator>::flush(std::chrono::milliseconds ti
         };
         re_enqueuer(retry_flush_queue, retry_messages_, retry_mutex_);
         re_enqueuer(flush_queue, messages_, mutex_);
+        return true;
     }
     else {
         async_flush();
