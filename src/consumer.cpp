@@ -202,11 +202,7 @@ Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) const
 
 void Consumer::store_offsets() const
 {
-    rd_kafka_topic_partition_list_t* list = nullptr;
-    rd_kafka_resp_err_t error = rd_kafka_assignment(get_handle(), &list);
-    check_error(error);
-    error = rd_kafka_offsets_store(get_handle(), list);
-    check_error(error, list);
+    store_offsets(get_offsets_position(get_assignment()));
 }
 
 void Consumer::store_offsets(const TopicPartitionList& topic_partitions) const

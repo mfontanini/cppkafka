@@ -295,8 +295,8 @@ public:
     /**
      * \brief Stores the offsets on the currently assigned topic/partitions (legacy).
      *
-     * This translates into a call to rd_kafka_offsets_store with the current partition assignment.
-     * It is equivalent to calling rd_kafka_offsets_store(get_assignment()).
+     * This translates into a call to rd_kafka_offsets_store with the offsets prior to the current assignment positions.
+     * It is equivalent to calling rd_kafka_offsets_store(get_offsets_position(get_assignment())).
      *
      * \note When using this API it's recommended to set enable.auto.offset.store to false.
      */
