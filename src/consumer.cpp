@@ -200,6 +200,28 @@ Consumer::get_offsets_position(const TopicPartitionList& topic_partitions) const
     return convert(topic_list_handle);
 }
 
+void Consumer::store_offsets() const
+{
+    rd_kafka_topic_partition_list_t* list = nullptr;
+    rd_kafka_resp_err_t error = rd_kafka_assignment(get_handle(), &list);
+    check_error(error);
+    error = rd_kafka_offsets_store(get_handle(), list);
+    check_error(error, list);
+}
+
+void Consumer::store_offsets(const TopicPartitionList& topic_partitions) const
+{
+    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+    rd_kafka_resp_err_t error = rd_kafka_offsets_store(get_handle(), topic_list_handle.get());
+    check_error(error, topic_list_handle.get());
+}
+
+void Consumer::store_offset(const Message& msg) const
+{
+    rd_kafka_resp_err_t error = rd_kafka_offset_store(msg.get_handle()->rkt, msg.get_partition(), msg.get_offset());
+    check_error(error);
+}
+
 vector<string> Consumer::get_subscription() const {
     rd_kafka_resp_err_t error;
     rd_kafka_topic_partition_list_t* list = nullptr;

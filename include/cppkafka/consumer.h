@@ -291,6 +291,38 @@ public:
      * \return The topic partition list
      */
     TopicPartitionList get_offsets_position(const TopicPartitionList& topic_partitions) const;
+    
+    /**
+     * \brief Stores the offsets on the currently assigned topic/partitions (legacy).
+     *
+     * This translates into a call to rd_kafka_offsets_store with the current partition assignment.
+     * It is equivalent to calling rd_kafka_offsets_store(get_assignment()).
+     *
+     * \note When using this API it's recommended to set enable.auto.offset.store to false.
+     */
+    void store_offsets() const;
+    
+    /**
+     * \brief Stores the offsets on the given topic/partitions (legacy).
+     *
+     * This translates into a call to rd_kafka_offsets_store.
+     *
+     * \param topic_partitions The topic/partition list to be stored.
+     *
+     * \note When using this API it's recommended to set enable.auto.offset.store to false.
+     */
+    void store_offsets(const TopicPartitionList& topic_partitions) const;
+    
+    /**
+     * \brief Stores the offset for this message (legacy).
+     *
+     * This translates into a call to rd_kafka_offset_store.
+     *
+     * \param msg The message whose offset will be stored.
+     *
+     * \note When using this API it's recommended to set enable.auto.offset.store to false.
+     */
+    void store_offset(const Message& msg) const;
 
     /**
      * \brief Gets the current topic subscription
