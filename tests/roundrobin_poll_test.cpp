@@ -36,6 +36,7 @@ using namespace cppkafka;
 static Configuration make_producer_config() {
     Configuration config = {    
         { "metadata.broker.list", KAFKA_TEST_INSTANCE },
+        { "max.in.flight", 1 }
     };
     return config;
 }
@@ -82,7 +83,7 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
     
     // push 3 messages in each partition
     for (int i = 0; i < total_messages; ++i) {
-        producer.produce(MessageBuilder(KAFKA_TOPICS[0])
+        producer.sync_produce(MessageBuilder(KAFKA_TOPICS[0])
                             .partition(i % KAFKA_NUM_PARTITIONS)
                             .payload(payload));
     }
@@ -101,7 +102,7 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
             // find first polled partition index
             partition_idx = runner.get_messages()[i].get_partition();
         }
-        REQUIRE(runner.get_messages()[i].get_partition() == partition_order[i+partition_idx]);
+        CHECK(runner.get_messages()[i].get_partition() == partition_order[i+partition_idx]);
         REQUIRE((string)runner.get_messages()[i].get_payload() == payload);
     }
     
@@ -115,7 +116,7 @@ TEST_CASE("roundrobin consumer test", "[roundrobin consumer]") {
     payload = "SerialPolling";
     // push 3 messages in each partition
     for (int i = 0; i < total_messages; ++i) {
-        producer.produce(MessageBuilder(KAFKA_TOPICS[0]).partition(i%KAFKA_NUM_PARTITIONS).payload(payload));
+        producer.sync_produce(MessageBuilder(KAFKA_TOPICS[0]).partition(i%KAFKA_NUM_PARTITIONS).payload(payload));
     }
     producer.flush();
     serial_runner.try_join();
