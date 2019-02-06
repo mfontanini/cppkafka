@@ -298,9 +298,9 @@ public:
      * This translates into a call to rd_kafka_offsets_store with the offsets prior to the current assignment positions.
      * It is equivalent to calling rd_kafka_offsets_store(get_offsets_position(get_assignment())).
      *
-     * \note When using this API it's recommended to set enable.auto.offset.store to false.
+     * \note When using this API it's recommended to set enable.auto.offset.store=false and enable.auto.commit=true.
      */
-    void store_offsets() const;
+    void store_consumed_offsets() const;
     
     /**
      * \brief Stores the offsets on the given topic/partitions (legacy).
@@ -309,7 +309,7 @@ public:
      *
      * \param topic_partitions The topic/partition list to be stored.
      *
-     * \note When using this API it's recommended to set enable.auto.offset.store to false.
+     * \note When using this API it's recommended to set enable.auto.offset.store=false and enable.auto.commit=true.
      */
     void store_offsets(const TopicPartitionList& topic_partitions) const;
     
@@ -320,7 +320,7 @@ public:
      *
      * \param msg The message whose offset will be stored.
      *
-     * \note When using this API it's recommended to set enable.auto.offset.store to false.
+     * \note When using this API it's recommended to set enable.auto.offset.store=false and enable.auto.commit=true.
      */
     void store_offset(const Message& msg) const;
 
