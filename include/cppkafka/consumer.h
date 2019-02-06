@@ -291,7 +291,7 @@ public:
      * \return The topic partition list
      */
     TopicPartitionList get_offsets_position(const TopicPartitionList& topic_partitions) const;
-    
+#if (RD_KAFKA_VERSION >= RD_KAFKA_STORE_OFFSETS_SUPPORT_VERSION)
     /**
      * \brief Stores the offsets on the currently assigned topic/partitions (legacy).
      *
@@ -312,7 +312,7 @@ public:
      * \note When using this API it's recommended to set enable.auto.offset.store=false and enable.auto.commit=true.
      */
     void store_offsets(const TopicPartitionList& topic_partitions) const;
-    
+#endif
     /**
      * \brief Stores the offset for this message (legacy).
      *
