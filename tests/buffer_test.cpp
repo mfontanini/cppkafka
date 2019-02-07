@@ -43,7 +43,7 @@ TEST_CASE("construction", "[buffer]") {
     // From vector
     const vector<uint8_t> vector_data(str_data.begin(), str_data.end());
     // From array
-    const array<char,12> array_data{'H','e','l','l','o',' ','w','o','r','l','d','!'};
+    const array<char,12> array_data{{'H','e','l','l','o',' ','w','o','r','l','d','!'}};
     // From raw array
     const char raw_array[12]{'H','e','l','l','o',' ','w','o','r','l','d','!'};
     
