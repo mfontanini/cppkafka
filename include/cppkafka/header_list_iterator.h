@@ -78,6 +78,7 @@ public:
         header_list_ = other.header_list_;
         header_ = make_header(other.header_);
         index_ = other.index_;
+        return *this;
     }
     HeaderIterator(HeaderIterator&&) = default;
     HeaderIterator& operator=(HeaderIterator&&) = default;

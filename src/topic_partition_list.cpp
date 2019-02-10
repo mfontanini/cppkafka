@@ -45,8 +45,7 @@ TopicPartitionsListPtr convert(const TopicPartitionList& topic_partitions) {
     TopicPartitionsListPtr handle(rd_kafka_topic_partition_list_new(topic_partitions.size()),
                                   &rd_kafka_topic_partition_list_destroy);
     for (const auto& item : topic_partitions) {
-        rd_kafka_topic_partition_t* new_item = nullptr;
-        new_item = rd_kafka_topic_partition_list_add(handle.get(),
+        rd_kafka_topic_partition_t* new_item = rd_kafka_topic_partition_list_add(handle.get(),
                                                      item.get_topic().data(),
                                                      item.get_partition());
         new_item->offset = item.get_offset();
