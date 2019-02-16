@@ -315,7 +315,7 @@ using ConsumerDispatcher = BasicConsumerDispatcher<Consumer>;
 
 template <typename ConsumerType>
 BasicConsumerDispatcher<ConsumerType>::BasicConsumerDispatcher(ConsumerType& consumer)
-: consumer_(consumer),running_(false) {
+: consumer_(consumer) {
 
 }
 
