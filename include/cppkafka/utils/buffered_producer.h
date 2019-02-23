@@ -221,7 +221,8 @@ public:
     /**
      * \brief Flushes all buffered messages and returns immediately.
      *
-     * Similar to flush, it will send all messages but will not wait for acks to complete.
+     * Similar to flush, it will send all messages but will not wait for acks to complete. However the underlying
+     * producer will still be flushed.
      */
     void async_flush();
 
@@ -641,6 +642,7 @@ void BufferedProducer<BufferType, Allocator>::async_flush() {
     };
     queue_flusher(retry_messages_, retry_mutex_);
     queue_flusher(messages_, mutex_);
+    wait_for_acks(std::chrono::milliseconds(0)); //flush the producer but don't wait
 }
 
 template <typename BufferType, typename Allocator>
