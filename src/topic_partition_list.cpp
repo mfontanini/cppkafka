@@ -89,7 +89,7 @@ TopicPartitionList find_matches(const TopicPartitionList& partitions,
         for (const auto& topic : topics) {
             if (topic.size() == partition.get_topic().size()) {
                 // compare both strings
-                bool match = equal(topic.begin(), topic.end(), partition.get_topic().begin(),
+                bool match = std::equal(topic.begin(), topic.end(), partition.get_topic().begin(),
                                    [](char c1, char c2)->bool {
                     return toupper(c1) == toupper(c2);
                 });
