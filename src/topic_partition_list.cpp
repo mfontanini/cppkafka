@@ -38,6 +38,7 @@ using std::vector;
 using std::set;
 using std::ostream;
 using std::string;
+using std::equal;
 
 namespace cppkafka {
 
