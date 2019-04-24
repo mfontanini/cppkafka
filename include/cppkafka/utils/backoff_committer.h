@@ -137,32 +137,28 @@ public:
 private:
     // If the ReturnType contains 'true', we abort committing. Otherwise we continue.
     // The second member of the ReturnType contains the RdKafka error if any.
-    template <typename T>
-    ReturnType do_commit(const T* object) {
-        ReturnType rt;
+    template <typename...Args>
+    bool do_commit(Args&&...args) {
         try {
-            if (!object) {
-                consumer_.commit();
-            }
-            else {
-                consumer_.commit(*object);
-            }
+            consumer_.commit(std::forward<Args>(args)...);
             // If the commit succeeds, we're done.
+            return true;
         }
         catch (const HandleException& ex) {
-            rt.error_ = ex.get_error();
+            Error error = ex.get_error();
             // If there were actually no offsets to commit, return. Retrying won't solve
             // anything here
-            if (rt.error_ != RD_KAFKA_RESP_ERR__NO_OFFSET) {
-                // If there's no callback or if returns true for this message, keep committing.
-                // Otherwise abort.
-                CallbackInvoker<ErrorCallback> callback("backoff committer", callback_, &consumer_);
-                if (!callback || callback(rt.error_)) {
-                    rt.abort_ = false; //continue retrying
-                }
+            if (error == RD_KAFKA_RESP_ERR__NO_OFFSET) {
+                throw ex; //abort
+            }
+            // If there's a callback and it returns false for this message, abort.
+            // Otherwise keep committing.
+            CallbackInvoker<ErrorCallback> callback("backoff committer", callback_, &consumer_);
+            if (callback && !callback(error)) {
+                throw ex; //abort
             }
         }
-        return rt;
+        return false; //continue
     }
 
     Consumer& consumer_;

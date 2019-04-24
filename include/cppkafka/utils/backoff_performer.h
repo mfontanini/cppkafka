@@ -48,14 +48,6 @@ public:
     static const TimeUnit DEFAULT_BACKOFF_STEP;
     static const TimeUnit DEFAULT_MAXIMUM_BACKOFF;
     static const size_t DEFAULT_MAXIMUM_RETRIES;
-    
-    /**
-     * @brief Type which any functor must return.
-     */
-    struct ReturnType {
-        bool    abort_{true};
-        Error   error_;
-    };
 
     /**
      * The backoff policy to use
@@ -128,15 +120,10 @@ public:
     void perform(const Functor& callback) {
         TimeUnit backoff = initial_backoff_;
         size_t retries = maximum_retries_;
-        ReturnType rt;
         while (retries--) {
             auto start = std::chrono::steady_clock::now();
             // If the callback returns true, we're done
-            rt = callback();
-            if (rt.abort_) {
-                if (rt.error_) {
-                    break; //terminal error
-                }
+            if (callback()) {
                 return; //success
             }
             auto end = std::chrono::steady_clock::now();
@@ -149,7 +136,7 @@ public:
             backoff = increase_backoff(backoff);
         }
         // No more retries left or we have a terminal error.
-        throw ConsumerException(rt.error_);
+        throw Exception("Commit failed: no more retries.");
     }
 private:
     TimeUnit increase_backoff(TimeUnit backoff);
