@@ -147,9 +147,9 @@ private:
         catch (const HandleException& ex) {
             Error error = ex.get_error();
             // If there were actually no offsets to commit, return. Retrying won't solve
-            // anything here
+            // anything here.
             if (error == RD_KAFKA_RESP_ERR__NO_OFFSET) {
-                throw ex; //abort
+                return true; //not considered an error.
             }
             // If there's a callback and it returns false for this message, abort.
             // Otherwise keep committing.
