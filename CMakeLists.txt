@@ -7,20 +7,17 @@ set(CPPKAFKA_VERSION_MINOR 2)
 set(CPPKAFKA_VERSION "${CPPKAFKA_VERSION_MAJOR}.${CPPKAFKA_VERSION_MINOR}")
 set(RDKAFKA_MIN_VERSION 0x00090400)
 
-if (NOT CMAKE_CXX_FLAGS)
-    # Set default compile flags for the project
-    if(MSVC)
-        # Don't always use Wall, since VC's /Wall is ridiculously verbose.
-        set(CMAKE_CXX_FLAGS "/W3")
+if(MSVC)
+    # Don't always use Wall, since VC's /Wall is ridiculously verbose.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 
-        # Disable VC secure checks, since these are not really issues
-        add_definitions("-D_CRT_SECURE_NO_WARNINGS=1")
-        add_definitions("-D_SCL_SECURE_NO_WARNINGS=1")
-        add_definitions("-DNOGDI=1")
-        add_definitions("-DNOMINMAX=1")
-    else()
-        set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
-    endif()
+    # Disable VC secure checks, since these are not really issues
+    add_definitions("-D_CRT_SECURE_NO_WARNINGS=1")
+    add_definitions("-D_SCL_SECURE_NO_WARNINGS=1")
+    add_definitions("-DNOGDI=1")
+    add_definitions("-DNOMINMAX=1")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
