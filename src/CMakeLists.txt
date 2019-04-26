@@ -41,9 +41,19 @@ endif()
 target_link_libraries(cppkafka ${DEPENDENCIES})
 target_include_directories(cppkafka PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-install( 
+install(
     TARGETS cppkafka
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     COMPONENT dev
+)
+
+# Generate package configuration file
+set(PKG_CONFIG ${PROJECT_SOURCE_DIR}/package/cppkafka.pc)
+configure_file(${PROJECT_SOURCE_DIR}/cppkafka.pc.in ${PKG_CONFIG} @ONLY)
+
+install(
+    FILES PKG_CONFIG
+    DESTINATION share/pkgconfig
+    COMPONENT pkgconfig
 )
