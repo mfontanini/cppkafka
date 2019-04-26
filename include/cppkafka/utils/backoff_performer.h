@@ -136,7 +136,7 @@ public:
             backoff = increase_backoff(backoff);
         }
         // No more retries left or we have a terminal error.
-        throw Exception("Commit failed: no more retries.");
+        throw ActionTerminatedException("Commit failed: no more retries.");
     }
 private:
     TimeUnit increase_backoff(TimeUnit backoff);

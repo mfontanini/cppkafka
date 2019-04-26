@@ -134,6 +134,14 @@ private:
     Error error_;
 };
 
+/**
+ * Backoff performer has no more retries left for a specific action.
+ */
+class CPPKAFKA_API ActionTerminatedException : public Exception {
+public:
+    ActionTerminatedException(const std::string& error);
+};
+
 } // cppkafka
 
 #endif // CPPKAFKA_EXCEPTIONS_H
