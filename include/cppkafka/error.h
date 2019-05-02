@@ -43,6 +43,10 @@ namespace cppkafka {
 class CPPKAFKA_API Error {
 public:
     /**
+     * @brief Constructs an error object with RD_KAFKA_RESP_ERR_NO_ERROR
+     */
+    Error() = default;
+    /**
      * Constructs an error object
      */
     Error(rd_kafka_resp_err_t error);
@@ -77,7 +81,7 @@ public:
      */
     CPPKAFKA_API friend std::ostream& operator<<(std::ostream& output, const Error& rhs);
 private:
-    rd_kafka_resp_err_t error_;
+    rd_kafka_resp_err_t error_{RD_KAFKA_RESP_ERR_NO_ERROR};
 };
 
 } // cppkafka
