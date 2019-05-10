@@ -43,14 +43,20 @@ void BackoffCommitter::set_error_callback(ErrorCallback callback) {
     callback_ = move(callback);
 }
 
+void BackoffCommitter::commit() {
+    perform([&] {
+        return do_commit();
+    });
+}
+
 void BackoffCommitter::commit(const Message& msg) {
-    perform([&] { 
+    perform([&] {
         return do_commit(msg);
     });
 }
 
 void BackoffCommitter::commit(const TopicPartitionList& topic_partitions) {
-    perform([&] { 
+    perform([&] {
         return do_commit(topic_partitions);
     });
 }
