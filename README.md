@@ -80,6 +80,7 @@ The following cmake options can be specified:
 * `CPPKAFKA_BOOST_STATIC_LIBS` : Link with Boost static libraries. Default is `ON`.
 * `CPPKAFKA_BOOST_USE_MULTITHREADED` : Use Boost multi-threaded libraries. Default is `ON`.
 * `CPPKAFKA_RDKAFKA_STATIC_LIB` : Link to Rdkafka static library. Default is `OFF`.
+* `CPPKAFKA_PKGCONFIG_DIR` : Install location of the .pc file. Default is `share/pkgconfig`.
 
 Example:
 ```Shell

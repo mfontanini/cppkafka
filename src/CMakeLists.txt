@@ -53,7 +53,7 @@ set(PKG_CONFIG ${PROJECT_SOURCE_DIR}/package/cppkafka.pc)
 configure_file(${PROJECT_SOURCE_DIR}/cppkafka.pc.in ${PKG_CONFIG} @ONLY)
 
 install(
-    FILES PKG_CONFIG
-    DESTINATION share/pkgconfig
+    FILES ${PKG_CONFIG}
+    DESTINATION ${CPPKAFKA_PKGCONFIG_DIR}
     COMPONENT pkgconfig
 )
