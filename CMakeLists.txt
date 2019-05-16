@@ -56,6 +56,10 @@ if (CPPKAFKA_RDKAFKA_STATIC_LIB)
     add_definitions("-DLIBRDKAFKA_STATICLIB")
 endif()
 
+if (NOT CPPKAFKA_PKGCONFIG_DIR)
+    set(CPPKAFKA_PKGCONFIG_DIR share/pkgconfig)
+endif()
+
 # Look for Boost (just need boost.optional headers here)
 find_package(Boost REQUIRED ${FIND_PACKAGE_QUIET})
 find_package(RdKafka REQUIRED ${FIND_PACKAGE_QUIET})

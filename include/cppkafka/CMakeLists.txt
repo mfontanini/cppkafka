@@ -10,7 +10,7 @@ function(make_cppkafka_header)
     endforeach()
 
     #create file from template
-    configure_file(${PROJECT_SOURCE_DIR}/cppkafka.h.in ${CPPKAFKA_HEADER})
+    configure_file(${PROJECT_SOURCE_DIR}/cppkafka.h.in ${CPPKAFKA_HEADER} @ONLY)
 endfunction()
 
 # Run file generation function
