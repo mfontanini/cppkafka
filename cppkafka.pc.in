@@ -8,7 +8,7 @@ Name: cppkafka
 Url: https://github.com/mfontanini/cppkafka
 Description: C++ wrapper library on top of RdKafka
 Version: @CPPKAFKA_VERSION@
-Requires: librdkafka >= 0.9.4
+Requires: rdkafka >= 0.9.4 boost
 Requires.private:
 Libs: -L${libdir} -L${sharedlibdir} -L@RDKAFKA_ROOT_DIR@/lib -lcppkafka -lrdkafka -lpthread -lrt -lssl -lcrypto -ldl -lz
 Cflags: -I${includedir} -I${includedir}/cppkafka -I@RDKAFKA_INCLUDE_DIR@ -I@Boost_INCLUDE_DIRS@
