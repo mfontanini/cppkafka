@@ -22,8 +22,8 @@ addons:
     - zookeeperd
 
 before_script:
-  - KAFKA_VERSION=2.11-1.0.2
-  - wget http://apache.cs.utah.edu/kafka/1.0.2/kafka_$KAFKA_VERSION.tgz
+  - KAFKA_VERSION=2.11-2.2.0
+  - wget http://apache.cs.utah.edu/kafka/2.2.0/kafka_$KAFKA_VERSION.tgz
   - tar xvzf kafka_$KAFKA_VERSION.tgz
   - ./kafka_$KAFKA_VERSION/bin/kafka-server-start.sh ./kafka_$KAFKA_VERSION/config/server.properties > /dev/null 2> /dev/null &
   - git clone https://github.com/edenhill/librdkafka.git
