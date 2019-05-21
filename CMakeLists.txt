@@ -38,14 +38,13 @@ option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
 option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
 option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
 
-# Determine if this is a 32 or 64 bit build
-string(FIND ${CMAKE_CXX_FLAGS} "-m64" BITNESS)
+math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
 
 # Properly set the output directory
-if (${BITNESS} EQUAL -1)
-    set(LIBDIR "lib")
-else()
+if (${BITS} EQUAL 64)
     set(LIBDIR "lib64")
+else()
+    set(LIBDIR "lib")
 endif()
 
 # Disable output from find_package macro
