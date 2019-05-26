@@ -43,8 +43,6 @@ target_include_directories(cppkafka PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 install(
     TARGETS cppkafka
-    LIBRARY DESTINATION ${LIBDIR}
-    ARCHIVE DESTINATION ${LIBDIR}
     COMPONENT dev
 )
 

@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 2.8.1)
+cmake_minimum_required(VERSION 2.8.5)
 project(cppkafka)
+
+include(GNUInstallDirs)
 
 # Set the version number.
 set(CPPKAFKA_VERSION_MAJOR 0)
@@ -37,15 +39,6 @@ option(CPPKAFKA_DISABLE_EXAMPLES "Disable build of cppkafka examples." OFF)
 option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
 option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
 option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
-
-math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
-
-# Properly set the output directory
-if (${BITS} EQUAL 64)
-    set(LIBDIR "lib64")
-else()
-    set(LIBDIR "lib")
-endif()
 
 # Disable output from find_package macro
 if (NOT CPPKAFKA_CMAKE_VERBOSE)
