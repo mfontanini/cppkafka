@@ -37,7 +37,7 @@ script:
   - ./configure --prefix=./install && make libs && make install
   - cd ..
   - mkdir build && cd build
-  - cmake .. -DRDKAFKA_ROOT_DIR=../librdkafka/install/ -DKAFKA_TEST_INSTANCE=localhost:9092
+  - cmake .. -DCPPKAFKA_CMAKE_VERBOSE=ON -DRDKAFKA_ROOT=./librdkafka/install -DKAFKA_TEST_INSTANCE=localhost:9092
   - make examples
   - make tests
   - ./tests/cppkafka_tests

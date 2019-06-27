@@ -1,12 +1,19 @@
-cmake_minimum_required(VERSION 2.8.1)
-project(cppkafka)
+cmake_minimum_required(VERSION 3.9.2)
+project(CppKafka)
+
+#Allows using '<Package>_ROOT' to point to a package install dir. After CMake v3.14 this becomes default behavior.
+#cmake_policy(SET CMP0074 NEW)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 # Set the version number.
 set(CPPKAFKA_VERSION_MAJOR 0)
 set(CPPKAFKA_VERSION_MINOR 3)
 set(CPPKAFKA_VERSION_REVISION 1)
 set(CPPKAFKA_VERSION "${CPPKAFKA_VERSION_MAJOR}.${CPPKAFKA_VERSION_MINOR}.${CPPKAFKA_VERSION_REVISION}")
-set(RDKAFKA_MIN_VERSION 0x00090400)
+set(RDKAFKA_MIN_VERSION "0.9.4")
+set(RDKAFKA_MIN_VERSION_HEX 0x00090400)
 
 if (NOT CMAKE_CXX_FLAGS)
     # Set default compile flags for the project
@@ -23,7 +30,6 @@ if (NOT CMAKE_CXX_FLAGS)
         set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 # Set output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -38,13 +44,27 @@ option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
 option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
 option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
 
-math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
+# Add FindRdKafka.cmake
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-# Properly set the output directory
-if (${BITS} EQUAL 64)
-    set(LIBDIR "lib64")
-else()
-    set(LIBDIR "lib")
+# Maintain previous compatibility
+if (RDKAFKA_ROOT_DIR)
+    set(RdKafka_ROOT ${RDKAFKA_ROOT_DIR})
+elseif (RDKAFKA_ROOT)
+    set(RdKafka_ROOT ${RDKAFKA_ROOT})
+endif()
+
+if (RdKafka_ROOT)
+    if (NOT IS_ABSOLUTE ${RdKafka_ROOT})
+        set(RdKafka_ROOT "${CMAKE_SOURCE_DIR}/${RdKafka_ROOT}")
+    endif()
+endif()
+
+if (RDKAFKA_DIR)
+    set(RdKafka_DIR ${RDKAFKA_DIR}) # For older versions of find_package
+    if (NOT IS_ABSOLUTE ${RdKafka_ROOT})
+        set(RdKafka_DIR "${CMAKE_SOURCE_DIR}/${RdKafka_DIR}")
+    endif()
 endif()
 
 # Disable output from find_package macro
@@ -60,10 +80,15 @@ else()
     message(STATUS "Build will generate a static library.")
     set(CPPKAFKA_LIBRARY_TYPE STATIC)
     add_definitions("-DCPPKAFKA_STATIC=1")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 if (CPPKAFKA_RDKAFKA_STATIC_LIB)
     add_definitions("-DLIBRDKAFKA_STATICLIB")
+endif()
+
+if (NOT CPPKAFKA_CONFIG_DIR)
+    set(CPPKAFKA_CONFIG_DIR lib/cmake/${PROJECT_NAME})
 endif()
 
 if (NOT CPPKAFKA_PKGCONFIG_DIR)
@@ -72,7 +97,6 @@ endif()
 
 # Look for Boost (just need boost.optional headers here)
 find_package(Boost REQUIRED ${FIND_PACKAGE_QUIET})
-find_package(RdKafka REQUIRED ${FIND_PACKAGE_QUIET})
 
 if (Boost_FOUND)
     find_package(Boost COMPONENTS program_options ${FIND_PACKAGE_QUIET})
@@ -89,8 +113,25 @@ if (Boost_FOUND)
     endif()
 endif()
 
+# Try to find the RdKafka configuration file if present.
+# This will search default system locations as well as RdKafka_ROOT and RdKafka_Dir paths if specified.
+find_package(RdKafka ${FIND_PACKAGE_QUIET} CONFIG)
+set(RDKAFKA_TARGET_IMPORTS ${RdKafka_FOUND})
+if (NOT RdKafka_FOUND)
+    message(STATUS "RdKafkaConfig.cmake not found. Please set RDKAFKA_ROOT or RDKAFKA_DIR if a config file is installed. Attempting to find module instead...")
+    find_package(RdKafka REQUIRED ${FIND_PACKAGE_QUIET} MODULE)
+    if (NOT RdKafka_FOUND)
+        message(FATAL_ERROR "RdKafka module not found. Please set RDKAFKA_ROOT to the install path.")
+    else()
+        message(STATUS "RdKafka module found.")
+    endif()
+else()
+    set(RdKafka_DEPENDENCIES RdKafka::rdkafka)
+    message(STATUS "RdKafka configuration file found: ${RdKafka_CONFIG}")
+endif()
+
 add_subdirectory(src)
-add_subdirectory(include)
+add_subdirectory(include/cppkafka)
 
 # Examples target
 if (NOT CPPKAFKA_DISABLE_EXAMPLES AND Boost_PROGRAM_OPTIONS_FOUND)
