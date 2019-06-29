@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.9.2)
 project(CppKafka)
-
-#Allows using '<Package>_ROOT' to point to a package install dir. After CMake v3.14 this becomes default behavior.
-#cmake_policy(SET CMP0074 NEW)
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
+    # Use <package>_ROOT variable to find configuration files
+    cmake_policy(SET CMP0074 NEW)
+endif()
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -46,6 +47,10 @@ option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
 
 # Add FindRdKafka.cmake
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+
+if (NOT CPPKAFKA_CONFIG_DIR)
+    set(CPPKAFKA_CONFIG_DIR lib/cmake/${PROJECT_NAME})
+endif()
 
 # Maintain previous compatibility
 if (RDKAFKA_ROOT_DIR)
