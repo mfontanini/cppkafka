@@ -3,14 +3,16 @@
 # - RdKafka_LIBNAME : The name of the library, i.e. librdkafka.a, librdkafka.so, etc.
 # - RdKafka_LIBRARY_DIR : The directory where the library is located.
 # - RdKafka_LIBRARY_PATH : The full library path i.e. ${RdKafka_LIBRARY_DIR}/${RdKafka_LIBNAME}
-# - RdKafka_DEPENDENCIES : Libs needed to link with RdKafka
+# - RdKafka::rdkafka : Imported library containing all above properties set.
 
 if (CPPKAFKA_RDKAFKA_STATIC_LIB)
     set(RDKAFKA_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
     set(RDKAFKA_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
+    set(RDKAFKA_LIBRARY_TYPE STATIC)
 else()
     set(RDKAFKA_PREFIX ${CMAKE_SHARED_LIBRARY_PREFIX})
     set(RDKAFKA_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(RDKAFKA_LIBRARY_TYPE SHARED)
 endif()
 
 set(RdKafka_LIBNAME ${RDKAFKA_PREFIX}rdkafka${RDKAFKA_SUFFIX})
@@ -60,13 +62,13 @@ try_compile(RdKafka_FOUND ${CMAKE_CURRENT_BINARY_DIR}
             CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${RdKafka_INCLUDE_DIR}")
 
 if (RdKafka_FOUND)
-    if (CPPKAFKA_RDKAFKA_STATIC_LIB)
-        set(RdKafka_DEPENDENCIES ${RdKafka_LIBNAME} pthread rt ssl crypto dl z)
-    else()
-        set(RdKafka_DEPENDENCIES ${RdKafka_LIBNAME} pthread)
-    endif()
-    include_directories(SYSTEM ${RdKafka_INCLUDE_DIR})
-    link_directories(${RdKafka_LIBRARY_DIR})
+    add_library(RdKafka::rdkafka ${RDKAFKA_LIBRARY_TYPE} IMPORTED GLOBAL)
+    set(RDKAFKA_DEPENDENCIES pthread rt ssl crypto dl z)
+    set_target_properties(RdKafka::rdkafka PROPERTIES
+            IMPORTED_NAME RdKafka
+            IMPORTED_LOCATION "${RdKafka_LIBRARY_PATH}"
+            INTERFACE_INCLUDE_DIRECTORIES "${RdKafka_INCLUDE_DIR}"
+            INTERFACE_LINK_LIBRARIES "${RDKAFKA_DEPENDENCIES}")
     message(STATUS "Found valid rdkafka version")
     mark_as_advanced(
         RDKAFKA_LIBRARY

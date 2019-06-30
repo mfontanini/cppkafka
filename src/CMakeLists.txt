@@ -27,7 +27,7 @@ set(SOURCES
 )
 
 set(TARGET_NAME         cppkafka)
-set(PKG_DIR             "${PROJECT_SOURCE_DIR}/package")
+set(PKG_DIR             "${CMAKE_BINARY_DIR}/package")
 set(PKG_CONFIG_FILE     "${PKG_DIR}/${TARGET_NAME}.pc")
 set(CONFIG_FILE         "${PKG_DIR}/${PROJECT_NAME}Config.cmake")
 set(VERSION_FILE        "${PKG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
@@ -42,12 +42,11 @@ add_library(${TARGET_NAME} ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES VERSION ${CPPKAFKA_VERSION}
                                                  SOVERSION ${CPPKAFKA_VERSION})
 # In CMake >= 3.15 Boost::boost == Boost::headers
-set(DEPENDENCIES ${RdKafka_DEPENDENCIES})
+target_link_libraries(${TARGET_NAME} PRIVATE RdKafka::rdkafka Boost::boost)
 if (WIN32)
     # On windows ntohs and related are in ws2_32
-    set(DEPENDENCIES ${DEPENDENCIES} ws2_32.lib)
+    target_link_libraries(${TARGET_NAME} PRIVATE ws2_32.lib)
 endif()
-target_link_libraries(${TARGET_NAME} PRIVATE ${DEPENDENCIES})
 
 # Install cppkafka target and specify all properties needed for the exported file
 install(

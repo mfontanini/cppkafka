@@ -25,6 +25,6 @@ add_executable(cppkafka_tests
 )
 
 # In CMake >= 3.15 Boost::boost == Boost::headers
-target_link_libraries(cppkafka_tests cppkafka ${RdKafka_DEPENDENCIES} Boost::boost Boost::program_options )
+target_link_libraries(cppkafka_tests cppkafka RdKafka::rdkafka Boost::boost Boost::program_options )
 add_dependencies(tests cppkafka_tests)
 add_test(cppkafka cppkafka_tests)
