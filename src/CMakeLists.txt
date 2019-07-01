@@ -35,10 +35,8 @@ set(FIND_RDKAFKA_FILE   "${PROJECT_SOURCE_DIR}/cmake/FindRdKafka.cmake")
 set(NAMESPACE           "${PROJECT_NAME}::")
 set(TARGET_EXPORT_NAME  ${PROJECT_NAME}Targets)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka)
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
 add_library(${TARGET_NAME} ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
+target_include_directories(${TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka>)
 set_target_properties(${TARGET_NAME} PROPERTIES VERSION ${CPPKAFKA_VERSION}
                                                  SOVERSION ${CPPKAFKA_VERSION})
 # In CMake >= 3.15 Boost::boost == Boost::headers
