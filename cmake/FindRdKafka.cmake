@@ -68,6 +68,7 @@ if (RdKafka_FOUND)
             IMPORTED_NAME RdKafka
             IMPORTED_LOCATION "${RdKafka_LIBRARY_PATH}"
             INTERFACE_INCLUDE_DIRECTORIES "${RdKafka_INCLUDE_DIR}"
+            INTERFACE_LINK_DIRECTORIES "${RdKafka_LIBRARY_DIR}"
             INTERFACE_LINK_LIBRARIES "${RDKAFKA_DEPENDENCIES}")
     message(STATUS "Found valid rdkafka version")
     mark_as_advanced(
