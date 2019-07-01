@@ -41,11 +41,12 @@ option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
 math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
 
 # Properly set the output directory
-if (${BITS} EQUAL 64)
-    set(LIBDIR "lib64")
-else()
-    set(LIBDIR "lib")
-endif()
+#if (${BITS} EQUAL 64)
+#    set(LIBDIR "lib64")
+#else()
+#    set(LIBDIR "lib")
+#endif()
+set(LIBDIR "lib")
 
 # Disable output from find_package macro
 if (NOT CPPKAFKA_CMAKE_VERBOSE)
