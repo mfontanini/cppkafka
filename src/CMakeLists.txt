@@ -42,10 +42,10 @@ add_library(${TARGET_NAME} ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES VERSION ${CPPKAFKA_VERSION}
                                                  SOVERSION ${CPPKAFKA_VERSION})
 # In CMake >= 3.15 Boost::boost == Boost::headers
-target_link_libraries(${TARGET_NAME} PRIVATE RdKafka::rdkafka Boost::boost)
+target_link_libraries(${TARGET_NAME} PUBLIC RdKafka::rdkafka Boost::boost)
 if (WIN32)
     # On windows ntohs and related are in ws2_32
-    target_link_libraries(${TARGET_NAME} PRIVATE ws2_32.lib)
+    target_link_libraries(${TARGET_NAME} PUBLIC ws2_32.lib)
 endif()
 
 # Install cppkafka target and specify all properties needed for the exported file
