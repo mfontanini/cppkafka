@@ -5,12 +5,14 @@ include(CMakeFindDependencyMacro)
 # Add FindRdKafka.cmake
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}")
 
+set(RDKAFKA_MIN_VERSION_HEX "@RDKAFKA_MIN_VERSION_HEX@")
+
 # Find boost optional
 find_dependency(Boost REQUIRED)
 
 # Try to find the RdKafka configuration file if present.
 # This will search default system locations as well as RdKafka_ROOT and RdKafka_Dir paths if specified.
-find_dependency(RdKafka QUIET CONFIG)
+find_package(RdKafka QUIET CONFIG)
 set(RDKAFKA_TARGET_IMPORTS ${RdKafka_FOUND})
 if (NOT RdKafka_FOUND)
     find_dependency(RdKafka REQUIRED MODULE)

@@ -54,7 +54,7 @@ find_package_handle_standard_args(RDKAFKA DEFAULT_MSG
 )
 
 set(CONTENTS "#include <librdkafka/rdkafka.h>\n #if RD_KAFKA_VERSION >= ${RDKAFKA_MIN_VERSION_HEX}\n int main() { }\n #endif")
-set(FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/rdkafka_version_test.c)
+set(FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/rdkafka_version_test.cpp)
 file(WRITE ${FILE_NAME} ${CONTENTS})
 
 try_compile(RdKafka_FOUND ${CMAKE_CURRENT_BINARY_DIR}
