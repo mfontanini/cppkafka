@@ -37,8 +37,15 @@ set(TARGET_EXPORT_NAME  ${PROJECT_NAME}Targets)
 
 add_library(${TARGET_NAME} ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
 target_include_directories(${TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka>)
-set_target_properties(${TARGET_NAME} PROPERTIES VERSION ${CPPKAFKA_VERSION}
-                                                 SOVERSION ${CPPKAFKA_VERSION})
+set_target_properties(${TARGET_NAME} PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE_OUTPUT_NAME "${TARGET_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY_OUTPUT_NAME "${TARGET_NAME}"
+        INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}"
+        INSTALL_RPATH_USE_LINK_PATH TRUE
+        VERSION ${CPPKAFKA_VERSION}
+        SOVERSION ${CPPKAFKA_VERSION})
 # In CMake >= 3.15 Boost::boost == Boost::headers
 target_link_libraries(${TARGET_NAME} PUBLIC RdKafka::rdkafka Boost::boost)
 if (WIN32)
