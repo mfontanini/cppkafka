@@ -64,40 +64,44 @@ install(
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 
-# Install the exported file
-install(
-    EXPORT "${TARGET_EXPORT_NAME}"
-    NAMESPACE "${NAMESPACE}"
-    COMPONENT config
-    DESTINATION "${CPPKAFKA_CONFIG_DIR}"
-)
+if (CPPKAFKA_EXPORT_PKGCONFIG)
+    # Generate and install pkgconfig file
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/cppkafka.pc.in ${PKG_CONFIG_FILE} @ONLY)
 
-# Generate and install pkgconfig file
-configure_file(${PROJECT_SOURCE_DIR}/cmake/cppkafka.pc.in ${PKG_CONFIG_FILE} @ONLY)
+    install(
+        FILES ${PKG_CONFIG}
+        DESTINATION "${CPPKAFKA_PKGCONFIG_DIR}"
+        COMPONENT pkgconfig
+    )
+endif()
 
-install(
-    FILES ${PKG_CONFIG}
-    DESTINATION "${CPPKAFKA_PKGCONFIG_DIR}"
-    COMPONENT pkgconfig
-)
+if (CPPKAFKA_EXPORT_CMAKE_CONFIG)
+    # Install the exported file
+    install(
+        EXPORT "${TARGET_EXPORT_NAME}"
+        NAMESPACE "${NAMESPACE}"
+        COMPONENT config
+        DESTINATION "${CPPKAFKA_CONFIG_DIR}"
+    )
 
-# Generate CMAKE configuration file and exported targets
-configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/config.cmake.in"
-    "${CONFIG_FILE}"
-    INSTALL_DESTINATION "${CPPKAFKA_CONFIG_DIR}"
-    PATH_VARS RDKAFKA_MIN_VERSION_HEX CMAKE_INSTALL_PREFIX CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
-)
+    # Generate CMAKE configuration file and exported targets
+    configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/config.cmake.in"
+        "${CONFIG_FILE}"
+        INSTALL_DESTINATION "${CPPKAFKA_CONFIG_DIR}"
+        PATH_VARS RDKAFKA_MIN_VERSION_HEX CMAKE_INSTALL_PREFIX CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+    )
 
-# Generate version file
-write_basic_package_version_file(
-    "${VERSION_FILE}"
-    VERSION ${CPPKAFKA_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
+    # Generate version file
+    write_basic_package_version_file(
+        "${VERSION_FILE}"
+        VERSION ${CPPKAFKA_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
 
-install(
-    FILES "${CONFIG_FILE}" "${VERSION_FILE}" "${FIND_RDKAFKA_FILE}"
-    DESTINATION "${CPPKAFKA_CONFIG_DIR}"
-    COMPONENT config
-)
+    install(
+        FILES "${CONFIG_FILE}" "${VERSION_FILE}" "${FIND_RDKAFKA_FILE}"
+        DESTINATION "${CPPKAFKA_CONFIG_DIR}"
+        COMPONENT config
+    )
+endif()

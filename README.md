@@ -83,6 +83,8 @@ The following cmake options can be specified:
 * `CPPKAFKA_RDKAFKA_STATIC_LIB` : Link to Rdkafka static library. Default is `OFF`.
 * `CPPKAFKA_CONFIG_DIR` : Install location of the cmake configuration files. Default is `lib/cmake/cppkafka`.
 * `CPPKAFKA_PKGCONFIG_DIR` : Install location of the .pc file. Default is `share/pkgconfig`.
+* `CPPKAFKA_EXPORT_PKGCONFIG` : Generate `cppkafka.pc` file. Default is `ON`.
+* `CPPKAFKA_EXPORT_CMAKE_CONFIG` : Generate CMake config, target and version files. Default is `ON`.
 
 Example:
 ```Shell

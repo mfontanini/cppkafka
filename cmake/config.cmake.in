@@ -11,7 +11,7 @@ set(RDKAFKA_MIN_VERSION_HEX "@RDKAFKA_MIN_VERSION_HEX@")
 find_dependency(Boost REQUIRED)
 
 # Try to find the RdKafka configuration file if present.
-# This will search default system locations as well as RdKafka_ROOT and RdKafka_Dir paths if specified.
+# This will search default system locations as well as RdKafka_ROOT and RdKafka_DIR paths if specified.
 find_package(RdKafka QUIET CONFIG)
 set(RDKAFKA_TARGET_IMPORTS ${RdKafka_FOUND})
 if (NOT RdKafka_FOUND)

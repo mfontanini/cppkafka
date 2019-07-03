@@ -44,6 +44,8 @@ option(CPPKAFKA_DISABLE_EXAMPLES "Disable build of cppkafka examples." OFF)
 option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
 option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
 option(CPPKAFKA_RDKAFKA_STATIC_LIB "Link with Rdkafka static library." OFF)
+option(CPPKAFKA_EXPORT_PKGCONFIG "Generate 'cppkafka.pc' file" ON)
+option(CPPKAFKA_EXPORT_CMAKE_CONFIG "Generate CMake config, target and version files." ON)
 
 # Add FindRdKafka.cmake
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
