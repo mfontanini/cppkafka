@@ -11,4 +11,4 @@ Version: @CPPKAFKA_VERSION@
 Requires:
 Requires.private: rdkafka >= 0.9.4
 Libs: -L${libdir} -L${sharedlibdir} -lcppkafka
-Cflags: -I${includedir} -I${includedir}/cppkafka
+Cflags: -I${includedir} -I${includedir}/cppkafka -I@Boost_INCLUDE_DIRS@
