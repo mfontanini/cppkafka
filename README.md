@@ -54,10 +54,9 @@ int main() {
 In order to compile _cppkafka_ you need:
 
 * _librdkafka >= 0.9.4_
-* _CMake_
-* A compiler with good C++11 support (e.g. gcc >= 4.8). This was tested successfully on
-_g++ 4.8.3_. 
-* The boost library.
+* _CMake >= 3.9.2_
+* A compiler with good C++11 support (e.g. gcc >= 4.8). This was tested successfully on _g++ 4.8.3_. 
+* The boost library (for boost::optional)
 
 Now, in order to build, just run:
 
@@ -66,12 +65,14 @@ mkdir build
 cd build
 cmake <OPTIONS> ..
 make
+make install
 ```
 
 ## CMake options
 
 The following cmake options can be specified:
-* `RDKAFKA_ROOT_DIR` : Specify a different librdkafka install directory.
+* `RDKAFKA_ROOT` : Specify a different librdkafka install directory.
+* `RDKAFKA_DIR` : Specify a different directory where the RdKafkaConfig.cmake is installed.
 * `BOOST_ROOT` : Specify a different Boost install directory.
 * `CPPKAFKA_CMAKE_VERBOSE` : Generate verbose output. Default is `OFF`.
 * `CPPKAFKA_BUILD_SHARED` : Build cppkafka as a shared library. Default is `ON`.
@@ -80,25 +81,14 @@ The following cmake options can be specified:
 * `CPPKAFKA_BOOST_STATIC_LIBS` : Link with Boost static libraries. Default is `ON`.
 * `CPPKAFKA_BOOST_USE_MULTITHREADED` : Use Boost multi-threaded libraries. Default is `ON`.
 * `CPPKAFKA_RDKAFKA_STATIC_LIB` : Link to Rdkafka static library. Default is `OFF`.
+* `CPPKAFKA_CONFIG_DIR` : Install location of the cmake configuration files. Default is `lib/cmake/cppkafka`.
 * `CPPKAFKA_PKGCONFIG_DIR` : Install location of the .pc file. Default is `share/pkgconfig`.
+* `CPPKAFKA_EXPORT_PKGCONFIG` : Generate `cppkafka.pc` file. Default is `ON`.
+* `CPPKAFKA_EXPORT_CMAKE_CONFIG` : Generate CMake config, target and version files. Default is `ON`.
 
 Example:
 ```Shell
-cmake -DRDKAFKA_ROOT_DIR=/some/other/dir -DCPPKAFKA_BUILD_SHARED=OFF ...
-```
-
-The `RDKAFKA_ROOT_DIR` must contain the following structure. If the system
-architecture is 64-bit and both `lib` and `lib64` folders are available, the `lib64`
-folder location will be selected by cmake.
-
-```Shell
-${RDKAFKA_ROOT_DIR}/
-                   |
-                   + include/librdkafka/rdkafka.h
-                   |
-                   + lib/librdkafka.a
-                   |
-                   + lib64/librdkafka.a (optional)
+cmake -DRDKAFKA_ROOT=/some/other/dir -DCPPKAFKA_BUILD_SHARED=OFF ...
 ```
 
 # Using
@@ -107,6 +97,13 @@ If you want to use _cppkafka_, you'll need to link your application with:
 
 * _cppkafka_
 * _rdkafka_
+
+If using CMake, this is simplified by doing:
+```cmake
+find_package(CppKafka REQUIRED)
+
+target_link_libraries(<YourLibrary> CppKafka::cppkafka)
+```
 
 # Documentation
 

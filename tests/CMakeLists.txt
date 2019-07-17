@@ -1,6 +1,5 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
 include_directories(SYSTEM ${CATCH_INCLUDE})
-include_directories(SYSTEM ${RDKAFKA_INCLUDE_DIR})
 
 set(KAFKA_TEST_INSTANCE "kafka-vm:9092" 
     CACHE STRING "The kafka instance to which to connect to run tests")
@@ -24,6 +23,8 @@ add_executable(cppkafka_tests
     # Main file
     test_main.cpp
 )
-target_link_libraries(cppkafka_tests cppkafka ${RDKAFKA_LIBRARY} pthread rt ssl crypto dl z)
+
+# In CMake >= 3.15 Boost::boost == Boost::headers
+target_link_libraries(cppkafka_tests cppkafka RdKafka::rdkafka Boost::boost Boost::program_options )
 add_dependencies(tests cppkafka_tests)
 add_test(cppkafka cppkafka_tests)
