@@ -69,7 +69,7 @@ if (CPPKAFKA_EXPORT_PKGCONFIG)
     configure_file(${PROJECT_SOURCE_DIR}/cmake/cppkafka.pc.in ${PKG_CONFIG_FILE} @ONLY)
 
     install(
-        FILES ${PKG_CONFIG}
+        FILES ${PKG_CONFIG_FILE}
         DESTINATION "${CPPKAFKA_PKGCONFIG_DIR}"
         COMPONENT pkgconfig
     )
