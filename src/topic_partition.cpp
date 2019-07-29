@@ -76,6 +76,10 @@ int64_t TopicPartition::get_offset() const {
     return offset_;
 }
 
+void TopicPartition::set_partition(int partition) {
+    partition_ = partition;
+}
+
 void TopicPartition::set_offset(int64_t offset) {
     offset_ = offset;
 }
