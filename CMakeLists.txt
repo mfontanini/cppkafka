@@ -32,6 +32,12 @@ if (NOT CMAKE_CXX_FLAGS)
     endif()
 endif()
 
+# Set default search directories for find_path, find_library, find_package, etc...
+if (NOT WIN32)
+    list(APPEND CMAKE_PREFIX_PATH /usr/lib /usr/local/lib /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE})
+    list(APPEND CMAKE_INCLUDE_PATH /usr/include /usr/local/include)
+endif()
+
 # Set output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
