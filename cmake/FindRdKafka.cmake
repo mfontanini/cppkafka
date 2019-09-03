@@ -1,8 +1,7 @@
 # This find module helps find the RdKafka module. It exports the following variables:
 # - RdKafka_INCLUDE_DIR : The directory where rdkafka.h is located.
 # - RdKafka_LIBNAME : The name of the library, i.e. librdkafka.a, librdkafka.so, etc.
-# - RdKafka_LIBRARY_DIR : The directory where the library is located.
-# - RdKafka_LIBRARY_PATH : The full library path i.e. ${RdKafka_LIBRARY_DIR}/${RdKafka_LIBNAME}
+# - RdKafka_LIBRARY_PATH : The full library path i.e. <path_to_binaries>/${RdKafka_LIBNAME}
 # - RdKafka::rdkafka : Imported library containing all above properties set.
 
 if (CPPKAFKA_RDKAFKA_STATIC_LIB)
@@ -22,14 +21,9 @@ find_path(RdKafka_INCLUDE_DIR
     HINTS ${RdKafka_ROOT}/include
 )
 
-find_path(RdKafka_LIBRARY_DIR
-    NAMES ${RdKafka_LIBNAME} rdkafka
-    HINTS ${RdKafka_ROOT}/lib ${RdKafka_ROOT}/lib64
-)
-
 find_library(RdKafka_LIBRARY_PATH
     NAMES ${RdKafka_LIBNAME} rdkafka
-    HINTS ${RdKafka_LIBRARY_DIR}
+    HINTS ${RdKafka_ROOT}/lib ${RdKafka_ROOT}/lib64
 )
 
 # Check lib paths
@@ -42,13 +36,11 @@ if (CPPKAFKA_CMAKE_VERBOSE)
     message(STATUS "RdKafka_INCLUDE_DIR = ${RdKafka_INCLUDE_DIR}")
     message(STATUS "RdKafka_LIBNAME = ${RdKafka_LIBNAME}")
     message(STATUS "RdKafka_LIBRARY_PATH = ${RdKafka_LIBRARY_PATH}")
-    message(STATUS "RdKafka_LIBRARY_DIR = ${RdKafka_LIBRARY_DIR}")
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(RDKAFKA DEFAULT_MSG
     RdKafka_LIBNAME
-    RdKafka_LIBRARY_DIR
     RdKafka_LIBRARY_PATH
     RdKafka_INCLUDE_DIR
 )
@@ -68,13 +60,12 @@ if (RdKafka_FOUND)
             IMPORTED_NAME RdKafka
             IMPORTED_LOCATION "${RdKafka_LIBRARY_PATH}"
             INTERFACE_INCLUDE_DIRECTORIES "${RdKafka_INCLUDE_DIR}"
-            INTERFACE_LINK_DIRECTORIES "${RdKafka_LIBRARY_DIR}"
             INTERFACE_LINK_LIBRARIES "${RDKAFKA_DEPENDENCIES}")
     message(STATUS "Found valid rdkafka version")
     mark_as_advanced(
         RDKAFKA_LIBRARY
-        RdKafka_LIBRARY_DIR
         RdKafka_INCLUDE_DIR
+        RdKafka_LIBRARY_PATH
     )
 else()
     message(FATAL_ERROR "Failed to find valid rdkafka version")
