@@ -1,3 +1,7 @@
+link_libraries(cppkafka ${RDKAFKA_LIBRARY} ${Boost_LIBRARIES} pthread rt ssl crypto dl z)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
+include_directories(SYSTEM ${RDKAFKA_INCLUDE_DIR})
+
 # add_custom_target(examples)
 # macro(create_example example_name)
 #     string(REPLACE "_" "-" sanitized_name ${example_name})
@@ -18,3 +22,4 @@ add_executable(consumer consumer_example.cpp)
 add_executable(consumer_dispatcher consumer_dispatcher_example.cpp)
 add_executable(consumers_information consumers_information_example.cpp)
 add_executable(metadata metadata_example.cpp)
+
