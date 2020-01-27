@@ -108,7 +108,7 @@ public:
      */
     std::string get_topic() const {
         assert(handle_);
-        return rd_kafka_topic_name(handle_->rkt);
+        return handle_->rkt ? rd_kafka_topic_name(handle_->rkt) : std::string{};
     }
 
     /**
