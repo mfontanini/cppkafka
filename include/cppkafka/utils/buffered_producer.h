@@ -771,7 +771,16 @@ void BufferedProducer<BufferType, Allocator>::clear() {
 
 template <typename BufferType, typename Allocator>
 size_t BufferedProducer<BufferType, Allocator>::get_buffer_size() const {
-    return messages_.size() + retry_messages_.size();
+    size_t size = 0;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        size += messages_.size();
+    }
+    {
+        std::lock_guard<std::mutex> lock(retry_mutex_);
+        size += retry_messages_.size();
+    }
+    return size;
 }
 
 template <typename BufferType, typename Allocator>
@@ -1025,7 +1034,12 @@ void BufferedProducer<BufferType, Allocator>::on_delivery_report(const Message& 
     }
     // Signal producers
     if (tracker) {
-        tracker->should_retry_.set_value(should_retry);
+        try {
+            tracker->should_retry_.set_value(should_retry);
+        }
+        catch (const std::future_error& ex) {
+            //This is an async retry and future is not being read
+        }
     }
     // Decrement the expected acks and check to prevent underflow
     if (pending_acks_ > 0) {
