@@ -771,7 +771,7 @@ void BufferedProducer<BufferType, Allocator>::clear() {
 
 template <typename BufferType, typename Allocator>
 size_t BufferedProducer<BufferType, Allocator>::get_buffer_size() const {
-    int size = 0;
+    size_t size = 0;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         size += messages_.size();
