@@ -102,10 +102,17 @@ public:
      * belonging to the provided partition list and calls reset_state().
      * To be used with static consumers.
      *
-     * \param partitions Revoked topic partitions. If the partition list is empty
-     *                   all partitions will be revoked.
+     * \param partitions Revoked topic partitions.
      */
-    virtual void revoke(const TopicPartitionList& partitions = {});
+    virtual void revoke(const TopicPartitionList& partitions);
+    
+    /**
+     * \brief Removes all partitions queues associated with the supplied partitions.
+     *
+     * This method contains a default implementation. It removes all the queues
+     * currently assigned and calls reset_state(). To be used with static consumers.
+     */
+    virtual void revoke();
     
 protected:
     /**

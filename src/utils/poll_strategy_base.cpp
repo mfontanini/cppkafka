@@ -99,20 +99,14 @@ void PollStrategyBase::assign(TopicPartitionList& partitions) {
 }
 
 void PollStrategyBase::revoke(const TopicPartitionList& partitions) {
-    if (partitions.empty()) {
-        //revoke everything
-        partition_queues_.clear();
+    for (const auto &partition : partitions) {
+        partition_queues_.erase(partition);
     }
-    else {
-        for (const auto &partition : partitions) {
-            // get the queue associated with this partition
-            auto toppar_it = partition_queues_.find(partition);
-            if (toppar_it != partition_queues_.end()) {
-                // remove this queue from the list
-                partition_queues_.erase(toppar_it);
-            }
-        }
-    }
+    reset_state();
+}
+
+void PollStrategyBase::revoke() {
+    partition_queues_.clear();
     reset_state();
 }
 
