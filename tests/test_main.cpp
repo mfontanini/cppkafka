@@ -15,8 +15,7 @@ using Catch::TestCaseStats;
 using Catch::Totals;
 using Catch::Session;
 
-std::vector<std::string> KAFKA_TOPICS = {"cppkafka_test1", "cppkafka_test2"};
-int KAFKA_NUM_PARTITIONS = 3;
+std::vector<std::string> KAFKA_TOPICS = {KAFKA_TOPIC_NAMES};
 
 namespace cppkafka {
 
