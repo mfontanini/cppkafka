@@ -89,13 +89,29 @@ void PollStrategyBase::reset_state() {
 
 }
 
-void PollStrategyBase::on_assignment(TopicPartitionList& partitions) {
+void PollStrategyBase::assign(TopicPartitionList& partitions) {
     // populate partition queues
     for (const auto& partition : partitions) {
         // get the queue associated with this partition
         partition_queues_.emplace(partition, QueueData{consumer_.get_partition_queue(partition), boost::any()});
     }
     reset_state();
+}
+
+void PollStrategyBase::revoke(const TopicPartitionList& partitions) {
+    for (const auto &partition : partitions) {
+        partition_queues_.erase(partition);
+    }
+    reset_state();
+}
+
+void PollStrategyBase::revoke() {
+    partition_queues_.clear();
+    reset_state();
+}
+
+void PollStrategyBase::on_assignment(TopicPartitionList& partitions) {
+    assign(partitions);
     // call original consumer callback if any
     if (assignment_callback_) {
         assignment_callback_(partitions);
@@ -103,15 +119,7 @@ void PollStrategyBase::on_assignment(TopicPartitionList& partitions) {
 }
 
 void PollStrategyBase::on_revocation(const TopicPartitionList& partitions) {
-    for (const auto& partition : partitions) {
-        // get the queue associated with this partition
-        auto toppar_it = partition_queues_.find(partition);
-        if (toppar_it != partition_queues_.end()) {
-            // remove this queue from the list
-            partition_queues_.erase(toppar_it);
-        }
-    }
-    reset_state();
+    revoke(partitions);
     // call original consumer callback if any
     if (revocation_callback_) {
         revocation_callback_(partitions);
