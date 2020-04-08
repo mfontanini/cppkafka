@@ -185,9 +185,15 @@ KafkaHandleBase::OffsetTuple Consumer::get_offsets(const TopicPartition& topic_p
 
 TopicPartitionList
 Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions) const {
+    return get_offsets_committed(topic_partitions, get_timeout());
+}
+
+TopicPartitionList
+Consumer::get_offsets_committed(const TopicPartitionList& topic_partitions,
+                                milliseconds timeout) const {
     TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
     rd_kafka_resp_err_t error = rd_kafka_committed(get_handle(), topic_list_handle.get(),
-                                                   static_cast<int>(get_timeout().count()));
+                                                   static_cast<int>(timeout.count()));
     check_error(error, topic_list_handle.get());
     return convert(topic_list_handle);
 }
