@@ -280,6 +280,20 @@ public:
      * \return The topic partition list
      */
     TopicPartitionList get_offsets_committed(const TopicPartitionList& topic_partitions) const;
+    
+    /**
+     * \brief Gets the offsets committed for the given topic/partition list with a timeout
+     *
+     * This translates into a call to rd_kafka_committed
+     *
+     * \param topic_partitions The topic/partition list to be queried
+     *
+     * \param timeout The timeout for this operation. Supersedes the default consumer timeout.
+     *
+     * \return The topic partition list
+     */
+    TopicPartitionList get_offsets_committed(const TopicPartitionList& topic_partitions,
+                                             std::chrono::milliseconds timeout) const;
 
     /**
      * \brief Gets the offset positions for the given topic/partition list

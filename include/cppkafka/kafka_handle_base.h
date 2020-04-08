@@ -134,6 +134,20 @@ public:
      * \return A pair of watermark offsets {low, high}
      */ 
     OffsetTuple query_offsets(const TopicPartition& topic_partition) const;
+    
+    /**
+     * \brief Queries the offset for the given topic/partition with a given timeout
+     *
+     * This translates into a call to rd_kafka_query_watermark_offsets
+     *
+     * \param topic_partition The topic/partition to be queried
+     *
+     * \timeout The timeout for this operation. This supersedes the default handle timeout.
+     *
+     * \return A pair of watermark offsets {low, high}
+     */
+    OffsetTuple query_offsets(const TopicPartition& topic_partition,
+                              std::chrono::milliseconds timeout) const;
 
     /**
      * \brief Gets the rdkafka handle
@@ -177,6 +191,20 @@ public:
      * \return The metadata
      */
     Metadata get_metadata(bool all_topics = true) const;
+    
+    /**
+     * \brief Gets metadata for brokers, topics, partitions, etc with a timeout
+     *
+     * This translates into a call to rd_kafka_metadata
+     *
+     * \param all_topics Whether to fetch metadata about all topics or only locally known ones
+     *
+     * \param timeout The timeout for this operation. Supersedes the default handle timeout.
+     *
+     * \return The metadata
+     */
+    Metadata get_metadata(bool all_topics,
+                          std::chrono::milliseconds timeout) const;
 
     /**
      * \brief Gets general metadata but only fetches metadata for the given topic rather than 
@@ -189,6 +217,21 @@ public:
      * \return The topic metadata
      */
     TopicMetadata get_metadata(const Topic& topic) const;
+    
+    /**
+     * \brief Gets general metadata but only fetches metadata for the given topic rather than
+     * all of them. Uses a timeout to limit the operation execution time.
+     *
+     * This translates into a call to rd_kafka_metadata
+     *
+     * \param topic The topic to fetch information for
+     *
+     * \param timeout The timeout for this operation. Supersedes the default handle timeout.
+     *
+     * \return The topic metadata
+     */
+    TopicMetadata get_metadata(const Topic& topic,
+                               std::chrono::milliseconds timeout) const;
 
     /**
      * \brief Gets the consumer group information
@@ -198,6 +241,18 @@ public:
      * \return The group information
      */
     GroupInformation get_consumer_group(const std::string& name);
+    
+    /**
+     * \brief Gets the consumer group information with a timeout
+     *
+     * \param name The name of the consumer group to look up
+     *
+     * \param timeout The timeout for this operation. Supersedes the default handle timeout.
+     *
+     * \return The group information
+     */
+    GroupInformation get_consumer_group(const std::string& name,
+                                        std::chrono::milliseconds timeout);
 
     /**
      * \brief Gets all consumer groups
@@ -205,6 +260,15 @@ public:
      * \return A list of consumer groups
      */
     GroupInformationList get_consumer_groups();
+    
+    /**
+     * \brief Gets all consumer groups with a timeout
+     *
+     * \param timeout The timeout for this operation. Supersedes the default handle timeout.
+     *
+     * \return A list of consumer groups
+     */
+    GroupInformationList get_consumer_groups(std::chrono::milliseconds timeout);
 
     /**
      * \brief Gets topic/partition offsets based on timestamps
@@ -216,6 +280,20 @@ public:
      * \return A topic partition list
      */
     TopicPartitionList get_offsets_for_times(const TopicPartitionsTimestampsMap& queries) const;
+    
+    /**
+     * \brief Gets topic/partition offsets based on timestamps with a timeout
+     *
+     * This translates into a call to rd_kafka_offsets_for_times
+     *
+     * \param queries A map from topic/partition to the timestamp to be used
+     *
+     * \param timeout The timeout for this operation. This supersedes the default handle timeout.
+     *
+     * \return A topic partition list
+     */
+    TopicPartitionList get_offsets_for_times(const TopicPartitionsTimestampsMap& queries,
+                                             std::chrono::milliseconds timeout) const;
 
     /**
      * \brief Get the kafka handle name
@@ -283,8 +361,11 @@ private:
     using TopicConfigurationMap = std::unordered_map<std::string, TopicConfiguration>;
 
     Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
-    Metadata get_metadata(bool all_topics, rd_kafka_topic_t* topic_ptr) const;
-    GroupInformationList fetch_consumer_groups(const char* name);
+    Metadata get_metadata(bool all_topics,
+                          rd_kafka_topic_t* topic_ptr,
+                          std::chrono::milliseconds timeout) const;
+    GroupInformationList fetch_consumer_groups(const char* name,
+                                               std::chrono::milliseconds timeout);
     void save_topic_config(const std::string& topic_name, TopicConfiguration config);
 
     std::chrono::milliseconds timeout_ms_;
