@@ -9,7 +9,6 @@
 #include "cppkafka/utils/consumer_dispatcher.h"
 
 extern const std::vector<std::string> KAFKA_TOPICS;
-extern const int KAFKA_NUM_PARTITIONS;
 
 using namespace cppkafka;
 
