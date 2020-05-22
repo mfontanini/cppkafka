@@ -48,7 +48,7 @@ namespace cppkafka {
 const milliseconds KafkaHandleBase::DEFAULT_TIMEOUT{1000};
 
 KafkaHandleBase::KafkaHandleBase(Configuration config) 
-: timeout_ms_(DEFAULT_TIMEOUT), config_(move(config)), handle_(nullptr, handle_deleter(this)) {
+: timeout_ms_(DEFAULT_TIMEOUT), config_(move(config)), handle_(nullptr, HandleDeleter(this)), destroy_flags_(0) {
     auto& maybe_config = config_.get_default_topic_configuration();
     if (maybe_config) {
         maybe_config->set_as_opaque();
@@ -213,7 +213,7 @@ void KafkaHandleBase::yield() const {
 }
 
 void KafkaHandleBase::set_handle(rd_kafka_t* handle) {
-    handle_ = HandlePtr(handle, handle_deleter(this));
+    handle_ = HandlePtr(handle, HandleDeleter(this));
 }
 
 Topic KafkaHandleBase::get_topic(const string& name, rd_kafka_topic_conf_t* conf) {
@@ -298,7 +298,7 @@ int KafkaHandleBase::get_destroy_flags() const {
 #endif
 
 
-void KafkaHandleBase::handle_deleter::operator()(rd_kafka_t* handle) {
+void KafkaHandleBase::HandleDeleter::operator()(rd_kafka_t* handle) {
 #if RD_KAFKA_VERSION >= RD_KAFKA_DESTROY_FLAGS_SUPPORT_VERSION
     rd_kafka_destroy_flags(handle, handle_base_ptr_->get_destroy_flags());
 #else
