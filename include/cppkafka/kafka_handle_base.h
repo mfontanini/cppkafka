@@ -340,6 +340,18 @@ public:
      */
     int get_out_queue_length() const;
 
+#if RD_KAFKA_VERSION >= RD_KAFKA_DESTROY_FLAGS_SUPPORT_VERSION
+    /**
+     * \brief Sets flags for rd_kafka_destroy_flags()
+     */
+     void set_destroy_flags(int destroy_flags);
+
+    /**
+     * \brief Returns flags for rd_kafka_destroy_flags()
+     */
+     int get_destroy_flags() const;
+
+#endif
     /**
      * \brief Cancels the current callback dispatcher
      *
@@ -357,7 +369,14 @@ protected:
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
-    using HandlePtr = std::unique_ptr<rd_kafka_t, decltype(&rd_kafka_destroy)>;
+    struct HandleDeleter {
+        explicit HandleDeleter(const KafkaHandleBase* handle_base_ptr) : handle_base_ptr_{handle_base_ptr} {}
+        void operator()(rd_kafka_t* handle);
+    private:
+        const KafkaHandleBase * handle_base_ptr_;
+    };
+
+    using HandlePtr = std::unique_ptr<rd_kafka_t, HandleDeleter>;
     using TopicConfigurationMap = std::unordered_map<std::string, TopicConfiguration>;
 
     Topic get_topic(const std::string& name, rd_kafka_topic_conf_t* conf);
@@ -373,6 +392,7 @@ private:
     TopicConfigurationMap topic_configurations_;
     std::mutex topic_configurations_mutex_;
     HandlePtr handle_;
+    int destroy_flags_;
 };
 
 } // cppkafka
