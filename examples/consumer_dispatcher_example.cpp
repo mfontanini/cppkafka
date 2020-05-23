@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
         },
         // Whenever EOF is reached on a partition, print this
         [](ConsumerDispatcher::EndOfFile, const TopicPartition& topic_partition) {
-            cout << "Reched EOF on partition " << topic_partition << endl;
+            cout << "Reached EOF on partition " << topic_partition << endl;
         }
     );
 }
