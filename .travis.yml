@@ -8,7 +8,6 @@ compiler:
 
 env:
   - RDKAFKA_VERSION=v0.9.4
-  - RDKAFKA_VERSION=v0.11.5
   - RDKAFKA_VERSION=v0.11.6
 
 os:
