@@ -79,6 +79,8 @@ public:
                                            const std::string& message)>;
     using StatsCallback = std::function<void(KafkaHandleBase& handle, const std::string& json)>;
     using SocketCallback = std::function<int(int domain, int type, int protocol)>;
+    using ConnectCallback = std::function<int(int sockfd, const struct sockaddr *addr, int addrlen, const char *id)>;
+    using CloseSocketCallback = std::function<int(int sockfd)>;
     using BackgroundEventCallback = std::function<void(KafkaHandleBase& handle, Event)>;
 
     using ConfigurationBase<Configuration>::set;
@@ -143,6 +145,16 @@ public:
      * Sets the socket callback (invokes rd_kafka_conf_set_socket_cb)
      */
     Configuration& set_socket_callback(SocketCallback callback);
+
+    /**
+     * Sets the connect callback (invokes rd_kafka_conf_set_connect_cb)
+     */
+    Configuration& set_connect_callback(ConnectCallback callback);
+
+    /**
+     * Sets the closesocket callback (invokes rd_kafka_conf_set_closesocket_cb)
+     */
+    Configuration& set_closesocket_callback(CloseSocketCallback callback);
 
 #if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
     /**
@@ -219,6 +231,16 @@ public:
     const SocketCallback& get_socket_callback() const;
 
     /**
+     * Gets the connect callback
+     */
+    const ConnectCallback& get_connect_callback() const;
+
+    /**
+     * Gets the closesocket callback
+     */
+    const CloseSocketCallback& get_closesocket_callback() const;
+
+    /**
      * Gets the background event callback
      */
     const BackgroundEventCallback& get_background_event_callback() const;
@@ -249,6 +271,8 @@ private:
     StatsCallback stats_callback_;
     SocketCallback socket_callback_;
     BackgroundEventCallback background_event_callback_;
+    ConnectCallback connect_callback_;
+    CloseSocketCallback closesocket_callback_;
 };
 
 } // cppkafka

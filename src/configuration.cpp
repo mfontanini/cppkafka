@@ -102,6 +102,20 @@ int socket_callback_proxy(int domain, int type, int protocol, void* opaque) {
         (domain, type, protocol);
 }
 
+int connect_callback_proxy(int sockfd, const struct sockaddr *addr, int addrlen, const char *id, void* opaque) {
+    KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
+    return CallbackInvoker<Configuration::ConnectCallback>
+        ("connect", handle->get_configuration().get_connect_callback(), handle)
+        (sockfd, addr, addrlen, id);
+}
+
+int closesocket_callback_proxy(int sockfd, void *opaque) {
+    KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
+    return CallbackInvoker<Configuration::CloseSocketCallback>
+       ("closesocket", handle->get_configuration().get_closesocket_callback(), handle)
+       (sockfd);
+}
+
 void background_event_callback_proxy(rd_kafka_t*, rd_kafka_event_t* event_ptr, void *opaque) {
     KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
     CallbackInvoker<Configuration::BackgroundEventCallback>
@@ -184,6 +198,18 @@ Configuration& Configuration::set_socket_callback(SocketCallback callback) {
     return *this;
 }
 
+Configuration& Configuration::set_connect_callback(ConnectCallback callback) {
+    connect_callback_ = move(callback);
+    rd_kafka_conf_set_connect_cb(handle_.get(), &connect_callback_proxy);
+    return *this;
+}
+
+Configuration& Configuration::set_closesocket_callback(CloseSocketCallback callback) {
+    closesocket_callback_ = move(callback);
+    rd_kafka_conf_set_closesocket_cb(handle_.get(), &closesocket_callback_proxy);
+    return *this;
+}
+
 #if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
 Configuration& Configuration::set_background_event_callback(BackgroundEventCallback callback) {
     background_event_callback_ = move(callback);
@@ -257,6 +283,14 @@ const Configuration::StatsCallback& Configuration::get_stats_callback() const {
 
 const Configuration::SocketCallback& Configuration::get_socket_callback() const {
     return socket_callback_;
+}
+
+const Configuration::ConnectCallback& Configuration::get_connect_callback() const {
+    return connect_callback_;
+}
+
+const Configuration::CloseSocketCallback& Configuration::get_closesocket_callback() const {
+    return closesocket_callback_;
 }
 
 const Configuration::BackgroundEventCallback&
