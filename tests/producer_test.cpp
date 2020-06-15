@@ -45,7 +45,8 @@ static Configuration make_consumer_config() {
         { "metadata.broker.list", KAFKA_TEST_INSTANCE },
         { "enable.auto.commit", false },
         { "group.id", make_consumer_group_id() },
-        { "api.version.request", true }
+        { "api.version.request", true },
+        { "enable.partition.eof", true }
     };
     return config;
 }

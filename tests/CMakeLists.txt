@@ -5,6 +5,10 @@ if (NOT KAFKA_TEST_INSTANCE)
 set(KAFKA_TEST_INSTANCE kafka-vm:9092
     CACHE STRING "The kafka instance to which to connect to run tests")
 endif()
+if (NOT KAFKA_TEST_INSTANCE_ID)
+   set(KAFKA_TEST_INSTANCE_ID 0
+       CACHE STRING "Node ID of the kafka instance to which to connect to run tests")
+endif()
 if (NOT KAFKA_NUM_PARTITIONS)
    set(KAFKA_NUM_PARTITIONS 3 CACHE STRING "Kafka Number of partitions")
 endif()
@@ -26,6 +30,7 @@ add_custom_target(tests)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(
   "-DKAFKA_TEST_INSTANCE=\"${KAFKA_TEST_INSTANCE}\""
+  -DKAFKA_TEST_INSTANCE_ID=${KAFKA_TEST_INSTANCE_ID}
   -DKAFKA_NUM_PARTITIONS=${KAFKA_NUM_PARTITIONS}
   -DKAFKA_TOPIC_NAMES=${TOPIC_LIST}
 )

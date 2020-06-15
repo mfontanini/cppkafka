@@ -75,10 +75,10 @@ TEST_CASE("metadata", "[handle_base]") {
                 for (const PartitionMetadata& partition : partitions) {
                     REQUIRE(expected_ids.erase(partition.get_id()) == 1);
                     for (int32_t replica : partition.get_replicas()) {
-                        REQUIRE(replica == 0);
+                        REQUIRE(replica == KAFKA_TEST_INSTANCE_ID);
                     }
                     for (int32_t isr : partition.get_in_sync_replica_brokers()) {
-                        REQUIRE(isr == 0);
+                        REQUIRE(isr == KAFKA_TEST_INSTANCE_ID);
                     }
                 }
                 found_topics++;
