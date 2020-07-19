@@ -102,6 +102,7 @@ public:
     using RevocationCallback = std::function<void(const TopicPartitionList&)>;
     using RebalanceErrorCallback = std::function<void(Error)>;
     using KafkaHandleBase::pause;
+    using KafkaHandleBase::resume;
 
     /**
      * \brief Creates an instance of a consumer.
