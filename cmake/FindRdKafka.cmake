@@ -39,7 +39,7 @@ if (CPPKAFKA_CMAKE_VERBOSE)
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(RDKAFKA DEFAULT_MSG
+find_package_handle_standard_args(RdKafka DEFAULT_MSG
     RdKafka_LIBNAME
     RdKafka_LIBRARY_PATH
     RdKafka_INCLUDE_DIR
