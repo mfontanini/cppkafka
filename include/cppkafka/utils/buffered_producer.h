@@ -39,7 +39,6 @@
 #include <atomic>
 #include <future>
 #include <thread>
-#include <boost/optional.hpp>
 #include "../producer.h"
 #include "../detail/callback_invoker.h"
 #include "../message_internal.h"
