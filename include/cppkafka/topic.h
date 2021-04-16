@@ -32,7 +32,6 @@
 
 #include <string>
 #include <memory>
-#include <boost/optional.hpp>
 #include <librdkafka/rdkafka.h>
 #include "macros.h"
 
