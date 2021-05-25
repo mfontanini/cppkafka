@@ -373,9 +373,9 @@ void BasicConsumerDispatcher<ConsumerType>::run(const Args&... args) {
 
         if (msg.empty()) {
             on_timeout(Timeout{});
-        }
+/*        }
         else if (lambda_get_error(msg)) {
-            lambda_is_eof(msg);
+            lambda_is_eof(msg);*/
         } else {
             process_message(on_message, std::move(msg), args...);
         }
