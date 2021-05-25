@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="CppKafka"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\cmake\;CMake Files\cmake-build-debug\;CMake Files\src\;CMake Files\include\;CMake Files\include\cppkafka\;CMake Files\examples\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/strip">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/strip"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/local">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/local"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="uninstall">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 uninstall"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 install"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="list_install_components">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 list_install_components"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="cppkafka">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/src/lib64/libcppkafka.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/src"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 cppkafka"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="cppkafka/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/src/lib64/libcppkafka.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/src"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 cppkafka/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="consumer">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/consumer" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 consumer"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="consumer/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/consumer" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 consumer/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="buffered-producer">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/buffered-producer" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 buffered-producer"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="buffered-producer/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/buffered-producer" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 buffered-producer/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="examples">
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 examples"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="producer">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/producer" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 producer"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="producer/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/producer" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 producer/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="consumer-dispatcher">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/consumer-dispatcher" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 consumer-dispatcher"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="consumer-dispatcher/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/consumer-dispatcher" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 consumer-dispatcher/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="metadata">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/metadata" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 metadata"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="metadata/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/metadata" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 metadata/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="consumers-information">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/consumers-information" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 consumers-information"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="consumers-information/fast">
+				<Option output="/home/illidansr/lib/cppkafka/cmake-build-debug/examples/consumers-information" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/illidansr/lib/cppkafka/cmake-build-debug/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/illidansr/lib/cppkafka/examples/../include"/>
+					<Add directory="/home/illidansr/lib/cppkafka/src/../include/cppkafka"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/x86_64-redhat-linux"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/../../../../include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 consumers-information/fast"/>
+					<CompileFile command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j16 -f &quot;/home/illidansr/lib/cppkafka/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/buffered_producer_example.cpp">
+			<Option target="buffered-producer"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/consumer_dispatcher_example.cpp">
+			<Option target="consumer-dispatcher"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/consumer_example.cpp">
+			<Option target="consumer"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/consumers_information_example.cpp">
+			<Option target="consumers-information"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/metadata_example.cpp">
+			<Option target="metadata"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/producer_example.cpp">
+			<Option target="producer"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/buffer.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/configuration.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/configuration_option.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/consumer.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/error.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/event.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/exceptions.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/group_information.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/kafka_handle_base.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/message.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/message_internal.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/message_timestamp.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/metadata.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/producer.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/queue.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/topic.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/topic_configuration.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/topic_partition.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/topic_partition_list.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/utils/backoff_committer.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/utils/backoff_performer.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/utils/poll_strategy_base.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/utils/roundrobin_poll_strategy.cpp">
+			<Option target="cppkafka"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/cmake/FindRdKafka.cmake">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/cmake/cmake_uninstall.cmake.in">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/cmake/config.cmake.in">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/cmake/cppkafka.h.in">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/cmake/cppkafka.pc.in">
+			<Option virtualFolder="CMake Files\cmake\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/cmake-build-debug/rdkafka_version_test.cpp">
+			<Option virtualFolder="CMake Files\cmake-build-debug\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/include/cppkafka/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\include\cppkafka\"/>
+		</Unit>
+		<Unit filename="/home/illidansr/lib/cppkafka/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\examples\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

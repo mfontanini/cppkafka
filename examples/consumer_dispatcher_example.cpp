@@ -97,17 +97,20 @@ int main(int argc, char* argv[]) {
 
     // Now run the dispatcher, providing a callback to handle messages, one to handle
     // errors and another one to handle EOF on a partition
-    dispatcher.run(
+    /*dispatcher.run(
         // Callback executed whenever a new message is consumed
-        [&](Message msg) {
+        [&](std::vector<Message> msg) {
             // Print the key (if any)
-            if (msg.get_key()) {
-                cout << msg.get_key() << " -> ";
+            for (auto &iter : msg) {
+                if (iter.get_key()) {
+                    cout << iter.get_key() << " -> ";
+                }
+                // Print the payload
+                cout << iter.get_payload() << endl;
+                // Now commit the message
+                consumer.commit();
             }
-            // Print the payload
-            cout << msg.get_payload() << endl;
-            // Now commit the message
-            consumer.commit(msg);
+
         },
         // Whenever there's an error (other than the EOF soft error)
         [](Error error) {
@@ -117,5 +120,5 @@ int main(int argc, char* argv[]) {
         [](ConsumerDispatcher::EndOfFile, const TopicPartition& topic_partition) {
             cout << "Reached EOF on partition " << topic_partition << endl;
         }
-    );
+    );*/
 }

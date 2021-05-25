@@ -118,7 +118,7 @@ public:
     void stop();
 private:
     // Define the types we need for each type of callback
-    using OnMessageArgs = std::tuple<Message>;
+    using OnMessageArgs = std::tuple<std::vector<Message>>;
     using OnErrorArgs = std::tuple<Error>;
     using OnEofArgs = std::tuple<EndOfFile, TopicPartition>;
     using OnTimeoutArgs = std::tuple<Timeout>;
@@ -278,15 +278,15 @@ private:
     }
 
     template <typename Functor, typename... Functors>
-    auto process_message(const Functor& callback, Message msg, const Functors&...) 
+    auto process_message(const Functor& callback, std::vector<Message> msg, const Functors&...)
     -> typename std::enable_if<std::is_same<void, decltype(callback(std::move(msg)))>::value,
                                void>::type {
         callback(std::move(msg));
     }
 
     template <typename Functor, typename... Functors>
-    auto process_message(const Functor& callback, Message msg, const Functors&... functors)
-    -> typename std::enable_if<std::is_same<Message, decltype(callback(std::move(msg)))>::value,
+    auto process_message(const Functor& callback, std::vector<Message> msg, const Functors&... functors)
+    -> typename std::enable_if<std::is_same<std::vector<Message>, decltype(callback(std::move(msg)))>::value,
                                void>::type { 
         const auto throttle_ptr = &BasicConsumerDispatcher::handle_throttle<Functor>;
         const auto default_throttler = std::bind(throttle_ptr, this, std::placeholders::_1,
@@ -298,7 +298,7 @@ private:
         
         msg = callback(std::move(msg));
         // The callback rejected the message, start throttling
-        if (msg) {
+        if (!msg.empty()) {
             // Pause consumption. When the pauser goes off scope, it will resume it
             Pauser<ConsumerType> pauser(consumer_, consumer_.get_assignment());
 
@@ -348,20 +348,35 @@ void BasicConsumerDispatcher<ConsumerType>::run(const Args&... args) {
     const auto on_event = find_matching_functor<OnEventArgs>(args..., &self::handle_event);
 
     running_ = true;
+
+    auto lambda_get_error = [](std::vector<Message> msg){
+        for (auto &iter : msg) {
+            if (iter.get_error()) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto lambda_is_eof= [&on_eof, &on_error](std::vector<Message> msg) {
+        for (auto &iter : msg) {
+            if (iter.is_eof()) {
+                on_eof(EndOfFile{}, { iter.get_topic(), iter.get_partition(), iter.get_offset() });
+            } else {
+                on_error(iter.get_error());
+            }
+        }
+    };
+
     while (running_) {
-        Message msg = consumer_.poll();
-        if (!msg) {
+        std::vector<Message> msg = consumer_.poll_batch(1024);
+
+        if (msg.empty()) {
             on_timeout(Timeout{});
         }
-        else if (msg.get_error()) {
-            if (msg.is_eof()) {
-                on_eof(EndOfFile{}, { msg.get_topic(), msg.get_partition(), msg.get_offset() });
-            }
-            else {
-                on_error(msg.get_error());
-            }
-        }
-        else {
+        else if (lambda_get_error(msg)) {
+            lambda_is_eof(msg);
+        } else {
             process_message(on_message, std::move(msg), args...);
         }
         on_event(Event{});
