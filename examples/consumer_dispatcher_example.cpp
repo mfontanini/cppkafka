@@ -13,7 +13,7 @@ using std::endl;
 using std::function;
 
 using cppkafka::Consumer;
-using cppkafka::ConsumerDispatcher;
+using cppkafka::ConsumerPollDispatcher;
 using cppkafka::Configuration;
 using cppkafka::Message;
 using cppkafka::TopicPartition;
@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
     cout << "Consuming messages from topic " << topic_name << endl;
 
     // Create a consumer dispatcher
-    ConsumerDispatcher dispatcher(consumer);
+    cppkafka::ConsumerPollDispatcher dispatcher(consumer);
 
     // Stop processing on SIGINT
     on_signal = [&]() {
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 
     // Now run the dispatcher, providing a callback to handle messages, one to handle
     // errors and another one to handle EOF on a partition
-    /*dispatcher.run(
+    dispatcher.run(
         // Callback executed whenever a new message is consumed
         [&](std::vector<Message> msg) {
             // Print the key (if any)
@@ -117,8 +117,8 @@ int main(int argc, char* argv[]) {
             cout << "[+] Received error notification: " << error << endl;
         },
         // Whenever EOF is reached on a partition, print this
-        [](ConsumerDispatcher::EndOfFile, const TopicPartition& topic_partition) {
+        [](ConsumerPollDispatcher::EndOfFile, const TopicPartition& topic_partition) {
             cout << "Reached EOF on partition " << topic_partition << endl;
         }
-    );*/
+    );
 }
