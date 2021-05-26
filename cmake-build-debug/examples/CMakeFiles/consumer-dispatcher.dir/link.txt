@@ -1,1 +1,0 @@
-/usr/bin/c++ -std=c++11 -Wall -g CMakeFiles/consumer-dispatcher.dir/consumer_dispatcher_example.cpp.o -o consumer-dispatcher   -L/usr/local/lib  -Wl,-rpath,/usr/local/lib:/home/illidansr/lib/cppkafka/cmake-build-debug/src/lib64 ../src/lib64/libcppkafka.so.0.3.1 /lib64/librdkafka.so /usr/local/lib/libboost_program_options.so -lpthread -lrt -lssl -lcrypto -ldl -lz 

@@ -1,9 +1,0 @@
-/home/illidansr/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/211.7142.21/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/illidansr/lib/cppkafka
--- Build will generate a shared library. Use CPPKAFKA_BUILD_SHARED=0 to perform a static build
--- RdKafkaConfig.cmake not found. Attempting to find module instead...
--- Found valid rdkafka version
--- RdKafka module found.
--- Disabling tests because submodule Catch2 isn't checked out
--- Configuring done
--- Generating done
--- Build files have been written to: /home/illidansr/lib/cppkafka/cmake-build-debug

@@ -1,1 +1,0 @@
-/usr/bin/c++ -std=c++11 -Wall -g CMakeFiles/buffered-producer.dir/buffered_producer_example.cpp.o -o buffered-producer   -L/usr/local/lib  -Wl,-rpath,/usr/local/lib:/home/illidansr/lib/cppkafka/cmake-build-debug/src/lib64 ../src/lib64/libcppkafka.so.0.3.1 /lib64/librdkafka.so /usr/local/lib/libboost_program_options.so -lpthread -lrt -lssl -lcrypto -ldl -lz 
