@@ -1,2 +1,3 @@
 build
 include/cppkafka/config.h
+/cmake-build-debug/
