@@ -265,12 +265,12 @@ examples/CMakeFiles/buffered-producer.dir/clean:
 # Target rules for target examples/CMakeFiles/examples.dir
 
 # All Build rule for target.
+examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/buffered-producer.dir/all
 examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/producer.dir/all
 examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/consumer-dispatcher.dir/all
 examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/metadata.dir/all
-examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/consumer.dir/all
-examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/buffered-producer.dir/all
 examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/consumers-information.dir/all
+examples/CMakeFiles/examples.dir/all: examples/CMakeFiles/consumer.dir/all
 	$(MAKE) $(MAKESILENT) -f examples/CMakeFiles/examples.dir/build.make examples/CMakeFiles/examples.dir/depend
 	$(MAKE) $(MAKESILENT) -f examples/CMakeFiles/examples.dir/build.make examples/CMakeFiles/examples.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/illidansr/lib/cppkafka/cmake-build-debug/CMakeFiles --progress-num= "Built target examples"
