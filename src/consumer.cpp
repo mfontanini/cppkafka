@@ -124,15 +124,9 @@ void Consumer::unsubscribe() {
 
 void Consumer::assign(const TopicPartitionList& topic_partitions) {
     rd_kafka_resp_err_t error;
-    if (topic_partitions.empty()) {
-        error = rd_kafka_assign(get_handle(), nullptr);
-        check_error(error);
-    }
-    else {
-        TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
-        error = rd_kafka_assign(get_handle(), topic_list_handle.get());
-        check_error(error, topic_list_handle.get());
-    }
+    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+    error = rd_kafka_assign(get_handle(), topic_list_handle.get());
+    check_error(error, topic_list_handle.get());
 }
 
 void Consumer::unassign() {
