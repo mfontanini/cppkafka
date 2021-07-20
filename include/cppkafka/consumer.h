@@ -197,6 +197,20 @@ public:
     void unassign();
     
     /**
+     * \brief Sets the current topic/partition incremental assignment
+     *
+     * This translates into a call to rd_kafka_incremental_assign
+     */
+    void incremental_assign(const TopicPartitionList& topic_partitions);
+
+    /**
+     * \brief Unassigns the current topic/partition incremental assignment
+     *
+     * This translates into a call to rd_kafka_incremental_unassign.
+     */
+    void incremental_unassign(const TopicPartitionList& topic_partitions);
+
+    /**
      * \brief Pauses all consumption
      */
     void pause();

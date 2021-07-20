@@ -281,6 +281,16 @@ void KafkaHandleBase::check_error(rd_kafka_resp_err_t error,
     }
 }
 
+void KafkaHandleBase::check_error(rd_kafka_error_t* error,
+                                  const rd_kafka_topic_partition_list_t* list_ptr) const {
+    if (!error) {
+        return;
+    }
+    rd_kafka_resp_err_t error_code = error->code;
+    rd_kafka_error_destroy(error);
+    check_error(error_code, list_ptr);
+}
+
 rd_kafka_conf_t* KafkaHandleBase::get_configuration_handle() {
     return config_.get_handle();
 }
