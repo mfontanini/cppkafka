@@ -17,6 +17,7 @@ set(RDKAFKA_MIN_VERSION "0.9.4")
 set(RDKAFKA_MIN_VERSION_HEX 0x00090400)
 
 if (NOT CMAKE_CXX_FLAGS)
+    set(CMAKE_CXX_STANDARD 17)
     # Set default compile flags for the project
     if(MSVC)
         # Don't always use Wall, since VC's /Wall is ridiculously verbose.
@@ -28,7 +29,7 @@ if (NOT CMAKE_CXX_FLAGS)
         add_definitions("-DNOGDI=1")
         add_definitions("-DNOMINMAX=1")
     else()
-        set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
+        set(CMAKE_CXX_FLAGS "-Wall")
     endif()
 endif()
 
