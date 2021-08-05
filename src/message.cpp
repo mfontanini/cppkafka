@@ -84,7 +84,7 @@ Message& Message::load_internal() {
     return *this;
 }
 
-boost::optional<MessageTimestamp> Message::get_timestamp() const {
+std::optional<MessageTimestamp> Message::get_timestamp() const {
     rd_kafka_timestamp_type_t type = RD_KAFKA_TIMESTAMP_NOT_AVAILABLE;
     int64_t timestamp = rd_kafka_message_timestamp(handle_.get(), &type);
     if (timestamp == -1 || type == RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {

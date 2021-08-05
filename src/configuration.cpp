@@ -41,7 +41,7 @@ using std::move;
 using std::vector;
 using std::initializer_list;
 using std::chrono::milliseconds;
-using boost::optional;
+using std::optional;
 
 namespace cppkafka {
 

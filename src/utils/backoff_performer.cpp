@@ -26,10 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include "utils/backoff_performer.h"
-#undef max // solves the windows issue which prevents using std::numeric_limits<T>::max()
 #include <limits>
 #include <algorithm>
+#include "utils/backoff_performer.h"
 
 using std::min;
 using std::numeric_limits;

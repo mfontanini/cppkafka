@@ -35,7 +35,7 @@
 #include <functional>
 #include <initializer_list>
 #include <chrono>
-#include <boost/optional.hpp>
+#include <optional>
 #include <librdkafka/rdkafka.h>
 #include "topic_partition_list.h"
 #include "topic_configuration.h"
@@ -226,12 +226,12 @@ public:
     /**
      * Gets the default topic configuration
      */
-    const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
+    const std::optional<TopicConfiguration>& get_default_topic_configuration() const;
 
     /**
      * Gets the default topic configuration
      */
-    boost::optional<TopicConfiguration>& get_default_topic_configuration();
+    std::optional<TopicConfiguration>& get_default_topic_configuration();
 private:
     using HandlePtr = ClonablePtr<rd_kafka_conf_t, decltype(&rd_kafka_conf_destroy),
                                   decltype(&rd_kafka_conf_dup)>;
@@ -240,7 +240,7 @@ private:
     static HandlePtr make_handle(rd_kafka_conf_t* ptr);
 
     HandlePtr handle_;
-    boost::optional<TopicConfiguration> default_topic_config_;
+    std::optional<TopicConfiguration> default_topic_config_;
     DeliveryReportCallback delivery_report_callback_;
     OffsetCommitCallback offset_commit_callback_;
     ErrorCallback error_callback_;
