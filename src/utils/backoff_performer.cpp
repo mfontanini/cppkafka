@@ -27,9 +27,14 @@
  *
  */
 
+#ifdef _WIN32
+#define NOMINMAX
+#endif
+
 #include <algorithm>
 #include <limits>
 #include "utils/backoff_performer.h"
+
 
 using std::min;
 using std::numeric_limits;
