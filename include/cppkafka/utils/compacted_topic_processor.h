@@ -34,7 +34,7 @@
 #include <string>
 #include <map>
 #include <set>
-#include<optional>
+#include "optional.h"
 #include "../buffer.h"
 #include "../consumer.h"
 #include "../macros.h"
@@ -106,8 +106,8 @@ private:
     EventType type_;
     std::string topic_;
     int partition_;
-    std::optional<Key> key_;
-    std::optional<Value> value_;
+    optional<Key> key_;
+    optional<Value> value_;
 };
 
 template <typename Key, typename Value>
@@ -121,12 +121,12 @@ public:
     /**
      * Callback used for decoding key objects
      */
-    using KeyDecoder = std::function<std::optional<Key>(const Buffer&)>;
+    using KeyDecoder = std::function<optional<Key>(const Buffer&)>;
 
     /**
      * Callback used for decoding value objects
      */
-    using ValueDecoder = std::function<std::optional<Value>(const Key& key, const Buffer&)>;
+    using ValueDecoder = std::function<optional<Value>(const Key& key, const Buffer&)>;
 
     /**
      * Callback used for event handling
@@ -276,10 +276,10 @@ void CompactedTopicProcessor<Key, Value>::process_event() {
     Message message = consumer_.poll();
     if (message) {
         if (!message.get_error()) {
-            std::optional<Key> key = key_decoder_(message.get_key());
+            optional<Key> key = key_decoder_(message.get_key());
             if (key) {
                 if (message.get_payload()) {
-                    std::optional<Value> value = value_decoder_(*key, message.get_payload());
+                    optional<Value> value = value_decoder_(*key, message.get_payload());
                     if (value) {
                         // If there's a payload and we managed to parse the value, generate a
                         // SET_ELEMENT event
