@@ -35,7 +35,6 @@
 #include <limits>
 #include "utils/backoff_performer.h"
 
-
 using std::min;
 using std::numeric_limits;
 

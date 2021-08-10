@@ -143,7 +143,11 @@ void Producer::do_produce(const Message& message,
     const Buffer& payload = message.get_payload();
     const Buffer& key = message.get_key();
     const int policy = static_cast<int>(message_payload_policy_);
+#ifdef _USE_CPP17
     int64_t duration = message.get_timestamp() ? message.get_timestamp().value().get_timestamp().count() : 0;
+#else
+    int64_t duration = message.get_timestamp() ? message.get_timestamp().get().get_timestamp().count() : 0;
+#endif
     auto result = rd_kafka_producev(get_handle(),
                                     RD_KAFKA_V_TOPIC(message.get_topic().data()),
                                     RD_KAFKA_V_PARTITION(message.get_partition()),

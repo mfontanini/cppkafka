@@ -93,7 +93,7 @@ void PollStrategyBase::assign(TopicPartitionList& partitions) {
     // populate partition queues
     for (const auto& partition : partitions) {
         // get the queue associated with this partition
-        partition_queues_.emplace(partition, QueueData{consumer_.get_partition_queue(partition), std::any()});
+        partition_queues_.emplace(partition, QueueData{consumer_.get_partition_queue(partition), any()});
     }
     reset_state();
 }
