@@ -36,7 +36,7 @@ namespace cppkafka {
 
 PollStrategyBase::PollStrategyBase(Consumer& consumer)
 : consumer_(consumer),
-  consumer_queue_(QueueData{consumer.get_consumer_queue(), std::any()}) {
+  consumer_queue_(QueueData{consumer.get_consumer_queue(), any()}) {
     // get all currently active partition assignments
     TopicPartitionList assignment = consumer_.get_assignment();
     on_assignment(assignment);
