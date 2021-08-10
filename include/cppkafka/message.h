@@ -34,7 +34,7 @@
 #include <cstdint>
 #include <chrono>
 #include <cassert>
-#include <optional>
+#include "utils/optional.h"
 #include <librdkafka/rdkafka.h>
 #include "buffer.h"
 #include "macros.h"
@@ -189,7 +189,7 @@ public:
      *
      * If calling rd_kafka_message_timestamp returns -1, then boost::none_t will be returned.
      */
-    std::optional<MessageTimestamp> get_timestamp() const;
+    optional<MessageTimestamp> get_timestamp() const;
     
 #if RD_KAFKA_VERSION >= RD_KAFKA_MESSAGE_LATENCY_SUPPORT_VERSION
     /**

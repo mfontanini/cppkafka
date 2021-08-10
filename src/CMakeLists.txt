@@ -49,7 +49,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 # In CMake >= 3.15 Boost::boost == Boost::headers
 target_link_libraries(${TARGET_NAME} PUBLIC RdKafka::rdkafka)
 
-if(NOT CPPKAFKA_DISABLE_EXAMPLES)
+if(NOT USE_CPP17 OR NOT CPPKAFKA_DISABLE_EXAMPLES OR NOT CPPKAFKA_DISABLE_TESTS)
     target_link_libraries(${TARGET_NAME} PUBLIC Boost::boost)
 endif()
 

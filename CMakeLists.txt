@@ -16,6 +16,8 @@ set(CPPKAFKA_VERSION "${CPPKAFKA_VERSION_MAJOR}.${CPPKAFKA_VERSION_MINOR}.${CPPK
 set(RDKAFKA_MIN_VERSION "0.9.4")
 set(RDKAFKA_MIN_VERSION_HEX 0x00090400)
 
+option(USE_CPP17 "Use C++17 features instead of Boost (still, if you don't have boost you can't build examples" OFF)
+
 if (NOT CMAKE_CXX_FLAGS)
     # Set default compile flags for the project
     if(MSVC)
@@ -31,8 +33,13 @@ if (NOT CMAKE_CXX_FLAGS)
         set(CMAKE_CXX_FLAGS "-Wall")
     endif()
 endif()
-# Use C++17
-set(CMAKE_CXX_STANDARD 17)
+
+if(USE_CPP17)
+    set(CMAKE_CXX_STANDARD 17)
+    add_definitions("-D_USE_CPP17")
+else()
+    set(CMAKE_CXX_STANDARD 11)
+endif()
 
 # Set output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -104,6 +111,33 @@ if (NOT CPPKAFKA_PKGCONFIG_DIR)
     set(CPPKAFKA_PKGCONFIG_DIR share/pkgconfig)
 endif()
 
+if(NOT USE_CPP17 OR NOT CPPKAFKA_DISABLE_EXAMPLES OR NOT CPPKAFKA_DISABLE_TESTS)
+    # Look for Boost (just need boost.optional headers here)
+    find_package(Boost REQUIRED ${FIND_PACKAGE_QUIET})
+
+    if (Boost_FOUND)
+        find_package(Boost COMPONENTS program_options ${FIND_PACKAGE_QUIET})
+        set(Boost_USE_STATIC_LIBS ${CPPKAFKA_BOOST_STATIC_LIBS})
+        set(Boost_USE_MULTITHREADED ${CPPKAFKA_BOOST_USE_MULTITHREADED})
+        include_directories(${Boost_INCLUDE_DIRS})
+        link_directories(${Boost_LIBRARY_DIRS})
+        if (CPPKAFKA_CMAKE_VERBOSE)
+            message(STATUS "Boost include dir: ${Boost_INCLUDE_DIRS}")
+            message(STATUS "Boost library dir: ${Boost_LIBRARY_DIRS}")
+            message(STATUS "Boost use static libs: ${Boost_USE_STATIC_LIBS}")
+            message(STATUS "Boost is multi-threaded: ${CPPKAFKA_BOOST_USE_MULTITHREADED}")
+            message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
+        endif()
+    endif()
+
+    # Examples target
+    if (Boost_PROGRAM_OPTIONS_FOUND)
+        add_subdirectory(examples)
+    else()
+        message(STATUS "Disabling examples")
+    endif()
+endif()
+
 # Try to find the RdKafka configuration file if present.
 # This will search default system locations as well as RdKafka_ROOT and RdKafka_Dir paths if specified.
 find_package(RdKafka ${FIND_PACKAGE_QUIET} CONFIG)
@@ -123,30 +157,7 @@ endif()
 add_subdirectory(src)
 add_subdirectory(include/cppkafka)
 
-# Examples target
-if (NOT CPPKAFKA_DISABLE_EXAMPLES)
-    # Look for Boost (just need boost.optional headers here)
-    find_package(Boost ${FIND_PACKAGE_QUIET} CONFIG)
-    if (Boost_FOUND)
-        option(CPPKAFKA_BOOST_STATIC_LIBS "Link with Boost static libraries." ON)
-        option(CPPKAFKA_BOOST_USE_MULTITHREADED "Use Boost multithreaded libraries." ON)
-        find_package(Boost COMPONENTS program_options ${FIND_PACKAGE_QUIET})
-        set(Boost_USE_STATIC_LIBS ${CPPKAFKA_BOOST_STATIC_LIBS})
-        set(Boost_USE_MULTITHREADED ${CPPKAFKA_BOOST_USE_MULTITHREADED})
-        include_directories(${Boost_INCLUDE_DIRS})
-        link_directories(${Boost_LIBRARY_DIRS})
-        if (CPPKAFKA_CMAKE_VERBOSE)
-            message(STATUS "Boost include dir: ${Boost_INCLUDE_DIRS}")
-            message(STATUS "Boost library dir: ${Boost_LIBRARY_DIRS}")
-            message(STATUS "Boost use static libs: ${Boost_USE_STATIC_LIBS}")
-            message(STATUS "Boost is multi-threaded: ${CPPKAFKA_BOOST_USE_MULTITHREADED}")
-            message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
-        endif()
-        add_subdirectory(examples)
-    else()
-        message(STATUS "Disabling examples")
-    endif()
-endif()
+
 
 # Add a target to generate API documentation using Doxygen
 find_package(Doxygen ${FIND_PACKAGE_QUIET})
