@@ -84,7 +84,7 @@ namespace cppkafka {
  */
 template <typename BufferType,
           typename Allocator = std::allocator<ConcreteMessageBuilder<BufferType>>>
-class CPPKAFKA_API BufferedProducer {
+class BufferedProducer {
 public:
     enum class FlushMethod {
         Sync,    ///< Empty the buffer and wait for acks from the broker.
