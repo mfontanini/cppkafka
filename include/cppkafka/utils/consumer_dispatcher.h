@@ -70,7 +70,7 @@ namespace cppkafka {
  * * EOF: void(BasicConsumerDispatcher::EndOfFile, TopicPartition)
  */
 template <typename ConsumerType>
-class CPPKAFKA_API BasicConsumerDispatcher {
+class BasicConsumerDispatcher {
 public:
     /**
      * Tag to indicate a timeout occurred
