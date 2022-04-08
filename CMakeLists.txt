@@ -28,7 +28,7 @@ if (NOT CMAKE_CXX_FLAGS)
         add_definitions("-DNOGDI=1")
         add_definitions("-DNOMINMAX=1")
     else()
-        set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
+        set(CMAKE_CXX_FLAGS "-Wall")
     endif()
 endif()
 
