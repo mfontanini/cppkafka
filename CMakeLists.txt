@@ -92,6 +92,8 @@ endif()
 
 if (CPPKAFKA_RDKAFKA_STATIC_LIB)
     add_definitions("-DLIBRDKAFKA_STATICLIB")
+else ()
+    set(RDKAFKA_REQUIRES "rdkafka >= 0.9.4")
 endif()
 
 if (NOT CPPKAFKA_CONFIG_DIR)
