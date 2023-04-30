@@ -51,7 +51,7 @@ option(CPPKAFKA_EXPORT_CMAKE_CONFIG "Generate CMake config, target and version f
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 if (NOT CPPKAFKA_CONFIG_DIR)
-    set(CPPKAFKA_CONFIG_DIR lib/cmake/${PROJECT_NAME})
+    set(CPPKAFKA_CONFIG_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 endif()
 
 # Maintain previous compatibility
