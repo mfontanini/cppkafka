@@ -36,6 +36,9 @@ set(NAMESPACE           "${PROJECT_NAME}::")
 set(TARGET_EXPORT_NAME  ${PROJECT_NAME}Targets)
 
 add_library(${TARGET_NAME} ${CPPKAFKA_LIBRARY_TYPE} ${SOURCES})
+IF(MSVC)
+    target_compile_definitions(${TARGET_NAME} PUBLIC NOMINMAX)
+ENDIF()
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_11)
 target_include_directories(${TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/cppkafka>)
 set_target_properties(${TARGET_NAME} PROPERTIES
