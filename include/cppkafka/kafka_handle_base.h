@@ -369,7 +369,7 @@ protected:
 private:
     static const std::chrono::milliseconds DEFAULT_TIMEOUT;
 
-    struct HandleDeleter {
+    struct CPPKAFKA_API HandleDeleter {
         explicit HandleDeleter(const KafkaHandleBase* handle_base_ptr) : handle_base_ptr_{handle_base_ptr} {}
         void operator()(rd_kafka_t* handle);
     private:
