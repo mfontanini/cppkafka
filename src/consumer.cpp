@@ -240,7 +240,10 @@ TopicPartitionList Consumer::get_assignment() const {
 }
 
 string Consumer::get_member_id() const {
-    return rd_kafka_memberid(get_handle());
+    char* memberid_ptr = rd_kafka_memberid(get_handle());
+    string memberid_string = memberid_ptr;
+    rd_kafka_mem_free(nullptr, memberid_ptr);
+    return memberid_string;
 }
 
 const Consumer::AssignmentCallback& Consumer::get_assignment_callback() const {
