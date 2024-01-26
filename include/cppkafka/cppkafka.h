@@ -57,11 +57,13 @@
 #include <cppkafka/topic_configuration.h>
 #include <cppkafka/topic_partition.h>
 #include <cppkafka/topic_partition_list.h>
+#include <cppkafka/utils/any.h>
 #include <cppkafka/utils/backoff_committer.h>
 #include <cppkafka/utils/backoff_performer.h>
 #include <cppkafka/utils/buffered_producer.h>
 #include <cppkafka/utils/compacted_topic_processor.h>
 #include <cppkafka/utils/consumer_dispatcher.h>
+#include <cppkafka/utils/optional.h>
 #include <cppkafka/utils/poll_interface.h>
 #include <cppkafka/utils/poll_strategy_base.h>
 #include <cppkafka/utils/roundrobin_poll_strategy.h>
