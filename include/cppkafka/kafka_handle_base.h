@@ -38,7 +38,9 @@
 #include <mutex>
 #include <tuple>
 #include <chrono>
+#include <librdkafka/rdtypes.h>
 #include <librdkafka/rdkafka.h>
+#include <librdkafka/rdkafka_error.h>
 #include "group_information.h"
 #include "topic_partition.h"
 #include "topic_partition_list.h"
@@ -364,6 +366,8 @@ protected:
     void set_handle(rd_kafka_t* handle);
     void check_error(rd_kafka_resp_err_t error) const;
     void check_error(rd_kafka_resp_err_t error,
+                     const rd_kafka_topic_partition_list_t* list_ptr) const;
+    void check_error(rd_kafka_error_t* error,
                      const rd_kafka_topic_partition_list_t* list_ptr) const;
     rd_kafka_conf_t* get_configuration_handle();
 private:

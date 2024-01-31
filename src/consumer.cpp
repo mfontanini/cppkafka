@@ -29,6 +29,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include "macros.h"
 #include "consumer.h"
 #include "exceptions.h"
@@ -132,6 +133,21 @@ void Consumer::assign(const TopicPartitionList& topic_partitions) {
 void Consumer::unassign() {
     rd_kafka_resp_err_t error = rd_kafka_assign(get_handle(), nullptr);
     check_error(error);
+}
+
+void Consumer::incremental_assign(const TopicPartitionList& topic_partitions) {
+    if (topic_partitions.empty()) {
+        return;
+    }
+    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+    rd_kafka_error_t* error = rd_kafka_incremental_assign(get_handle(), topic_list_handle.get());
+    check_error(error, topic_list_handle.get());
+}
+
+void Consumer::incremental_unassign(const TopicPartitionList& topic_partitions) {
+    TopicPartitionsListPtr topic_list_handle = convert(topic_partitions);
+    rd_kafka_error_t* error = rd_kafka_incremental_unassign(get_handle(), topic_list_handle.get());
+    check_error(error, topic_list_handle.get());
 }
 
 void Consumer::pause() {
@@ -320,11 +336,19 @@ void Consumer::handle_rebalance(rd_kafka_resp_err_t error,
                                 TopicPartitionList& topic_partitions) {
     if (error == RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS) {
         CallbackInvoker<AssignmentCallback>("assignment", assignment_callback_, this)(topic_partitions);
-        assign(topic_partitions);
+        if (!strcmp(rd_kafka_rebalance_protocol(get_handle()), "COOPERATIVE")) {
+            incremental_assign(topic_partitions);
+        } else {
+            assign(topic_partitions);
+        }
     }
     else if (error == RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS) {
         CallbackInvoker<RevocationCallback>("revocation", revocation_callback_, this)(topic_partitions);
-        unassign();
+        if (!strcmp(rd_kafka_rebalance_protocol(get_handle()), "COOPERATIVE")) {
+            incremental_unassign(topic_partitions);
+        } else {
+            unassign();
+        }
     }
     else {
         CallbackInvoker<RebalanceErrorCallback>("rebalance error", rebalance_error_callback_, this)(error);
