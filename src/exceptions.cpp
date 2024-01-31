@@ -31,6 +31,7 @@
 
 using std::string;
 using std::to_string;
+using std::move;
 
 namespace cppkafka {
 
@@ -43,6 +44,24 @@ Exception::Exception(string message)
 
 const char* Exception::what() const noexcept {
     return message_.data();
+}
+
+// RdKafkaException
+
+RdKafkaException::RdKafkaException(Error error)
+: Exception(error.to_string())
+, error_(move(error)) {
+
+}
+
+RdKafkaException::RdKafkaException(Error error, string message)
+: Exception(move(message))
+, error_(move(error)) {
+
+}
+
+Error RdKafkaException::get_error() const noexcept {
+    return error_;
 }
 
 // ConfigException
@@ -75,8 +94,8 @@ ElementNotFound::ElementNotFound(const string& element_type, const string& name)
 
 // ParseException
 
-ParseException::ParseException(const string& message)
-: Exception(message) {
+ParseException::ParseException(string message)
+: Exception(move(message)) {
 
 }
 
@@ -89,40 +108,28 @@ UnexpectedVersion::UnexpectedVersion(uint32_t version)
 // HandleException
 
 HandleException::HandleException(Error error) 
-: Exception(error.to_string()), error_(error) {
+: RdKafkaException(move(error)) {
 
-}
-
-Error HandleException::get_error() const {
-    return error_;
 }
 
 // ConsumerException
 
 ConsumerException::ConsumerException(Error error) 
-: Exception(error.to_string()), error_(error) {
+: RdKafkaException(move(error)) {
 
-}
-
-Error ConsumerException::get_error() const {
-    return error_;
 }
 
 // QueueException
 
 QueueException::QueueException(Error error)
-: Exception(error.to_string()), error_(error) {
+: RdKafkaException(move(error)) {
 
-}
-
-Error QueueException::get_error() const {
-    return error_;
 }
 
 // ActionTerminatedException
 
-ActionTerminatedException::ActionTerminatedException(const string& error) 
-: Exception(error) {
+ActionTerminatedException::ActionTerminatedException(string message)
+: Exception(move(message)) {
 
 }
     

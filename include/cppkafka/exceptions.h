@@ -51,6 +51,19 @@ private:
 };
 
 /**
+ * Base class for all rdkafka exceptions
+ */
+class CPPKAFKA_API RdKafkaException : public Exception {
+public:
+    RdKafkaException(Error error);
+    RdKafkaException(Error error, std::string message);
+    
+    Error get_error() const noexcept;
+private:
+    Error error_;
+};
+
+/**
  * A configuration related error
  */
 class CPPKAFKA_API ConfigException : public Exception {
@@ -87,7 +100,7 @@ public:
  */
 class CPPKAFKA_API ParseException : public Exception {
 public:
-    ParseException(const std::string& message);
+    ParseException(std::string message);
 };
 
 /** 
@@ -101,37 +114,25 @@ public:
 /**
  * A generic rdkafka handle error
  */
-class CPPKAFKA_API HandleException : public Exception {
+class CPPKAFKA_API HandleException : public RdKafkaException {
 public:
     HandleException(Error error);
-
-    Error get_error() const;
-private:
-    Error error_;
 };
 
 /**
  * Consumer exception
  */
-class CPPKAFKA_API ConsumerException : public Exception {
+class CPPKAFKA_API ConsumerException : public RdKafkaException {
 public:
     ConsumerException(Error error);
-
-    Error get_error() const;
-private:
-    Error error_;
 };
 
 /**
  * Queue exception for rd_kafka_queue_t errors
  */
-class CPPKAFKA_API QueueException : public Exception {
+class CPPKAFKA_API QueueException : public RdKafkaException {
 public:
     QueueException(Error error);
-
-    Error get_error() const;
-private:
-    Error error_;
 };
 
 /**
@@ -139,7 +140,7 @@ private:
  */
 class CPPKAFKA_API ActionTerminatedException : public Exception {
 public:
-    ActionTerminatedException(const std::string& error);
+    ActionTerminatedException(std::string message);
 };
 
 } // cppkafka
