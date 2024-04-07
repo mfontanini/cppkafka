@@ -57,6 +57,7 @@ In order to compile _cppkafka_ you need:
 * _CMake >= 3.9.2_
 * A compiler with good C++11 support (e.g. gcc >= 4.8). This was tested successfully on _g++ 4.8.3_. 
 * The boost library (for boost::optional)
+* _libssl-dev_
 
 Now, in order to build, just run:
 
