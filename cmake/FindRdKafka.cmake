@@ -56,9 +56,9 @@ try_compile(RdKafka_FOUND ${CMAKE_CURRENT_BINARY_DIR}
 if (RdKafka_FOUND)
     add_library(RdKafka::rdkafka ${RDKAFKA_LIBRARY_TYPE} IMPORTED GLOBAL)
     if (UNIX AND NOT APPLE)
-        set(RDKAFKA_DEPENDENCIES pthread rt ssl crypto dl z)
+        set(RDKAFKA_DEPENDENCIES pthread rt dl)
     else()
-        set(RDKAFKA_DEPENDENCIES pthread ssl crypto dl z)
+        set(RDKAFKA_DEPENDENCIES pthread dl)
     endif()
     set_target_properties(RdKafka::rdkafka PROPERTIES
             IMPORTED_NAME RdKafka
