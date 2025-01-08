@@ -180,8 +180,8 @@ void RoundRobinPollStrategy::consume_batch(Queue& queue,
     }
     // concatenate both lists
     messages.insert(messages.end(),
-                    make_move_iterator(queue_messages.begin()),
-                    make_move_iterator(queue_messages.end()));
+                    std::make_move_iterator(queue_messages.begin()),
+                    std::make_move_iterator(queue_messages.end()));
     // reduce total batch count
     count -= queue_messages.size();
 }
