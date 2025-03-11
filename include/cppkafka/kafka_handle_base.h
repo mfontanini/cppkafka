@@ -391,8 +391,8 @@ private:
     Configuration config_;
     TopicConfigurationMap topic_configurations_;
     std::mutex topic_configurations_mutex_;
-    HandlePtr handle_;
     int destroy_flags_;
+    HandlePtr handle_;
 };
 
 } // cppkafka
