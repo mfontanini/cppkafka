@@ -241,6 +241,8 @@ TopicPartitionList Consumer::get_assignment() const {
 
 string Consumer::get_member_id() const {
     char* memberid_ptr = rd_kafka_memberid(get_handle());
+    if (memberid_ptr == nullptr)
+        return string();
     string memberid_string = memberid_ptr;
     rd_kafka_mem_free(nullptr, memberid_ptr);
     return memberid_string;
