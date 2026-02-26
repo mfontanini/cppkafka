@@ -109,6 +109,19 @@ void background_event_callback_proxy(rd_kafka_t*, rd_kafka_event_t* event_ptr, v
         (*handle, Event{event_ptr});
 }
 
+void oauthbearer_token_refresh_callback_proxy(rd_kafka_t*, const char* oauthbearer_config, void* opaque) {
+    KafkaHandleBase* handle = static_cast<KafkaHandleBase*>(opaque);
+    const string* config_ptr = nullptr;
+    string config_value;
+    if (oauthbearer_config) {
+        config_value = oauthbearer_config;
+        config_ptr = &config_value;
+    }
+    CallbackInvoker<Configuration::OAuthBearerTokenRefreshCallback>
+        ("oauthbearer_token_refresh", handle->get_configuration().get_oauthbearer_token_refresh_callback(), handle)
+        (*handle, config_ptr);
+}
+
 // Configuration
 
 Configuration::Configuration() 
@@ -181,6 +194,12 @@ Configuration& Configuration::set_stats_callback(StatsCallback callback) {
 Configuration& Configuration::set_socket_callback(SocketCallback callback) {
     socket_callback_ = move(callback);
     rd_kafka_conf_set_socket_cb(handle_.get(), &socket_callback_proxy);
+    return *this;
+}
+
+Configuration& Configuration::set_oauthbearer_token_refresh_callback(OAuthBearerTokenRefreshCallback callback) {
+    oauthbearer_token_refresh_callback_ = move(callback);
+    rd_kafka_conf_set_oauthbearer_token_refresh_cb(handle_.get(), &oauthbearer_token_refresh_callback_proxy);
     return *this;
 }
 
@@ -262,6 +281,11 @@ const Configuration::SocketCallback& Configuration::get_socket_callback() const 
 const Configuration::BackgroundEventCallback&
 Configuration::get_background_event_callback() const {
     return background_event_callback_;
+}
+
+const Configuration::OAuthBearerTokenRefreshCallback&
+Configuration::get_oauthbearer_token_refresh_callback() const {
+    return oauthbearer_token_refresh_callback_;
 }
 
 const optional<TopicConfiguration>& Configuration::get_default_topic_configuration() const {

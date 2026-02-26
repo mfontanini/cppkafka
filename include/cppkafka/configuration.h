@@ -80,6 +80,8 @@ public:
     using StatsCallback = std::function<void(KafkaHandleBase& handle, const std::string& json)>;
     using SocketCallback = std::function<int(int domain, int type, int protocol)>;
     using BackgroundEventCallback = std::function<void(KafkaHandleBase& handle, Event)>;
+    using OAuthBearerTokenRefreshCallback = std::function<void(KafkaHandleBase& handle,
+                                                               const std::string* oauthbearer_config)>;
 
     using ConfigurationBase<Configuration>::set;
     using ConfigurationBase<Configuration>::get;
@@ -143,6 +145,15 @@ public:
      * Sets the socket callback (invokes rd_kafka_conf_set_socket_cb)
      */
     Configuration& set_socket_callback(SocketCallback callback);
+
+    /**
+     * Sets the OAuth bearer token refresh callback (invokes rd_kafka_conf_set_oauthbearer_token_refresh_cb)
+     * 
+     * This callback is triggered when the SASL/OAUTHBEARER token needs to be refreshed.
+     * The callback should generate a new token and call rd_kafka_oauthbearer_set_token()
+     * or rd_kafka_oauthbearer_set_token_failure() on the rd_kafka_t handle.
+     */
+    Configuration& set_oauthbearer_token_refresh_callback(OAuthBearerTokenRefreshCallback callback);
 
 #if RD_KAFKA_VERSION >= RD_KAFKA_ADMIN_API_SUPPORT_VERSION
     /**
@@ -224,6 +235,11 @@ public:
     const BackgroundEventCallback& get_background_event_callback() const;
 
     /**
+     * Gets the OAuth bearer token refresh callback
+     */
+    const OAuthBearerTokenRefreshCallback& get_oauthbearer_token_refresh_callback() const;
+
+    /**
      * Gets the default topic configuration
      */
     const boost::optional<TopicConfiguration>& get_default_topic_configuration() const;
@@ -249,6 +265,7 @@ private:
     StatsCallback stats_callback_;
     SocketCallback socket_callback_;
     BackgroundEventCallback background_event_callback_;
+    OAuthBearerTokenRefreshCallback oauthbearer_token_refresh_callback_;
 };
 
 } // cppkafka
