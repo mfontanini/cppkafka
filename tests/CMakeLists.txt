@@ -1,6 +1,9 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)
 include_directories(SYSTEM ${CATCH_INCLUDE})
 
+# Disable Catch2 POSIX signal handling (breaks on modern glibc where SIGSTKSZ is not constexpr)
+add_compile_definitions(CATCH_CONFIG_NO_POSIX_SIGNALS)
+
 if (NOT KAFKA_TEST_INSTANCE)
 set(KAFKA_TEST_INSTANCE kafka-vm:9092
     CACHE STRING "The kafka instance to which to connect to run tests")
