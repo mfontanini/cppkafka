@@ -63,7 +63,13 @@ public:
     using OffsetTuple = std::tuple<int64_t, int64_t>;
     using TopicPartitionsTimestampsMap = std::map<TopicPartition, std::chrono::milliseconds>;
 
-    virtual ~KafkaHandleBase() = default;
+    // Reset handle_ from the destructor body, while the object is still fully
+    // alive: HandleDeleter reads destroy_flags_ back through the owning object,
+    // and under -fsanitize-memory-use-after-dtor the default member-wise
+    // destruction poisons the trivial fields before handle_'s deleter runs.
+    virtual ~KafkaHandleBase() {
+        handle_.reset();
+    }
     KafkaHandleBase(const KafkaHandleBase&) = delete;
     KafkaHandleBase(KafkaHandleBase&&) = delete;
     KafkaHandleBase& operator=(const KafkaHandleBase&) = delete;
