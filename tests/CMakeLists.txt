@@ -38,6 +38,7 @@ add_executable(cppkafka_tests
     kafka_handle_base_test.cpp
     producer_test.cpp
     consumer_test.cpp
+    commit_timeout_test.cpp
     roundrobin_poll_test.cpp
     headers_test.cpp
     test_utils.cpp

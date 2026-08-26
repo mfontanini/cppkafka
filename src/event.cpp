@@ -69,6 +69,18 @@ Error Event::get_error() const {
     return rd_kafka_event_error(handle_.get());
 }
 
+Error Event::get_partitions_error() const {
+    const rd_kafka_topic_partition_list_t* list = rd_kafka_event_topic_partition_list(handle_.get());
+    if (list != nullptr) {
+        for (int i = 0; i < list->cnt; ++i) {
+            if (list->elems[i].err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+                return Error(list->elems[i].err);
+            }
+        }
+    }
+    return Error(RD_KAFKA_RESP_ERR_NO_ERROR);
+}
+
 void* Event::get_opaque() const {
     return rd_kafka_event_opaque(handle_.get());
 }

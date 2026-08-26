@@ -117,6 +117,15 @@ public:
     Error get_error() const;
 
     /**
+     * \brief Returns the first error attached to an entry of this event's topic/partition list
+     *
+     * An RD_KAFKA_EVENT_OFFSET_COMMIT reply carries the request-level error in Event::get_error and
+     * a per-partition error on each entry of the list. Both have to be checked: a commit the broker
+     * rejected for one partition arrives with no request-level error.
+     */
+    Error get_partitions_error() const;
+
+    /**
      * Gets the opaque pointer in this event
      */
     void* get_opaque() const;

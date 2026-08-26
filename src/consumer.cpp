@@ -166,6 +166,19 @@ void Consumer::async_commit(const TopicPartitionList& topic_partitions) {
     commit(&topic_partitions, true);
 }
 
+void Consumer::commit(milliseconds timeout) {
+    commit(nullptr, timeout);
+}
+
+void Consumer::commit(const TopicPartitionList& topic_partitions, milliseconds timeout) {
+    commit(&topic_partitions, timeout);
+}
+
+void Consumer::commit(const Message& msg, milliseconds timeout) {
+    TopicPartitionList offsets{TopicPartition(msg.get_topic(), msg.get_partition(), msg.get_offset() + 1)};
+    commit(offsets, timeout);
+}
+
 KafkaHandleBase::OffsetTuple Consumer::get_offsets(const TopicPartition& topic_partition) const {
     int64_t low;
     int64_t high;
@@ -313,6 +326,30 @@ void Consumer::commit(const TopicPartitionList* topic_partitions, bool async) {
         TopicPartitionsListPtr topic_list_handle = convert(*topic_partitions);
         error = rd_kafka_commit(get_handle(), topic_list_handle.get(), async ? 1 : 0);
         check_error(error, topic_list_handle.get());
+    }
+}
+
+void Consumer::commit(const TopicPartitionList* topic_partitions, milliseconds timeout) {
+    // Not Queue::make_queue: its refcount workaround is for handles from rd_kafka_queue_get_*
+    Queue queue(rd_kafka_queue_new(get_handle()));
+    TopicPartitionsListPtr topic_list_handle = topic_partitions == nullptr
+        ? make_handle(nullptr)
+        : convert(*topic_partitions);
+    rd_kafka_resp_err_t error = rd_kafka_commit_queue(get_handle(), topic_list_handle.get(),
+                                                     queue.get_handle(), nullptr, nullptr);
+    check_error(error, topic_list_handle.get());
+    const Event event = queue.next_event(timeout);
+    if (!event) {
+        throw HandleException(RD_KAFKA_RESP_ERR__TIMED_OUT);
+    }
+    const Error commit_error = event.get_error();
+    if (commit_error) {
+        throw HandleException(commit_error);
+    }
+    // Same contract as the check_error(error, list) the blocking commits use
+    const Error partitions_error = event.get_partitions_error();
+    if (partitions_error) {
+        throw HandleException(partitions_error);
     }
 }
 
